@@ -133,6 +133,48 @@ app.get('/api/setup/test', (req, res) => {
     });
 });
 
+app.get('/api/setup/debug', async (req, res) => {
+    try {
+        const { db } = require('./config/database');
+        
+        // Show connection config (without password)
+        const config = {
+            host: process.env.DB_HOST || 'not set',
+            port: process.env.DB_PORT || 'not set', 
+            user: process.env.DB_USER || 'not set',
+            database: process.env.DB_NAME || 'not set',
+            hasPassword: !!process.env.DB_PASS,
+            hasDatabaseUrl: !!process.env.DATABASE_URL,
+            mysqlHost: process.env.MYSQLHOST || 'not set',
+            mysqlPort: process.env.MYSQLPORT || 'not set',
+            mysqlUser: process.env.MYSQLUSER || 'not set',
+            mysqlDatabase: process.env.MYSQLDATABASE || 'not set',
+            hasMysqlPassword: !!process.env.MYSQLPASSWORD
+        };
+        
+        // Test basic query
+        try {
+            await db.query('SELECT 1 as test');
+            config.connectionTest = 'SUCCESS';
+        } catch (error) {
+            config.connectionTest = `FAILED: ${error.message}`;
+        }
+        
+        res.json({
+            success: true,
+            config: config,
+            timestamp: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
 app.post('/api/setup/create-tables', async (req, res) => {
     try {
         const { db } = require('./config/database');
