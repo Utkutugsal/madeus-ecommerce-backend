@@ -3,6 +3,15 @@ const Database = require('../config/database');
 
 const router = express.Router();
 
+// Simple test route to verify setup is working
+router.get('/test', (req, res) => {
+    res.json({
+        success: true,
+        message: 'Setup route is working!',
+        timestamp: new Date().toISOString()
+    });
+});
+
 // Create database tables
 router.post('/create-tables', async (req, res) => {
     try {
