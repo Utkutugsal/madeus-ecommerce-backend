@@ -132,6 +132,7 @@ try {
     app.use('/api/admin', require('./routes/admin'));
     app.use('/api/payment', require('./routes/payment'));
     app.use('/api/seo', require('./routes/seo'));
+    app.use('/api/setup', require('./routes/setup'));
 } catch (error) {
     console.log('Routes not yet created - will add them during development');
 }
