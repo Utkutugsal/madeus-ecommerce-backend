@@ -1,8 +1,52 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
+// Parse DATABASE_URL as fallback
+function parseDatabaseUrl(url) {
+    if (!url) return null;
+    
+    try {
+        const parsed = new URL(url);
+        return {
+            host: parsed.hostname,
+            port: parseInt(parsed.port) || 3306,
+            user: parsed.username,
+            password: parsed.password,
+            database: parsed.pathname.slice(1) // Remove leading slash
+        };
+    } catch (error) {
+        console.error('Error parsing DATABASE_URL:', error.message);
+        return null;
+    }
+}
+
+// Try DATABASE_URL first, then individual variables
+const urlConfig = parseDatabaseUrl(process.env.DATABASE_URL);
+const useUrlConfig = urlConfig && !process.env.DB_HOST;
+
 // Database connection configuration
-const dbConfig = {
+const dbConfig = useUrlConfig ? {
+    host: urlConfig.host,
+    port: urlConfig.port,
+    user: urlConfig.user,
+    password: urlConfig.password,
+    database: urlConfig.database,
+    charset: 'utf8mb4',
+    
+    // Connection pool settings
+    connectionLimit: 5,
+    queueLimit: 0,
+    waitForConnections: true,
+    
+    // SSL for Railway
+    ssl: {
+        rejectUnauthorized: false
+    },
+    
+    // Force IPv4
+    family: 4,
+    connectTimeout: 30000
+} : {
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT) || 3306,
     user: process.env.DB_USER,
@@ -11,9 +55,8 @@ const dbConfig = {
     charset: 'utf8mb4',
     
     // Connection pool settings (MySQL2 compatible)
-    connectionLimit: 10,
+    connectionLimit: 5,
     queueLimit: 0,
-    acquireTimeout: 60000,
     waitForConnections: true,
     
     // Additional MySQL settings
@@ -22,17 +65,21 @@ const dbConfig = {
     dateStrings: false,
     timezone: '+00:00', // Use UTC for better compatibility
     
-    // SSL settings (for Railway production)
+    // Railway MySQL specific settings
     ssl: process.env.NODE_ENV === 'production' ? {
         rejectUnauthorized: false
     } : false,
     
-    // Connection flags for Railway compatibility
+    // Force IPv4 for Railway compatibility
+    family: 4,
+    
+    // Connection timeout settings
+    connectTimeout: 30000,
+    
+    // Railway connection flags
     flags: [
-        'FOUND_ROWS',
-        'IGNORE_SPACE',
         'LONG_PASSWORD',
-        'LONG_FLAG',
+        'LONG_FLAG', 
         'TRANSACTIONS',
         'PROTOCOL_41',
         'SECURE_CONNECTION'
@@ -40,12 +87,14 @@ const dbConfig = {
 };
 
 // Log connection attempt (for debugging)
+console.log(`🔍 Using ${useUrlConfig ? 'DATABASE_URL' : 'individual variables'} for connection`);
 console.log('🔍 Database connection config:', {
     host: dbConfig.host,
     port: dbConfig.port,
     user: dbConfig.user,
     database: dbConfig.database,
-    ssl: !!dbConfig.ssl
+    ssl: !!dbConfig.ssl,
+    family: dbConfig.family
 });
 
 // Create connection pool
