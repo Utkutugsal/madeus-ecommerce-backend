@@ -175,6 +175,38 @@ app.get('/api/setup/debug', async (req, res) => {
     }
 });
 
+// Temporary products endpoint to test data
+app.get('/api/products', async (req, res) => {
+    try {
+        const { db } = require('./config/database');
+        
+        const products = await db.query(`
+            SELECT 
+                p.*,
+                c.name as category_name,
+                c.slug as category_slug
+            FROM products p
+            LEFT JOIN categories c ON p.category_id = c.id
+            WHERE p.is_active = TRUE
+            ORDER BY p.is_featured DESC, p.created_at DESC
+        `);
+        
+        res.json({
+            success: true,
+            count: products.length,
+            products: products
+        });
+        
+    } catch (error) {
+        console.error('Products fetch error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch products',
+            error: error.message
+        });
+    }
+});
+
 app.post('/api/setup/create-tables', async (req, res) => {
     try {
         const { db } = require('./config/database');
