@@ -4,29 +4,49 @@ require('dotenv').config();
 // Database connection configuration
 const dbConfig = {
     host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 3306,
+    port: parseInt(process.env.DB_PORT) || 3306,
     user: process.env.DB_USER,
     password: process.env.DB_PASS,
     database: process.env.DB_NAME,
     charset: 'utf8mb4',
     
-    // Connection pool settings
-    connectionLimit: 20,
+    // Connection pool settings (MySQL2 compatible)
+    connectionLimit: 10,
+    queueLimit: 0,
     acquireTimeout: 60000,
-    timeout: 60000,
-    reconnect: true,
+    waitForConnections: true,
     
     // Additional MySQL settings
     supportBigNumbers: true,
     bigNumberStrings: true,
     dateStrings: false,
-    timezone: '+03:00', // Turkey timezone
+    timezone: '+00:00', // Use UTC for better compatibility
     
-    // SSL settings (for production)
+    // SSL settings (for Railway production)
     ssl: process.env.NODE_ENV === 'production' ? {
         rejectUnauthorized: false
-    } : false
+    } : false,
+    
+    // Connection flags for Railway compatibility
+    flags: [
+        'FOUND_ROWS',
+        'IGNORE_SPACE',
+        'LONG_PASSWORD',
+        'LONG_FLAG',
+        'TRANSACTIONS',
+        'PROTOCOL_41',
+        'SECURE_CONNECTION'
+    ]
 };
+
+// Log connection attempt (for debugging)
+console.log('🔍 Database connection config:', {
+    host: dbConfig.host,
+    port: dbConfig.port,
+    user: dbConfig.user,
+    database: dbConfig.database,
+    ssl: !!dbConfig.ssl
+});
 
 // Create connection pool
 const pool = mysql.createPool(dbConfig);
@@ -193,10 +213,20 @@ const db = new Database();
 // Initialize database connection on startup
 (async () => {
     try {
+        console.log('🔌 Attempting database connection...');
         const isConnected = await db.testConnection();
         if (!isConnected) {
-            console.error('Failed to connect to database. Please check your configuration.');
-            process.exit(1);
+            console.error('💥 Failed to connect to database. Please check your configuration.');
+            console.error('🔍 Environment variables check:');
+            console.error('- DB_HOST:', process.env.DB_HOST ? '✅ Set' : '❌ Missing');
+            console.error('- DB_PORT:', process.env.DB_PORT ? '✅ Set' : '❌ Missing');
+            console.error('- DB_USER:', process.env.DB_USER ? '✅ Set' : '❌ Missing');
+            console.error('- DB_PASS:', process.env.DB_PASS ? '✅ Set' : '❌ Missing');
+            console.error('- DB_NAME:', process.env.DB_NAME ? '✅ Set' : '❌ Missing');
+            // Don't exit in production, let the server start without DB
+            if (process.env.NODE_ENV !== 'production') {
+                process.exit(1);
+            }
         }
     } catch (error) {
         console.error('Database initialization error:', error);
