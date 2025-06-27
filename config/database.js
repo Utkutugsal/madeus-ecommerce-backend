@@ -296,4 +296,4 @@ process.on('SIGTERM', async () => {
     process.exit(0);
 });
 
-module.exports = db; 
+module.exports = { Database, db }; 

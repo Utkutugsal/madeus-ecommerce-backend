@@ -135,8 +135,7 @@ app.get('/api/setup/test', (req, res) => {
 
 app.post('/api/setup/create-tables', async (req, res) => {
     try {
-        const Database = require('./config/database');
-        const db = new Database();
+        const { db } = require('./config/database');
         
         // Create users table
         await db.query(`
@@ -238,8 +237,7 @@ app.post('/api/setup/create-tables', async (req, res) => {
 
 app.post('/api/setup/sample-data', async (req, res) => {
     try {
-        const Database = require('./config/database');
-        const db = new Database();
+        const { db } = require('./config/database');
         
         // Insert categories
         await db.query(`
