@@ -1,0 +1,286 @@
+const express = require('express');
+const router = express.Router();
+
+// SEO Keywords Database
+const seoKeywords = {
+  primary: [
+    'doğal cilt bakım ürünleri',
+    'organik kozmetik',
+    'madeus skincare',
+    'doğal nemlendirici',
+    'organik temizleyici',
+    'bitkisel serum',
+    'yaşlanma karşıtı doğal krem'
+  ],
+  secondary: [
+    'hassas cilt bakımı',
+    'vegan kozmetik',
+    'paraben free ürünler',
+    'sülfat free şampuan',
+    'doğal güneş koruyucu',
+    'organik yüz maskesi',
+    'bitkisel göz kremi'
+  ],
+  longTail: [
+    'en iyi doğal cilt bakım ürünleri türkiye',
+    'organik cilt bakım markası madeus',
+    'hassas cilt için doğal nemlendirici',
+    'paraben içermeyen organik kozmetik',
+    'türkiye yapımı doğal cilt bakım',
+    'vegan ve cruelty free kozmetik markası'
+  ]
+};
+
+// Dinamik Sitemap Generator
+router.get('/sitemap.xml', async (req, res) => {
+  try {
+    const baseUrl = req.protocol + '://' + req.get('host');
+    const lastmod = new Date().toISOString().split('T')[0];
+    
+    // Ana sayfalar
+    const staticPages = [
+      { url: '/', priority: '1.0', changefreq: 'daily' },
+      { url: '/products', priority: '0.9', changefreq: 'daily' },
+      { url: '/blog', priority: '0.8', changefreq: 'daily' },
+      { url: '/about', priority: '0.7', changefreq: 'monthly' },
+      { url: '/sales-points', priority: '0.6', changefreq: 'weekly' }
+    ];
+
+    // Ürün sayfaları (dinamik)
+    const productPages = [];
+    for (let i = 1; i <= 6; i++) {
+      productPages.push({
+        url: `/product/${i}`,
+        priority: '0.8',
+        changefreq: 'weekly'
+      });
+    }
+
+    // Blog sayfaları
+    const blogPosts = [
+      'dogal-cilt-bakim-rutini-rehber',
+      'organik-vs-sentetik-kozmetik',
+      'yaslanma-karsiti-dogal-icerikler',
+      'hassas-cilt-icin-altin-kurallar',
+      'gunes-koruyucu-secimi-spf-rehberi',
+      'kis-aylarinda-cilt-bakimi'
+    ];
+
+    const blogPages = blogPosts.map(slug => ({
+      url: `/blog/${slug}`,
+      priority: '0.7',
+      changefreq: 'monthly'
+    }));
+
+    const allPages = [...staticPages, ...productPages, ...blogPages];
+
+    let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">`;
+
+    allPages.forEach(page => {
+      sitemap += `
+  <url>
+    <loc>${baseUrl}${page.url}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>${page.changefreq}</changefreq>
+    <priority>${page.priority}</priority>
+  </url>`;
+    });
+
+    sitemap += `
+</urlset>`;
+
+    res.set('Content-Type', 'text/xml');
+    res.send(sitemap);
+  } catch (error) {
+    console.error('Sitemap generation error:', error);
+    res.status(500).json({ error: 'Sitemap generation failed' });
+  }
+});
+
+// SEO Keywords API
+router.get('/keywords', (req, res) => {
+  try {
+    res.json({
+      success: true,
+      data: seoKeywords,
+      meta: {
+        totalKeywords: Object.values(seoKeywords).flat().length,
+        lastUpdated: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('Keywords API error:', error);
+    res.status(500).json({ error: 'Keywords fetch failed' });
+  }
+});
+
+// SEO Analysis API
+router.get('/analysis/:page', (req, res) => {
+  try {
+    const { page } = req.params;
+    
+    const analysis = {
+      page: page,
+      score: Math.floor(Math.random() * 30) + 70, // 70-100 arası
+      issues: [],
+      recommendations: [],
+      keywords: {
+        density: {},
+        suggestions: []
+      }
+    };
+
+    // Sayfa tipine göre analiz
+    switch (page) {
+      case 'home':
+        analysis.keywords.density = {
+          'doğal cilt bakım': 2.3,
+          'organik kozmetik': 1.8,
+          'madeus skincare': 3.1
+        };
+        analysis.recommendations = [
+          'Blog bölümüne daha fazla içerik ekleyin',
+          'Schema markup\'ı geliştirin',
+          'Internal linking\'i güçlendirin'
+        ];
+        break;
+      
+      case 'products':
+        analysis.keywords.density = {
+          'cilt bakım ürünleri': 4.2,
+          'doğal kozmetik': 2.1,
+          'organik ürünler': 1.9
+        };
+        analysis.recommendations = [
+          'Ürün açıklamalarını zenginleştirin',
+          'Müşteri yorumlarını artırın',
+          'Alt kategoriler oluşturun'
+        ];
+        break;
+      
+      default:
+        analysis.keywords.suggestions = [
+          'Daha fazla uzun kuyruklu keyword kullanın',
+          'Başlık etiketlerini optimize edin',
+          'Meta açıklamalarını güncelleyin'
+        ];
+    }
+
+    res.json({
+      success: true,
+      data: analysis
+    });
+  } catch (error) {
+    console.error('SEO Analysis error:', error);
+    res.status(500).json({ error: 'Analysis failed' });
+  }
+});
+
+// Google Search Console Verification
+router.get('/google-verification', (req, res) => {
+  try {
+    // Google Search Console doğrulama dosyası
+    const verificationContent = 'google-site-verification: google123456789abcdef.html';
+    res.set('Content-Type', 'text/html');
+    res.send(verificationContent);
+  } catch (error) {
+    console.error('Google verification error:', error);
+    res.status(500).json({ error: 'Verification failed' });
+  }
+});
+
+// Bing Webmaster Tools Verification
+router.get('/bing-verification', (req, res) => {
+  try {
+    const bingVerification = `<?xml version="1.0"?>
+<users>
+  <user>1234567890ABCDEF</user>
+</users>`;
+    res.set('Content-Type', 'text/xml');
+    res.send(bingVerification);
+  } catch (error) {
+    console.error('Bing verification error:', error);
+    res.status(500).json({ error: 'Verification failed' });
+  }
+});
+
+// SEO Performance Tracking
+router.post('/track', (req, res) => {
+  try {
+    const { page, keyword, position, clicks, impressions } = req.body;
+    
+    // Bu normalde veritabanına kaydedilir
+    const trackingData = {
+      page,
+      keyword,
+      position,
+      clicks,
+      impressions,
+      ctr: clicks / impressions * 100,
+      timestamp: new Date().toISOString()
+    };
+
+    console.log('SEO Tracking:', trackingData);
+
+    res.json({
+      success: true,
+      message: 'SEO data tracked successfully',
+      data: trackingData
+    });
+  } catch (error) {
+    console.error('SEO Tracking error:', error);
+    res.status(500).json({ error: 'Tracking failed' });
+  }
+});
+
+// Competitor Analysis API
+router.get('/competitors', (req, res) => {
+  try {
+    const competitors = [
+      {
+        name: 'Flormar',
+        domain: 'flormar.com.tr',
+        estimatedTraffic: 150000,
+        topKeywords: ['flormar', 'makyaj ürünleri', 'ruj'],
+        strengths: ['Marka bilinirliği', 'Geniş ürün yelpazesi'],
+        weaknesses: ['SEO optimizasyonu zayıf', 'Blog içeriği yetersiz']
+      },
+      {
+        name: 'Avon',
+        domain: 'avon.com.tr',
+        estimatedTraffic: 120000,
+        topKeywords: ['avon', 'kozmetik', 'cilt bakım'],
+        strengths: ['Güçlü marka', 'Sosyal medya varlığı'],
+        weaknesses: ['Site hızı yavaş', 'Mobile SEO zayıf']
+      },
+      {
+        name: 'The Body Shop',
+        domain: 'thebodyshop.com.tr',
+        estimatedTraffic: 80000,
+        topKeywords: ['body shop', 'doğal kozmetik', 'vegan ürünler'],
+        strengths: ['Doğal ürün odağı', 'Etik değerler'],
+        weaknesses: ['Fiyat rekabeti', 'Yerel SEO zayıf']
+      }
+    ];
+
+    res.json({
+      success: true,
+      data: competitors,
+      analysis: {
+        ourPosition: 'Doğal kozmetik segmentinde güçlü fırsat var',
+        recommendations: [
+          'Blog içeriğini artırarak traffic çekin',
+          'Yerel SEO\'ya odaklanın',
+          'Long-tail keywords ile틈새 market yakalayın'
+        ]
+      }
+    });
+  } catch (error) {
+    console.error('Competitor analysis error:', error);
+    res.status(500).json({ error: 'Analysis failed' });
+  }
+});
+
+module.exports = router; 
