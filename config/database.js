@@ -20,9 +20,12 @@ function parseDatabaseUrl(url) {
     }
 }
 
-// Try DATABASE_URL first, then individual variables
+// Try DATABASE_URL first, then Railway MySQL variables, then individual variables
 const urlConfig = parseDatabaseUrl(process.env.DATABASE_URL);
-const useUrlConfig = urlConfig && !process.env.DB_HOST;
+const useUrlConfig = urlConfig && !process.env.DB_HOST && !process.env.MYSQLHOST;
+
+// Determine which variables to use
+const useRailwayMysql = !process.env.DB_HOST && process.env.MYSQLHOST;
 
 // Database connection configuration
 const dbConfig = useUrlConfig ? {
@@ -42,6 +45,27 @@ const dbConfig = useUrlConfig ? {
     ssl: {
         rejectUnauthorized: false
     },
+    
+    // Force IPv4
+    family: 4,
+    connectTimeout: 30000
+} : useRailwayMysql ? {
+    host: process.env.MYSQLHOST,
+    port: parseInt(process.env.MYSQLPORT) || 3306,
+    user: process.env.MYSQLUSER,
+    password: process.env.MYSQLPASSWORD,
+    database: process.env.MYSQLDATABASE,
+    charset: 'utf8mb4',
+    
+    // Connection pool settings
+    connectionLimit: 5,
+    queueLimit: 0,
+    waitForConnections: true,
+    
+    // Railway MySQL specific settings
+    ssl: process.env.NODE_ENV === 'production' ? {
+        rejectUnauthorized: false
+    } : false,
     
     // Force IPv4
     family: 4,
@@ -87,7 +111,8 @@ const dbConfig = useUrlConfig ? {
 };
 
 // Log connection attempt (for debugging)
-console.log(`🔍 Using ${useUrlConfig ? 'DATABASE_URL' : 'individual variables'} for connection`);
+const connectionMethod = useUrlConfig ? 'DATABASE_URL' : useRailwayMysql ? 'Railway MySQL variables' : 'individual variables';
+console.log(`🔍 Using ${connectionMethod} for connection`);
 console.log('🔍 Database connection config:', {
     host: dbConfig.host,
     port: dbConfig.port,
