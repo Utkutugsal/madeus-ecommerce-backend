@@ -123,19 +123,32 @@ app.get('/api', (req, res) => {
 // Apply auth rate limiter to auth routes
 app.use('/api/auth', authLimiter);
 
-// Route imports (will be created)
-try {
-    app.use('/api/auth', require('./routes/auth'));
-    app.use('/api/products', require('./routes/products'));
-    app.use('/api/orders', require('./routes/orders'));
-    app.use('/api/users', require('./routes/users'));
-    app.use('/api/admin', require('./routes/admin'));
-    app.use('/api/payment', require('./routes/payment'));
-    app.use('/api/seo', require('./routes/seo'));
-    app.use('/api/setup', require('./routes/setup'));
-} catch (error) {
-    console.log('Routes not yet created - will add them during development');
+// Route imports - load existing routes individually
+const fs = require('fs');
+const path = require('path');
+
+// Helper function to safely load routes
+function loadRoute(routePath, mountPath) {
+    try {
+        if (fs.existsSync(path.join(__dirname, routePath))) {
+            app.use(mountPath, require(routePath));
+            console.log(`✅ Loaded route: ${mountPath}`);
+        } else {
+            console.log(`⚠️  Route file not found: ${routePath}`);
+        }
+    } catch (error) {
+        console.error(`❌ Error loading route ${mountPath}:`, error.message);
+    }
 }
+
+// Load existing routes
+loadRoute('./routes/auth', '/api/auth');
+loadRoute('./routes/products', '/api/products');
+loadRoute('./routes/seo', '/api/seo');
+loadRoute('./routes/setup', '/api/setup');
+
+// Routes to be created later
+console.log('📝 Routes to be created: orders, users, admin, payment');
 
 // 404 handler
 app.use('*', (req, res) => {
