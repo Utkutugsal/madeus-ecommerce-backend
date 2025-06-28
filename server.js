@@ -355,6 +355,121 @@ loadRoute('./routes/products.js', '/api/products');
 loadRoute('./routes/seo.js', '/api/seo');
 loadRoute('./routes/setup.js', '/api/setup');
 
+// ===================================
+// TEMPORARY EMAIL ENDPOINTS (Direct)
+// ===================================
+
+// Email configuration check
+app.get('/api/setup/email-config', (req, res) => {
+    const config = {
+        host: process.env.EMAIL_HOST || 'not set',
+        port: process.env.EMAIL_PORT || 'not set',
+        user: process.env.EMAIL_USER || 'not set',
+        hasPassword: !!process.env.EMAIL_PASS,
+        secure: process.env.EMAIL_SECURE || 'not set',
+        from: process.env.EMAIL_FROM || 'not set',
+        frontendUrl: process.env.FRONTEND_URL || 'not set'
+    };
+    
+    console.log('📧 Email configuration check:', config);
+    
+    res.json({
+        success: true,
+        message: 'Email configuration retrieved',
+        config: config,
+        isConfigured: !!(config.host !== 'not set' && config.user !== 'not set' && config.hasPassword)
+    });
+});
+
+// Email connection test
+app.get('/api/setup/email-connection', async (req, res) => {
+    try {
+        console.log('🔍 Email connection test başlatılıyor...');
+        
+        const emailService = require('./utils/email');
+        const result = await emailService.testConnection();
+        
+        console.log('✅ Email connection test result:', result);
+        
+        res.json({
+            success: true,
+            message: 'Email connection test completed successfully',
+            result: result,
+            timestamp: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error('❌ Email connection test error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            message: 'Email connection test failed',
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+// Test email endpoint
+app.post('/api/setup/test-email', async (req, res) => {
+    try {
+        const { email = 'test@example.com', type = 'welcome' } = req.body;
+        
+        console.log('🧪 Email test başlatılıyor:', { email, type });
+        
+        const emailService = require('./utils/email');
+        let result;
+        
+        if (type === 'welcome') {
+            result = await emailService.sendWelcomeEmail({
+                name: 'Test Kullanıcı',
+                email: email
+            });
+        } else if (type === 'verification') {
+            result = await emailService.sendVerificationEmail({
+                name: 'Test Kullanıcı',
+                email: email
+            }, 'test-verification-token-123456');
+        } else {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid email type. Use "welcome" or "verification"'
+            });
+        }
+        
+        console.log('📧 Email test result:', result);
+        
+        res.json({
+            success: true,
+            message: `Test ${type} email sent successfully to ${email}`,
+            result: result,
+            emailConfig: {
+                host: process.env.EMAIL_HOST,
+                port: process.env.EMAIL_PORT,
+                user: process.env.EMAIL_USER,
+                hasPassword: !!process.env.EMAIL_PASS,
+                from: process.env.EMAIL_FROM,
+                secure: process.env.EMAIL_SECURE
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Test email error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+            emailConfig: {
+                host: process.env.EMAIL_HOST || 'not set',
+                port: process.env.EMAIL_PORT || 'not set',
+                user: process.env.EMAIL_USER || 'not set',
+                hasPassword: !!process.env.EMAIL_PASS,
+                from: process.env.EMAIL_FROM || 'not set',
+                secure: process.env.EMAIL_SECURE || 'not set'
+            }
+        });
+    }
+});
+
 // Routes to be created later
 console.log('📝 Routes to be created: orders, users, admin, payment');
 

@@ -12,17 +12,30 @@ class EmailService {
     }
 
     createTransporter() {
+        const port = parseInt(process.env.EMAIL_PORT) || 587;
+        const isSecure = port === 465 || process.env.EMAIL_SECURE === 'true';
+        
+        console.log('📧 Email transporter creating:', {
+            host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+            port: port,
+            secure: isSecure,
+            user: process.env.EMAIL_USER || 'not set'
+        });
+        
         return nodemailer.createTransporter({
             host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-            port: parseInt(process.env.EMAIL_PORT) || 587,
-            secure: false, // true for 465, false for other ports
+            port: port,
+            secure: isSecure, // true for 465 (SSL), false for 587 (TLS)
             auth: {
                 user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS // App password for Gmail
+                pass: process.env.EMAIL_PASS
             },
             tls: {
-                rejectUnauthorized: false
-            }
+                rejectUnauthorized: false,
+                ciphers: 'SSLv3'
+            },
+            debug: process.env.NODE_ENV === 'development',
+            logger: process.env.NODE_ENV === 'development'
         });
     }
 
@@ -343,20 +356,29 @@ class EmailService {
         });
     }
 
-    // Test email connection
+    // Test connection method
     async testConnection() {
         try {
             if (!this.transporter) {
-                console.warn('⚠️ Email service not initialized');
-                return false;
+                throw new Error('Email transporter not initialized');
             }
             
-            await this.transporter.verify();
-            console.log('✅ Email service is ready');
-            return true;
+            console.log('🔍 Testing email connection...');
+            const result = await this.transporter.verify();
+            console.log('✅ Email connection verified:', result);
+            
+            return {
+                success: true,
+                verified: result,
+                message: 'Email connection test successful'
+            };
         } catch (error) {
-            console.error('❌ Email service connection failed:', error.message);
-            return false;
+            console.error('❌ Email connection test failed:', error);
+            return {
+                success: false,
+                error: error.message,
+                message: 'Email connection test failed'
+            };
         }
     }
 }
