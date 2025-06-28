@@ -3,7 +3,12 @@ require('dotenv').config();
 
 class EmailService {
     constructor() {
-        this.transporter = this.createTransporter();
+        try {
+            this.transporter = this.createTransporter();
+        } catch (error) {
+            console.error('❌ Email service initialization failed:', error.message);
+            this.transporter = null;
+        }
     }
 
     createTransporter() {
@@ -23,6 +28,11 @@ class EmailService {
 
     async sendMail(mailOptions) {
         try {
+            if (!this.transporter) {
+                console.warn('⚠️ Email service not available - skipping email');
+                return { success: false, error: 'Email service not initialized' };
+            }
+
             const info = await this.transporter.sendMail({
                 from: process.env.EMAIL_FROM || `"Madeus Skincare" <${process.env.EMAIL_USER}>`,
                 ...mailOptions
@@ -336,6 +346,11 @@ class EmailService {
     // Test email connection
     async testConnection() {
         try {
+            if (!this.transporter) {
+                console.warn('⚠️ Email service not initialized');
+                return false;
+            }
+            
             await this.transporter.verify();
             console.log('✅ Email service is ready');
             return true;

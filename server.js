@@ -24,7 +24,7 @@ app.use(helmet({
             styleSrc: ["'self'", "'unsafe-inline'"],
             scriptSrc: ["'self'"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'"],
+            connectSrc: ["'self'", "https://madeusskincare.com", "https://www.madeusskincare.com"],
             fontSrc: ["'self'"],
             objectSrc: ["'none'"],
             mediaSrc: ["'self'"],
@@ -36,7 +36,14 @@ app.use(helmet({
 
 // CORS configuration
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: [
+        'http://localhost:3000',
+        'http://localhost:5173', 
+        'http://localhost:8081',
+        'https://madeusskincare.com',
+        'https://www.madeusskincare.com',
+        process.env.FRONTEND_URL
+    ].filter(Boolean),
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -175,37 +182,7 @@ app.get('/api/setup/debug', async (req, res) => {
     }
 });
 
-// Temporary products endpoint to test data
-app.get('/api/products', async (req, res) => {
-    try {
-        const { db } = require('./config/database');
-        
-        const products = await db.query(`
-            SELECT 
-                p.*,
-                c.name as category_name,
-                c.slug as category_slug
-            FROM products p
-            LEFT JOIN categories c ON p.category_id = c.id
-            WHERE p.is_active = TRUE
-            ORDER BY p.is_featured DESC, p.created_at DESC
-        `);
-        
-        res.json({
-            success: true,
-            count: products.length,
-            products: products
-        });
-        
-    } catch (error) {
-        console.error('Products fetch error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch products',
-            error: error.message
-        });
-    }
-});
+// Temporary products endpoint removed - now handled by routes/products.js
 
 app.post('/api/setup/create-tables', async (req, res) => {
     try {
@@ -373,10 +350,10 @@ function loadRoute(routePath, mountPath) {
 }
 
 // Load existing routes
-loadRoute('./routes/auth', '/api/auth');
-loadRoute('./routes/products', '/api/products');
-loadRoute('./routes/seo', '/api/seo');
-loadRoute('./routes/setup', '/api/setup');
+loadRoute('./routes/auth.js', '/api/auth');
+loadRoute('./routes/products.js', '/api/products');
+loadRoute('./routes/seo.js', '/api/seo');
+loadRoute('./routes/setup.js', '/api/setup');
 
 // Routes to be created later
 console.log('📝 Routes to be created: orders, users, admin, payment');
@@ -437,7 +414,7 @@ app.use((err, req, res, next) => {
 // SERVER STARTUP
 // ===========================================
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5002;
 
 // Graceful shutdown handler
 process.on('SIGTERM', () => {

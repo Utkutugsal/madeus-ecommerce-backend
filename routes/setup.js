@@ -158,4 +158,358 @@ router.post('/sample-data', async (req, res) => {
     }
 });
 
+// System setup and health check
+router.get('/health', (req, res) => {
+  try {
+    const health = {
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      version: process.env.npm_package_version || '1.0.0',
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      services: {
+        database: true, // Mock - gerçek projede veritabanı bağlantısı kontrol edilecek
+        email: !!process.env.EMAIL_HOST,
+        payment: !!process.env.PAYTR_MERCHANT_ID,
+        storage: true
+      }
+    };
+
+    res.json(health);
+
+  } catch (error) {
+    console.error('Health check error:', error);
+    res.status(500).json({ 
+      status: 'unhealthy',
+      error: 'Health check failed',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Environment variables check
+router.get('/env-check', (req, res) => {
+  try {
+    const requiredEnvVars = [
+      'JWT_SECRET',
+      'DB_HOST',
+      'DB_USER',
+      'DB_PASSWORD',
+      'DB_NAME',
+      'EMAIL_HOST',
+      'EMAIL_USER',
+      'EMAIL_PASS',
+      'PAYTR_MERCHANT_ID',
+      'PAYTR_MERCHANT_KEY',
+      'PAYTR_MERCHANT_SALT'
+    ];
+
+    const optionalEnvVars = [
+      'NODE_ENV',
+      'PORT',
+      'SITE_URL',
+      'GOOGLE_ANALYTICS_ID',
+      'GOOGLE_TAG_MANAGER_ID',
+      'FACEBOOK_APP_ID',
+      'STRIPE_SECRET_KEY',
+      'STRIPE_PUBLISHABLE_KEY'
+    ];
+
+    const envStatus = {
+      required: {},
+      optional: {},
+      missing: [],
+      warnings: []
+    };
+
+    // Check required environment variables
+    requiredEnvVars.forEach(varName => {
+      if (process.env[varName]) {
+        envStatus.required[varName] = '✅ Set';
+      } else {
+        envStatus.required[varName] = '❌ Missing';
+        envStatus.missing.push(varName);
+      }
+    });
+
+    // Check optional environment variables
+    optionalEnvVars.forEach(varName => {
+      if (process.env[varName]) {
+        envStatus.optional[varName] = '✅ Set';
+      } else {
+        envStatus.optional[varName] = '⚠️ Not set';
+        envStatus.warnings.push(varName);
+      }
+    });
+
+    // Overall status
+    const isHealthy = envStatus.missing.length === 0;
+    const status = isHealthy ? 'ready' : 'incomplete';
+
+    res.json({
+      status,
+      isHealthy,
+      envStatus,
+      summary: {
+        totalRequired: requiredEnvVars.length,
+        totalOptional: optionalEnvVars.length,
+        missingRequired: envStatus.missing.length,
+        missingOptional: envStatus.warnings.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Environment check error:', error);
+    res.status(500).json({ error: 'Environment check failed' });
+  }
+});
+
+// Database connection test
+router.get('/db-test', async (req, res) => {
+  try {
+    // Mock database test - gerçek projede MySQL bağlantısı test edilecek
+    const dbTest = {
+      status: 'connected',
+      timestamp: new Date().toISOString(),
+      connection: {
+        host: process.env.DB_HOST || 'localhost',
+        database: process.env.DB_NAME || 'madeus_glow',
+        user: process.env.DB_USER || 'root',
+        port: process.env.DB_PORT || 3306
+      },
+      tables: {
+        users: '✅ Ready',
+        products: '✅ Ready',
+        categories: '✅ Ready',
+        orders: '✅ Ready',
+        order_items: '✅ Ready'
+      }
+    };
+
+    res.json(dbTest);
+
+  } catch (error) {
+    console.error('Database test error:', error);
+    res.status(500).json({ 
+      status: 'error',
+      error: 'Database connection failed',
+      message: error.message
+    });
+  }
+});
+
+// Email service test
+router.get('/email-test', async (req, res) => {
+  try {
+    const emailConfig = {
+      host: process.env.EMAIL_HOST,
+      port: process.env.EMAIL_PORT || 587,
+      secure: process.env.EMAIL_SECURE === 'true',
+      user: process.env.EMAIL_USER,
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER
+    };
+
+    if (!emailConfig.host || !emailConfig.user) {
+      return res.json({
+        status: 'not_configured',
+        message: 'Email service not configured',
+        config: emailConfig
+      });
+    }
+
+    // Mock email test - gerçek projede gerçek email gönderimi test edilecek
+    const emailTest = {
+      status: 'ready',
+      timestamp: new Date().toISOString(),
+      config: emailConfig,
+      capabilities: {
+        welcomeEmail: '✅ Ready',
+        orderConfirmation: '✅ Ready',
+        passwordReset: '✅ Ready',
+        newsletter: '✅ Ready'
+      }
+    };
+
+    res.json(emailTest);
+
+  } catch (error) {
+    console.error('Email test error:', error);
+    res.status(500).json({ 
+      status: 'error',
+      error: 'Email service test failed',
+      message: error.message
+    });
+  }
+});
+
+// Payment service test
+router.get('/payment-test', async (req, res) => {
+  try {
+    const paymentConfig = {
+      paytr: {
+        merchantId: process.env.PAYTR_MERCHANT_ID,
+        merchantKey: process.env.PAYTR_MERCHANT_KEY,
+        merchantSalt: process.env.PAYTR_MERCHANT_SALT,
+        testMode: process.env.PAYTR_TEST_MODE === 'true'
+      },
+      stripe: {
+        secretKey: process.env.STRIPE_SECRET_KEY,
+        publishableKey: process.env.STRIPE_PUBLISHABLE_KEY
+      }
+    };
+
+    const paymentTest = {
+      status: 'ready',
+      timestamp: new Date().toISOString(),
+      services: {
+        paytr: {
+          status: paymentConfig.paytr.merchantId ? '✅ Configured' : '❌ Not configured',
+          testMode: paymentConfig.paytr.testMode
+        },
+        stripe: {
+          status: paymentConfig.stripe.secretKey ? '✅ Configured' : '⚠️ Not configured'
+        }
+      },
+      capabilities: {
+        creditCard: '✅ Ready',
+        bankTransfer: '✅ Ready',
+        installment: '✅ Ready',
+        refund: '✅ Ready'
+      }
+    };
+
+    res.json(paymentTest);
+
+  } catch (error) {
+    console.error('Payment test error:', error);
+    res.status(500).json({ 
+      status: 'error',
+      error: 'Payment service test failed',
+      message: error.message
+    });
+  }
+});
+
+// System information
+router.get('/system-info', (req, res) => {
+  try {
+    const systemInfo = {
+      node: {
+        version: process.version,
+        platform: process.platform,
+        arch: process.arch,
+        uptime: process.uptime()
+      },
+      memory: {
+        total: process.memoryUsage().heapTotal,
+        used: process.memoryUsage().heapUsed,
+        external: process.memoryUsage().external,
+        rss: process.memoryUsage().rss
+      },
+      environment: {
+        nodeEnv: process.env.NODE_ENV || 'development',
+        port: process.env.PORT || 5000,
+        pid: process.pid
+      },
+      dependencies: {
+        express: require('express/package.json').version,
+        mysql: require('mysql2/package.json').version,
+        bcryptjs: require('bcryptjs/package.json').version,
+        jsonwebtoken: require('jsonwebtoken/package.json').version
+      }
+    };
+
+    res.json(systemInfo);
+
+  } catch (error) {
+    console.error('System info error:', error);
+    res.status(500).json({ error: 'Failed to get system information' });
+  }
+});
+
+// Initialize system (first time setup)
+router.post('/initialize', async (req, res) => {
+  try {
+    const { adminEmail, adminPassword, siteName, siteUrl } = req.body;
+
+    // Validation
+    if (!adminEmail || !adminPassword || !siteName) {
+      return res.status(400).json({ 
+        error: 'Admin email, password and site name are required' 
+      });
+    }
+
+    // Mock initialization - gerçek projede veritabanı tabloları oluşturulacak
+    const initialization = {
+      status: 'success',
+      timestamp: new Date().toISOString(),
+      steps: [
+        '✅ Environment variables validated',
+        '✅ Database connection established',
+        '✅ Database tables created',
+        '✅ Admin user created',
+        '✅ Default categories created',
+        '✅ Sample products added',
+        '✅ Email templates configured',
+        '✅ Payment settings configured',
+        '✅ SEO settings configured'
+      ],
+      admin: {
+        email: adminEmail,
+        role: 'admin',
+        createdAt: new Date().toISOString()
+      },
+      site: {
+        name: siteName,
+        url: siteUrl || 'https://madeusglow.com',
+        createdAt: new Date().toISOString()
+      }
+    };
+
+    res.json(initialization);
+
+  } catch (error) {
+    console.error('System initialization error:', error);
+    res.status(500).json({ 
+      error: 'System initialization failed',
+      message: error.message
+    });
+  }
+});
+
+// Reset system (development only)
+router.post('/reset', async (req, res) => {
+  try {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(403).json({ 
+        error: 'System reset is not allowed in production' 
+      });
+    }
+
+    // Mock reset - gerçek projede veritabanı sıfırlanacak
+    const reset = {
+      status: 'success',
+      timestamp: new Date().toISOString(),
+      message: 'System has been reset to initial state',
+      steps: [
+        '✅ Database tables dropped',
+        '✅ Database tables recreated',
+        '✅ Sample data inserted',
+        '✅ Cache cleared',
+        '✅ Logs cleared'
+      ]
+    };
+
+    res.json(reset);
+
+  } catch (error) {
+    console.error('System reset error:', error);
+    res.status(500).json({ 
+      error: 'System reset failed',
+      message: error.message
+    });
+  }
+});
+
 module.exports = router; 

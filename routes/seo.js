@@ -31,6 +31,18 @@ const seoKeywords = {
   ]
 };
 
+// SEO Configuration
+const seoConfig = {
+  siteName: 'Madeus Glow',
+  siteDescription: 'Premium cilt bakım ürünleri ve profesyonel güzellik çözümleri',
+  siteUrl: process.env.SITE_URL || 'https://madeusglow.com',
+  defaultImage: '/images/og-default.jpg',
+  twitterHandle: '@madeusglow',
+  facebookAppId: process.env.FACEBOOK_APP_ID || '',
+  googleAnalyticsId: process.env.GOOGLE_ANALYTICS_ID || '',
+  googleTagManagerId: process.env.GOOGLE_TAG_MANAGER_ID || ''
+};
+
 // Dinamik Sitemap Generator
 router.get('/sitemap.xml', async (req, res) => {
   try {
@@ -280,6 +292,267 @@ router.get('/competitors', (req, res) => {
   } catch (error) {
     console.error('Competitor analysis error:', error);
     res.status(500).json({ error: 'Analysis failed' });
+  }
+});
+
+// Generate robots.txt
+router.get('/robots.txt', (req, res) => {
+  try {
+    const robotsTxt = `User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: ${seoConfig.siteUrl}/api/seo/sitemap.xml
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /api/admin/
+Disallow: /private/
+Disallow: /_next/
+Disallow: /api/auth/
+
+# Crawl delay
+Crawl-delay: 1
+`;
+
+    res.header('Content-Type', 'text/plain');
+    res.send(robotsTxt);
+
+  } catch (error) {
+    console.error('Robots.txt generation error:', error);
+    res.status(500).json({ error: 'Failed to generate robots.txt' });
+  }
+});
+
+// Get meta tags for a page
+router.post('/meta-tags', (req, res) => {
+  try {
+    const { page, data } = req.body;
+
+    let metaTags = {
+      title: seoConfig.siteName,
+      description: seoConfig.siteDescription,
+      keywords: 'cilt bakım, güzellik, serum, krem, nemlendirici, anti-aging',
+      image: seoConfig.defaultImage,
+      url: seoConfig.siteUrl,
+      type: 'website',
+      siteName: seoConfig.siteName,
+      twitterHandle: seoConfig.twitterHandle,
+      facebookAppId: seoConfig.facebookAppId
+    };
+
+    // Page-specific meta tags
+    switch (page) {
+      case 'home':
+        metaTags.title = `${seoConfig.siteName} - Premium Cilt Bakım Ürünleri`;
+        metaTags.description = 'Cildinizi aydınlatan ve gençleştiren premium cilt bakım ürünleri. Vitamin C serumları, nemlendiriciler ve anti-aging çözümleri.';
+        metaTags.keywords = 'cilt bakım, güzellik, serum, krem, vitamin c, anti-aging, nemlendirici';
+        break;
+
+      case 'products':
+        metaTags.title = `Ürünler - ${seoConfig.siteName}`;
+        metaTags.description = 'Geniş ürün yelpazemizde cilt bakım ürünleri, serumlar, kremler ve daha fazlası.';
+        metaTags.keywords = 'cilt bakım ürünleri, serum, krem, maske, güzellik ürünleri';
+        break;
+
+      case 'product':
+        if (data && data.product) {
+          const product = data.product;
+          metaTags.title = `${product.name} - ${seoConfig.siteName}`;
+          metaTags.description = product.description || `Kaliteli ${product.name} ürünü. ${seoConfig.siteName} güvencesiyle.`;
+          metaTags.keywords = `${product.name}, ${product.category}, ${product.brand}, cilt bakım`;
+          metaTags.image = product.mainImage || seoConfig.defaultImage;
+          metaTags.url = `${seoConfig.siteUrl}/products/${product.id}`;
+          metaTags.type = 'product';
+        }
+        break;
+
+      case 'category':
+        if (data && data.category) {
+          const category = data.category;
+          metaTags.title = `${category.name} - ${seoConfig.siteName}`;
+          metaTags.description = `${category.name} kategorisinde kaliteli cilt bakım ürünleri. ${seoConfig.siteName} güvencesiyle.`;
+          metaTags.keywords = `${category.name}, cilt bakım, güzellik ürünleri, ${seoConfig.siteName}`;
+          metaTags.url = `${seoConfig.siteUrl}/category/${category.slug}`;
+        }
+        break;
+
+      case 'about':
+        metaTags.title = `Hakkımızda - ${seoConfig.siteName}`;
+        metaTags.description = `${seoConfig.siteName} olarak cildinizin sağlığı ve güzelliği için premium ürünler sunuyoruz.`;
+        metaTags.keywords = 'hakkımızda, madeus glow, cilt bakım, güzellik, misyon, vizyon';
+        break;
+
+      case 'contact':
+        metaTags.title = `İletişim - ${seoConfig.siteName}`;
+        metaTags.description = `${seoConfig.siteName} ile iletişime geçin. Sorularınız için bize ulaşın.`;
+        metaTags.keywords = 'iletişim, müşteri hizmetleri, destek, madeus glow';
+        break;
+
+      case 'blog':
+        metaTags.title = `Blog - ${seoConfig.siteName}`;
+        metaTags.description = 'Cilt bakımı, güzellik ve sağlık hakkında uzman tavsiyeleri ve güncel bilgiler.';
+        metaTags.keywords = 'blog, cilt bakımı, güzellik, sağlık, tavsiye, ipuçları';
+        break;
+
+      default:
+        break;
+    }
+
+    // Add Open Graph tags
+    metaTags.og = {
+      title: metaTags.title,
+      description: metaTags.description,
+      image: metaTags.image,
+      url: metaTags.url,
+      type: metaTags.type,
+      siteName: metaTags.siteName
+    };
+
+    // Add Twitter Card tags
+    metaTags.twitter = {
+      card: 'summary_large_image',
+      title: metaTags.title,
+      description: metaTags.description,
+      image: metaTags.image,
+      creator: metaTags.twitterHandle,
+      site: metaTags.twitterHandle
+    };
+
+    res.json({ metaTags });
+
+  } catch (error) {
+    console.error('Meta tags generation error:', error);
+    res.status(500).json({ error: 'Failed to generate meta tags' });
+  }
+});
+
+// Get structured data (JSON-LD)
+router.post('/structured-data', (req, res) => {
+  try {
+    const { type, data } = req.body;
+
+    let structuredData = {};
+
+    switch (type) {
+      case 'organization':
+        structuredData = {
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "name": seoConfig.siteName,
+          "url": seoConfig.siteUrl,
+          "logo": `${seoConfig.siteUrl}/images/logo.png`,
+          "description": seoConfig.siteDescription,
+          "sameAs": [
+            "https://www.facebook.com/madeusglow",
+            "https://www.instagram.com/madeusglow",
+            "https://twitter.com/madeusglow"
+          ],
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "telephone": "+90-212-XXX-XXXX",
+            "contactType": "customer service",
+            "availableLanguage": ["Turkish", "English"]
+          }
+        };
+        break;
+
+      case 'product':
+        if (data && data.product) {
+          const product = data.product;
+          structuredData = {
+            "@context": "https://schema.org",
+            "@type": "Product",
+            "name": product.name,
+            "description": product.description,
+            "image": product.mainImage,
+            "brand": {
+              "@type": "Brand",
+              "name": product.brand
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": product.price,
+              "priceCurrency": "TRY",
+              "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+              "url": `${seoConfig.siteUrl}/products/${product.id}`
+            },
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": product.rating,
+              "reviewCount": product.reviewCount
+            }
+          };
+        }
+        break;
+
+      case 'breadcrumb':
+        if (data && data.breadcrumbs) {
+          structuredData = {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": data.breadcrumbs.map((item, index) => ({
+              "@type": "ListItem",
+              "position": index + 1,
+              "name": item.name,
+              "item": `${seoConfig.siteUrl}${item.url}`
+            }))
+          };
+        }
+        break;
+
+      case 'website':
+        structuredData = {
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          "name": seoConfig.siteName,
+          "url": seoConfig.siteUrl,
+          "description": seoConfig.siteDescription,
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": `${seoConfig.siteUrl}/search?q={search_term_string}`,
+            "query-input": "required name=search_term_string"
+          }
+        };
+        break;
+
+      default:
+        break;
+    }
+
+    res.json({ structuredData });
+
+  } catch (error) {
+    console.error('Structured data generation error:', error);
+    res.status(500).json({ error: 'Failed to generate structured data' });
+  }
+});
+
+// SEO health check
+router.get('/health', (req, res) => {
+  try {
+    const health = {
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      services: {
+        sitemap: true,
+        robots: true,
+        metaTags: true,
+        structuredData: true
+      },
+      config: {
+        siteUrl: seoConfig.siteUrl,
+        siteName: seoConfig.siteName,
+        hasGoogleAnalytics: !!seoConfig.googleAnalyticsId,
+        hasGoogleTagManager: !!seoConfig.googleTagManagerId
+      }
+    };
+
+    res.json(health);
+
+  } catch (error) {
+    console.error('SEO health check error:', error);
+    res.status(500).json({ error: 'SEO health check failed' });
   }
 });
 

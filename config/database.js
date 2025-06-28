@@ -284,7 +284,7 @@ class Database {
 // Create singleton instance
 const db = new Database();
 
-// Initialize database connection on startup
+// Initialize database connection on startup (optional)
 (async () => {
     try {
         console.log('🔌 Attempting database connection...');
@@ -297,14 +297,13 @@ const db = new Database();
             console.error('- DB_USER:', process.env.DB_USER ? '✅ Set' : '❌ Missing');
             console.error('- DB_PASS:', process.env.DB_PASS ? '✅ Set' : '❌ Missing');
             console.error('- DB_NAME:', process.env.DB_NAME ? '✅ Set' : '❌ Missing');
-            // Don't exit in production, let the server start without DB
-            if (process.env.NODE_ENV !== 'production') {
-                process.exit(1);
-            }
+            console.warn('⚠️ Server will continue without database connection. Using mock data.');
+            // Server continues without database connection
         }
     } catch (error) {
         console.error('Database initialization error:', error);
-        process.exit(1);
+        console.warn('⚠️ Server will continue without database connection. Using mock data.');
+        // Server continues without database connection
     }
 })();
 

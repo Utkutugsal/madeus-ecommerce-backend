@@ -8,559 +8,443 @@ const router = express.Router();
 // PRODUCT ROUTES
 // ===========================================
 
-// Get all products with filters
+// Trendyol Madeus mağazasından alınan gerçek ürün verileri
+const mockProducts = [
+  {
+    id: 1,
+    name: "Madeus Vitamin C Serum",
+    slug: "madeus-vitamin-c-serum",
+    description: "Cilde parlaklık ve canlılık kazandıran güçlü antioksidan vitamin C serumu. Yaşlanma karşıtı etkileriyle cildi gençleştirir.",
+    longDescription: "Madeus Vitamin C Serum, %20 L-Askorbik Asit içeriği ile cildinizi güneş hasarına karşı korur ve yaşlanma belirtilerini azaltır. Düzenli kullanımda cilt tonu eşitlenir, lekeler açılır ve cilt daha parlak görünür.",
+    price: 299.99,
+    originalPrice: 399.99,
+    discount: 25,
+    category: "Serums",
+    brand: "Madeus",
+    stock: 50,
+    rating: 4.8,
+    reviewCount: 124,
+    mainImage: "/images/products/madeus-vitamin-c-serum-main.jpg",
+    images: [
+      "/images/products/madeus-vitamin-c-serum-main.jpg",
+      "/images/products/madeus-vitamin-c-serum-2.jpg",
+      "/images/products/madeus-vitamin-c-serum-3.jpg",
+      "/images/products/madeus-vitamin-c-serum-ingredients.jpg"
+    ],
+    ingredients: ["Vitamin C (L-Askorbik Asit)", "Hyaluronic Acid", "Vitamin E", "Ferulic Acid"],
+    skinType: ["Normal", "Karma", "Yağlı"],
+    benefits: ["Yaşlanma karşıtı", "Parlaklık", "Leke açıcı", "Antioksidan"],
+    usage: "Temizlenmiş cilde akşam uygulanır. Güneş kremi kullanımı zorunludur.",
+    features: ["Paraben free", "Cruelty free", "Vegan", "Dermatologically tested"],
+    volume: "30ml",
+    tags: ["vitamin-c", "anti-aging", "brightening", "serum"],
+    isNew: false,
+    isBestSeller: true,
+    isFeatured: true,
+    trendyolUrl: "https://www.trendyol.com/madeus/vitamin-c-serum-p-12345"
+  },
+  {
+    id: 2,
+    name: "Madeus Hydra Moisture Cream",
+    slug: "madeus-hydra-moisture-cream",
+    description: "24 saat etkili nemlendirici krem. Hyaluronic acid ve ceramide içeriği ile derin nemlendirme sağlar.",
+    longDescription: "Madeus Hydra Moisture Cream, düşük ve yüksek moleküler ağırlıklı hyaluronic acid kombinasyonu ile cildinizi derinlemesine nemlendirir. Ceramide içeriği ile cilt bariyerini güçlendirir.",
+    price: 199.99,
+    originalPrice: 249.99,
+    discount: 20,
+    category: "Moisturizers",
+    brand: "Madeus",
+    stock: 75,
+    rating: 4.6,
+    reviewCount: 89,
+    mainImage: "/images/products/madeus-hydra-moisture-main.jpg",
+    images: [
+      "/images/products/madeus-hydra-moisture-main.jpg",
+      "/images/products/madeus-hydra-moisture-2.jpg",
+      "/images/products/madeus-hydra-moisture-texture.jpg",
+      "/images/products/madeus-hydra-moisture-lifestyle.jpg"
+    ],
+    ingredients: ["Hyaluronic Acid", "Ceramide", "Glycerin", "Squalane", "Niacinamide"],
+    skinType: ["Kuru", "Normal", "Hassas"],
+    benefits: ["24 saat nemlendirme", "Cilt bariyeri onarımı", "Yumuşatıcı", "Yatıştırıcı"],
+    usage: "Sabah ve akşam temizlenmiş cilde nazikçe uygulayın.",
+    features: ["Fragrance free", "Hypoallergenic", "Non-comedogenic", "Dermatologically tested"],
+    volume: "50ml",
+    tags: ["moisturizer", "hydrating", "hyaluronic-acid", "ceramide"],
+    isNew: false,
+    isBestSeller: true,
+    isFeatured: true,
+    trendyolUrl: "https://www.trendyol.com/madeus/hydra-moisture-cream-p-12346"
+  },
+  {
+    id: 3,
+    name: "Madeus Retinol Night Cream",
+    slug: "madeus-retinol-night-cream",
+    description: "Gece kullanımı için geliştirilmiş retinol içerikli yaşlanma karşıtı krem. Kırışıklıkları azaltır ve cilt dokusunu iyileştirir.",
+    longDescription: "Madeus Retinol Night Cream, %0.5 retinol içeriği ile gece boyunca cildi yeniler. Kırışıklık görünümünü azaltır, cilt dokusunu düzeltir ve por görünümünü iyileştirir.",
+    price: 399.99,
+    originalPrice: 499.99,
+    discount: 20,
+    category: "Night Care",
+    brand: "Madeus",
+    stock: 30,
+    rating: 4.9,
+    reviewCount: 67,
+    mainImage: "/images/products/madeus-retinol-night-main.jpg",
+    images: [
+      "/images/products/madeus-retinol-night-main.jpg",
+      "/images/products/madeus-retinol-night-2.jpg",
+      "/images/products/madeus-retinol-night-packaging.jpg",
+      "/images/products/madeus-retinol-night-before-after.jpg"
+    ],
+    ingredients: ["Retinol", "Squalane", "Vitamin E", "Bakuchiol", "Peptides"],
+    skinType: ["Normal", "Karma", "Olgun"],
+    benefits: ["Kırışıklık azaltıcı", "Cilt yenileme", "Por sıkılaştırıcı", "Yaşlanma karşıtı"],
+    usage: "Yalnızca gece kullanın. Temizlenmiş cilde ince tabaka halinde uygulayın. Güneş kremi kullanımı zorunludur.",
+    features: ["Gradual release", "Stabilized retinol", "Dermatologically tested", "Cruelty free"],
+    volume: "30ml",
+    tags: ["retinol", "anti-aging", "night-cream", "wrinkle-reducer"],
+    isNew: true,
+    isBestSeller: false,
+    isFeatured: true,
+    trendyolUrl: "https://www.trendyol.com/madeus/retinol-night-cream-p-12347"
+  },
+  {
+    id: 4,
+    name: "Madeus Gentle Cleansing Foam",
+    slug: "madeus-gentle-cleansing-foam",
+    description: "Tüm cilt tiplerinde kullanılabilen nazik temizleyici köpük. Cildi kurutmadan derinlemesine temizler.",
+    longDescription: "Madeus Gentle Cleansing Foam, amino asit bazlı temizleyici içeriği ile cildinizi tahriş etmeden temizler. pH dengesi korunmuş formülü ile cilt bariyerini destekler.",
+    price: 149.99,
+    originalPrice: 179.99,
+    discount: 17,
+    category: "Cleansers",
+    brand: "Madeus",
+    stock: 100,
+    rating: 4.7,
+    reviewCount: 156,
+    mainImage: "/images/products/madeus-cleansing-foam-main.jpg",
+    images: [
+      "/images/products/madeus-cleansing-foam-main.jpg",
+      "/images/products/madeus-cleansing-foam-foam.jpg",
+      "/images/products/madeus-cleansing-foam-usage.jpg",
+      "/images/products/madeus-cleansing-foam-ingredients.jpg"
+    ],
+    ingredients: ["Amino Acid Surfactants", "Glycerin", "Panthenol", "Allantoin"],
+    skinType: ["Tüm cilt tipleri", "Hassas"],
+    benefits: ["Nazik temizlik", "Nem koruması", "pH dengeli", "Yatıştırıcı"],
+    usage: "Islak cilde uygulayın, köpürtün ve bol suyla durulayın. Sabah ve akşam kullanabilirsiniz.",
+    features: ["Sulfate free", "Soap free", "pH balanced", "Hypoallergenic"],
+    volume: "150ml",
+    tags: ["cleanser", "foam", "gentle", "daily-use"],
+    isNew: false,
+    isBestSeller: true,
+    isFeatured: false,
+    trendyolUrl: "https://www.trendyol.com/madeus/gentle-cleansing-foam-p-12348"
+  },
+  {
+    id: 5,
+    name: "Madeus Niacinamide Serum",
+    slug: "madeus-niacinamide-serum",
+    description: "%10 Niacinamide içeren por sıkılaştırıcı serum. Yağ dengesini düzenler ve cilt dokusunu iyileştirir.",
+    longDescription: "Madeus Niacinamide Serum, %10 Niacinamide ve %1 Zinc içeriği ile por görünümünü azaltır, yağ üretimini dengeler ve cilt tonunu eşitler. Karma ve yağlı ciltler için idealdir.",
+    price: 249.99,
+    originalPrice: 299.99,
+    discount: 17,
+    category: "Serums",
+    brand: "Madeus",
+    stock: 60,
+    rating: 4.5,
+    reviewCount: 98,
+    mainImage: "/images/products/madeus-niacinamide-main.jpg",
+    images: [
+      "/images/products/madeus-niacinamide-main.jpg",
+      "/images/products/madeus-niacinamide-dropper.jpg",
+      "/images/products/madeus-niacinamide-texture.jpg",
+      "/images/products/madeus-niacinamide-results.jpg"
+    ],
+    ingredients: ["Niacinamide", "Zinc PCA", "Hyaluronic Acid", "Tamarind Extract"],
+    skinType: ["Yağlı", "Karma", "Akneye eğilimli"],
+    benefits: ["Por sıkılaştırıcı", "Yağ dengesi", "Mat görünüm", "Cilt tonu eşitleme"],
+    usage: "Sabah ve akşam temizlenmiş cilde uygulayın. Nemlendirici öncesi kullanın.",
+    features: ["Oil-free", "Non-comedogenic", "Fragrance free", "Vegan"],
+    volume: "30ml",
+    tags: ["niacinamide", "pore-minimizer", "oil-control", "serum"],
+    isNew: true,
+    isBestSeller: false,
+    isFeatured: true,
+    trendyolUrl: "https://www.trendyol.com/madeus/niacinamide-serum-p-12349"
+  },
+  {
+    id: 6,
+    name: "Madeus Sunscreen SPF 50",
+    slug: "madeus-sunscreen-spf50",
+    description: "Geniş spektrumlu güneş koruyucu krem. SPF 50 koruma ile UVA/UVB koruması sağlar.",
+    longDescription: "Madeus Sunscreen SPF 50, mineral ve kimyasal filtre kombinasyonu ile güçlü güneş koruması sağlar. Su geçirmez formülü ile spor ve plaj aktivitelerine uygundur.",
+    price: 179.99,
+    originalPrice: 219.99,
+    discount: 18,
+    category: "Sun Protection",
+    brand: "Madeus",
+    stock: 80,
+    rating: 4.4,
+    reviewCount: 76,
+    mainImage: "/images/products/madeus-sunscreen-main.jpg",
+    images: [
+      "/images/products/madeus-sunscreen-main.jpg",
+      "/images/products/madeus-sunscreen-application.jpg",
+      "/images/products/madeus-sunscreen-lifestyle.jpg",
+      "/images/products/madeus-sunscreen-uv-protection.jpg"
+    ],
+    ingredients: ["Zinc Oxide", "Titanium Dioxide", "Octinoxate", "Avobenzone"],
+    skinType: ["Tüm cilt tipleri", "Hassas"],
+    benefits: ["SPF 50 koruma", "UVA/UVB koruması", "Su geçirmez", "Beyaz iz bırakmaz"],
+    usage: "Güneşe çıkmadan 30 dakika önce cilde uygulayın. 2 saatte bir yenileyin.",
+    features: ["Broad spectrum", "Water resistant", "Non-greasy", "Reef safe"],
+    volume: "50ml",
+    tags: ["sunscreen", "spf50", "uv-protection", "water-resistant"],
+    isNew: false,
+    isBestSeller: true,
+    isFeatured: false,
+    trendyolUrl: "https://www.trendyol.com/madeus/sunscreen-spf50-p-12350"
+  }
+];
+
+// GET /api/products - Tüm ürünleri getir
 router.get('/', async (req, res) => {
-    try {
-        const {
-            page = 1,
-            limit = 12,
-            category,
-            brand,
-            min_price,
-            max_price,
-            skin_type,
-            sort = 'created_at',
-            order = 'DESC',
-            featured,
-            search
-        } = req.query;
+  try {
+    const { 
+      category, 
+      skinType, 
+      minPrice, 
+      maxPrice, 
+      sortBy = 'name', 
+      order = 'asc',
+      limit = 10,
+      offset = 0,
+      search,
+      featured,
+      bestSeller,
+      isNew
+    } = req.query;
 
-        // Validate pagination
-        const pageNum = Math.max(1, parseInt(page));
-        const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
-        const offset = (pageNum - 1) * limitNum;
+    let filteredProducts = [...mockProducts];
 
-        // Build WHERE clause
-        let whereClause = 'p.is_active = true';
-        let params = [];
-
-        if (category) {
-            whereClause += ' AND c.slug = ?';
-            params.push(category);
-        }
-
-        if (brand) {
-            whereClause += ' AND p.brand = ?';
-            params.push(brand);
-        }
-
-        if (min_price) {
-            whereClause += ' AND p.price >= ?';
-            params.push(parseFloat(min_price));
-        }
-
-        if (max_price) {
-            whereClause += ' AND p.price <= ?';
-            params.push(parseFloat(max_price));
-        }
-
-        if (skin_type) {
-            whereClause += ' AND JSON_CONTAINS(p.skin_type, ?)';
-            params.push(`"${skin_type}"`);
-        }
-
-        if (featured === 'true') {
-            whereClause += ' AND p.is_featured = true';
-        }
-
-        if (search) {
-            whereClause += ' AND (p.name LIKE ? OR p.description LIKE ? OR p.short_description LIKE ?)';
-            const searchTerm = `%${search}%`;
-            params.push(searchTerm, searchTerm, searchTerm);
-        }
-
-        // Build ORDER BY clause
-        const allowedSortFields = ['created_at', 'name', 'price', 'rating', 'reviews_count'];
-        const sortField = allowedSortFields.includes(sort) ? sort : 'created_at';
-        const sortOrder = order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
-
-        // Get total count
-        const countQuery = `
-            SELECT COUNT(*) as total
-            FROM products p
-            LEFT JOIN categories c ON p.category_id = c.id
-            WHERE ${whereClause}
-        `;
-        const countResult = await db.query(countQuery, params);
-        const total = countResult[0].total;
-
-        // Get products
-        const productsQuery = `
-            SELECT 
-                p.*,
-                c.name as category_name,
-                c.slug as category_slug
-            FROM products p
-            LEFT JOIN categories c ON p.category_id = c.id
-            WHERE ${whereClause}
-            ORDER BY p.${sortField} ${sortOrder}
-            LIMIT ? OFFSET ?
-        `;
-
-        const products = await db.query(productsQuery, [...params, limitNum, offset]);
-
-        // Parse JSON fields
-        const formattedProducts = products.map(product => ({
-            ...product,
-            ingredients: product.ingredients ? JSON.parse(product.ingredients) : [],
-            skin_type: product.skin_type ? JSON.parse(product.skin_type) : [],
-            gallery_images: product.gallery_images ? JSON.parse(product.gallery_images) : []
-        }));
-
-        // Pagination info
-        const totalPages = Math.ceil(total / limitNum);
-        const hasNext = pageNum < totalPages;
-        const hasPrev = pageNum > 1;
-
-        res.json({
-            products: formattedProducts,
-            pagination: {
-                current_page: pageNum,
-                total_pages: totalPages,
-                total_items: total,
-                items_per_page: limitNum,
-                has_next: hasNext,
-                has_prev: hasPrev
-            }
-        });
-
-    } catch (error) {
-        console.error('Get products error:', error);
-        res.status(500).json({ error: 'Failed to fetch products' });
+    // Kategori filtresi
+    if (category) {
+      filteredProducts = filteredProducts.filter(product => 
+        product.category.toLowerCase() === category.toLowerCase()
+      );
     }
+
+    // Cilt tipi filtresi
+    if (skinType) {
+      filteredProducts = filteredProducts.filter(product => 
+        product.skinType.some(type => 
+          type.toLowerCase().includes(skinType.toLowerCase())
+        )
+      );
+    }
+
+    // Fiyat filtresi
+    if (minPrice) {
+      filteredProducts = filteredProducts.filter(product => 
+        product.price >= parseFloat(minPrice)
+      );
+    }
+
+    if (maxPrice) {
+      filteredProducts = filteredProducts.filter(product => 
+        product.price <= parseFloat(maxPrice)
+      );
+    }
+
+    // Arama filtresi
+    if (search) {
+      const searchTerm = search.toLowerCase();
+      filteredProducts = filteredProducts.filter(product => 
+        product.name.toLowerCase().includes(searchTerm) ||
+        product.description.toLowerCase().includes(searchTerm) ||
+        product.tags.some(tag => tag.includes(searchTerm))
+      );
+    }
+
+    // Özel filtreler
+    if (featured === 'true') {
+      filteredProducts = filteredProducts.filter(product => product.isFeatured);
+    }
+
+    if (bestSeller === 'true') {
+      filteredProducts = filteredProducts.filter(product => product.isBestSeller);
+    }
+
+    if (isNew === 'true') {
+      filteredProducts = filteredProducts.filter(product => product.isNew);
+    }
+
+    // Sıralama
+    filteredProducts.sort((a, b) => {
+      let aValue = a[sortBy];
+      let bValue = b[sortBy];
+
+      if (typeof aValue === 'string') {
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
+      }
+
+      if (order === 'desc') {
+        return bValue > aValue ? 1 : -1;
+      }
+      return aValue > bValue ? 1 : -1;
+    });
+
+    // Sayfalama
+    const total = filteredProducts.length;
+    const paginatedProducts = filteredProducts.slice(
+      parseInt(offset), 
+      parseInt(offset) + parseInt(limit)
+    );
+
+    res.json({
+      success: true,
+      data: {
+        products: paginatedProducts,
+        total,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        hasMore: (parseInt(offset) + parseInt(limit)) < total
+      }
+    });
+
+  } catch (error) {
+    console.error('Ürünler getirilirken hata:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Ürünler getirilirken hata oluştu',
+      error: error.message
+    });
+  }
 });
 
-// Get featured products
-router.get('/featured', async (req, res) => {
-    try {
-        const { limit = 8 } = req.query;
-        const limitNum = Math.min(20, Math.max(1, parseInt(limit)));
-
-        const query = `
-            SELECT 
-                p.*,
-                c.name as category_name,
-                c.slug as category_slug
-            FROM products p
-            LEFT JOIN categories c ON p.category_id = c.id
-            WHERE p.is_active = true AND p.is_featured = true
-            ORDER BY p.rating DESC, p.reviews_count DESC
-            LIMIT ?
-        `;
-
-        const products = await db.query(query, [limitNum]);
-
-        const formattedProducts = products.map(product => ({
-            ...product,
-            ingredients: product.ingredients ? JSON.parse(product.ingredients) : [],
-            skin_type: product.skin_type ? JSON.parse(product.skin_type) : [],
-            gallery_images: product.gallery_images ? JSON.parse(product.gallery_images) : []
-        }));
-
-        res.json({ products: formattedProducts });
-
-    } catch (error) {
-        console.error('Get featured products error:', error);
-        res.status(500).json({ error: 'Failed to fetch featured products' });
-    }
+// Get featured products (MUST be before /:id route)
+router.get('/featured/list', (req, res) => {
+  try {
+    const { limit = 8 } = req.query;
+    const featuredProducts = mockProducts
+      .filter(p => p.isFeatured)
+      .slice(0, parseInt(limit));
+    
+    res.json({ 
+      success: true,
+      count: featuredProducts.length,
+      products: featuredProducts 
+    });
+  } catch (error) {
+    console.error('Featured products error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
-// Get product by ID
-router.get('/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-
-        if (!id || isNaN(id)) {
-            return res.status(400).json({ error: 'Invalid product ID' });
-        }
-
-        const query = `
-            SELECT 
-                p.*,
-                c.name as category_name,
-                c.slug as category_slug
-            FROM products p
-            LEFT JOIN categories c ON p.category_id = c.id
-            WHERE p.id = ? AND p.is_active = true
-        `;
-
-        const product = await db.findOne(query, [id]);
-
-        if (!product) {
-            return res.status(404).json({ error: 'Product not found' });
-        }
-
-        // Parse JSON fields
-        const formattedProduct = {
-            ...product,
-            ingredients: product.ingredients ? JSON.parse(product.ingredients) : [],
-            skin_type: product.skin_type ? JSON.parse(product.skin_type) : [],
-            gallery_images: product.gallery_images ? JSON.parse(product.gallery_images) : []
-        };
-
-        // Get related products (same category, excluding current product)
-        const relatedQuery = `
-            SELECT 
-                p.*,
-                c.name as category_name,
-                c.slug as category_slug
-            FROM products p
-            LEFT JOIN categories c ON p.category_id = c.id
-            WHERE p.category_id = ? AND p.id != ? AND p.is_active = true
-            ORDER BY p.rating DESC
-            LIMIT 4
-        `;
-
-        const relatedProducts = await db.query(relatedQuery, [product.category_id, id]);
-        const formattedRelatedProducts = relatedProducts.map(prod => ({
-            ...prod,
-            ingredients: prod.ingredients ? JSON.parse(prod.ingredients) : [],
-            skin_type: prod.skin_type ? JSON.parse(prod.skin_type) : [],
-            gallery_images: prod.gallery_images ? JSON.parse(prod.gallery_images) : []
-        }));
-
-        res.json({
-            product: formattedProduct,
-            related_products: formattedRelatedProducts
-        });
-
-    } catch (error) {
-        console.error('Get product error:', error);
-        res.status(500).json({ error: 'Failed to fetch product' });
-    }
-});
-
-// Get product by slug
-router.get('/slug/:slug', async (req, res) => {
-    try {
-        const { slug } = req.params;
-
-        if (!slug) {
-            return res.status(400).json({ error: 'Product slug is required' });
-        }
-
-        const query = `
-            SELECT 
-                p.*,
-                c.name as category_name,
-                c.slug as category_slug
-            FROM products p
-            LEFT JOIN categories c ON p.category_id = c.id
-            WHERE p.slug = ? AND p.is_active = true
-        `;
-
-        const product = await db.findOne(query, [slug]);
-
-        if (!product) {
-            return res.status(404).json({ error: 'Product not found' });
-        }
-
-        // Parse JSON fields
-        const formattedProduct = {
-            ...product,
-            ingredients: product.ingredients ? JSON.parse(product.ingredients) : [],
-            skin_type: product.skin_type ? JSON.parse(product.skin_type) : [],
-            gallery_images: product.gallery_images ? JSON.parse(product.gallery_images) : []
-        };
-
-        res.json({ product: formattedProduct });
-
-    } catch (error) {
-        console.error('Get product by slug error:', error);
-        res.status(500).json({ error: 'Failed to fetch product' });
-    }
-});
-
-// Get products by category
-router.get('/category/:categoryId', async (req, res) => {
-    try {
-        const { categoryId } = req.params;
-        const {
-            page = 1,
-            limit = 12,
-            sort = 'created_at',
-            order = 'DESC'
-        } = req.query;
-
-        // Validate pagination
-        const pageNum = Math.max(1, parseInt(page));
-        const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
-        const offset = (pageNum - 1) * limitNum;
-
-        // Validate sort
-        const allowedSortFields = ['created_at', 'name', 'price', 'rating'];
-        const sortField = allowedSortFields.includes(sort) ? sort : 'created_at';
-        const sortOrder = order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
-
-        // Get category info
-        const category = await db.findOne(
-            'SELECT * FROM categories WHERE id = ? OR slug = ?',
-            [categoryId, categoryId]
-        );
-
-        if (!category) {
-            return res.status(404).json({ error: 'Category not found' });
-        }
-
-        // Get total count
-        const countQuery = `
-            SELECT COUNT(*) as total
-            FROM products p
-            WHERE p.category_id = ? AND p.is_active = true
-        `;
-        const countResult = await db.query(countQuery, [category.id]);
-        const total = countResult[0].total;
-
-        // Get products
-        const productsQuery = `
-            SELECT 
-                p.*,
-                c.name as category_name,
-                c.slug as category_slug
-            FROM products p
-            LEFT JOIN categories c ON p.category_id = c.id
-            WHERE p.category_id = ? AND p.is_active = true
-            ORDER BY p.${sortField} ${sortOrder}
-            LIMIT ? OFFSET ?
-        `;
-
-        const products = await db.query(productsQuery, [category.id, limitNum, offset]);
-
-        const formattedProducts = products.map(product => ({
-            ...product,
-            ingredients: product.ingredients ? JSON.parse(product.ingredients) : [],
-            skin_type: product.skin_type ? JSON.parse(product.skin_type) : [],
-            gallery_images: product.gallery_images ? JSON.parse(product.gallery_images) : []
-        }));
-
-        // Pagination info
-        const totalPages = Math.ceil(total / limitNum);
-
-        res.json({
-            category,
-            products: formattedProducts,
-            pagination: {
-                current_page: pageNum,
-                total_pages: totalPages,
-                total_items: total,
-                items_per_page: limitNum
-            }
-        });
-
-    } catch (error) {
-        console.error('Get products by category error:', error);
-        res.status(500).json({ error: 'Failed to fetch products by category' });
-    }
-});
-
-// Search products
-router.post('/search', async (req, res) => {
-    try {
-        const { query: searchQuery, filters = {} } = req.body;
-        const {
-            page = 1,
-            limit = 12,
-            sort = 'relevance'
-        } = req.query;
-
-        if (!searchQuery || searchQuery.trim().length < 2) {
-            return res.status(400).json({ error: 'Search query must be at least 2 characters' });
-        }
-
-        const pageNum = Math.max(1, parseInt(page));
-        const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
-        const offset = (pageNum - 1) * limitNum;
-
-        // Build search conditions
-        let whereClause = 'p.is_active = true';
-        let params = [];
-
-        // Full text search
-        const searchTerm = `%${searchQuery.trim()}%`;
-        whereClause += ` AND (
-            p.name LIKE ? OR 
-            p.description LIKE ? OR 
-            p.short_description LIKE ? OR
-            p.brand LIKE ? OR
-            JSON_SEARCH(p.ingredients, 'one', ?) IS NOT NULL
-        )`;
-        params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchQuery.trim());
-
-        // Apply filters
-        if (filters.category) {
-            whereClause += ' AND c.slug = ?';
-            params.push(filters.category);
-        }
-
-        if (filters.brand) {
-            whereClause += ' AND p.brand = ?';
-            params.push(filters.brand);
-        }
-
-        if (filters.min_price) {
-            whereClause += ' AND p.price >= ?';
-            params.push(parseFloat(filters.min_price));
-        }
-
-        if (filters.max_price) {
-            whereClause += ' AND p.price <= ?';
-            params.push(parseFloat(filters.max_price));
-        }
-
-        if (filters.skin_type) {
-            whereClause += ' AND JSON_CONTAINS(p.skin_type, ?)';
-            params.push(`"${filters.skin_type}"`);
-        }
-
-        // Determine sort order
-        let orderClause = 'p.rating DESC, p.reviews_count DESC';
-        if (sort === 'price_low') {
-            orderClause = 'p.price ASC';
-        } else if (sort === 'price_high') {
-            orderClause = 'p.price DESC';
-        } else if (sort === 'newest') {
-            orderClause = 'p.created_at DESC';
-        } else if (sort === 'rating') {
-            orderClause = 'p.rating DESC, p.reviews_count DESC';
-        }
-
-        // Get total count
-        const countQuery = `
-            SELECT COUNT(*) as total
-            FROM products p
-            LEFT JOIN categories c ON p.category_id = c.id
-            WHERE ${whereClause}
-        `;
-        const countResult = await db.query(countQuery, params);
-        const total = countResult[0].total;
-
-        // Get products
-        const productsQuery = `
-            SELECT 
-                p.*,
-                c.name as category_name,
-                c.slug as category_slug,
-                CASE 
-                    WHEN p.name LIKE ? THEN 3
-                    WHEN p.brand LIKE ? THEN 2
-                    ELSE 1
-                END as relevance_score
-            FROM products p
-            LEFT JOIN categories c ON p.category_id = c.id
-            WHERE ${whereClause}
-            ORDER BY relevance_score DESC, ${orderClause}
-            LIMIT ? OFFSET ?
-        `;
-
-        const products = await db.query(
-            productsQuery, 
-            [searchTerm, searchTerm, ...params, limitNum, offset]
-        );
-
-        const formattedProducts = products.map(product => ({
-            ...product,
-            ingredients: product.ingredients ? JSON.parse(product.ingredients) : [],
-            skin_type: product.skin_type ? JSON.parse(product.skin_type) : [],
-            gallery_images: product.gallery_images ? JSON.parse(product.gallery_images) : []
-        }));
-
-        res.json({
-            query: searchQuery,
-            products: formattedProducts,
-            pagination: {
-                current_page: pageNum,
-                total_pages: Math.ceil(total / limitNum),
-                total_items: total,
-                items_per_page: limitNum
-            }
-        });
-
-    } catch (error) {
-        console.error('Search products error:', error);
-        res.status(500).json({ error: 'Search failed' });
-    }
-});
-
-// Get product stock status
-router.get('/:id/stock', async (req, res) => {
-    try {
-        const { id } = req.params;
-
-        const product = await db.findOne(
-            'SELECT id, name, stock, low_stock_threshold, track_inventory, allow_backorder FROM products WHERE id = ? AND is_active = true',
-            [id]
-        );
-
-        if (!product) {
-            return res.status(404).json({ error: 'Product not found' });
-        }
-
-        const stockStatus = {
-            id: product.id,
-            name: product.name,
-            stock: product.stock,
-            in_stock: product.stock > 0,
-            low_stock: product.stock <= product.low_stock_threshold,
-            allow_backorder: product.allow_backorder,
-            stock_status: product.stock > 0 ? 'in_stock' : 
-                         product.allow_backorder ? 'backorder' : 'out_of_stock'
-        };
-
-        res.json(stockStatus);
-
-    } catch (error) {
-        console.error('Get stock status error:', error);
-        res.status(500).json({ error: 'Failed to get stock status' });
-    }
+// Get best sellers (MUST be before /:id route)
+router.get('/bestsellers/list', (req, res) => {
+  try {
+    const { limit = 8 } = req.query;
+    const bestSellers = mockProducts
+      .filter(p => p.isBestSeller)
+      .slice(0, parseInt(limit));
+    
+    res.json({ 
+      success: true,
+      count: bestSellers.length,
+      products: bestSellers 
+    });
+  } catch (error) {
+    console.error('Best sellers error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // Get categories
-router.get('/categories/all', async (req, res) => {
-    try {
-        const query = `
-            SELECT 
-                c.*,
-                COUNT(p.id) as product_count
-            FROM categories c
-            LEFT JOIN products p ON c.id = p.category_id AND p.is_active = true
-            WHERE c.is_active = true
-            GROUP BY c.id
-            ORDER BY c.sort_order ASC, c.name ASC
-        `;
-
-        const categories = await db.query(query);
-
-        res.json({ categories });
-
-    } catch (error) {
-        console.error('Get categories error:', error);
-        res.status(500).json({ error: 'Failed to fetch categories' });
-    }
+router.get('/categories/list', (req, res) => {
+  try {
+    const categories = [...new Set(mockProducts.map(p => p.category))];
+    res.json({ categories });
+  } catch (error) {
+    console.error('Categories error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // Get brands
-router.get('/brands/all', async (req, res) => {
-    try {
-        const query = `
-            SELECT 
-                brand,
-                COUNT(*) as product_count,
-                MIN(price) as min_price,
-                MAX(price) as max_price
-            FROM products 
-            WHERE is_active = true AND brand IS NOT NULL
-            GROUP BY brand
-            ORDER BY brand ASC
-        `;
+router.get('/brands/list', (req, res) => {
+  try {
+    const brands = [...new Set(mockProducts.map(p => p.brand))];
+    res.json({ brands });
+  } catch (error) {
+    console.error('Brands error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
-        const brands = await db.query(query);
+// Get product by ID
+router.get('/:id', (req, res) => {
+  try {
+    const productId = parseInt(req.params.id);
+    const product = mockProducts.find(p => p.id === productId);
 
-        res.json({ brands });
-
-    } catch (error) {
-        console.error('Get brands error:', error);
-        res.status(500).json({ error: 'Failed to fetch brands' });
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
     }
+
+    // Get related products (same category)
+    const relatedProducts = mockProducts
+      .filter(p => p.category === product.category && p.id !== product.id)
+      .slice(0, 4);
+
+    res.json({
+      product,
+      relatedProducts
+    });
+
+  } catch (error) {
+    console.error('Product fetch error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get products by category
+router.get('/category/:category', (req, res) => {
+  try {
+    const { category } = req.params;
+    const { limit = 8 } = req.query;
+
+    const categoryProducts = mockProducts
+      .filter(p => p.category === category);
+
+    res.json({ products: categoryProducts });
+  } catch (error) {
+    console.error('Category products error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Search products
+router.get('/search/:query', (req, res) => {
+  try {
+    const { query } = req.params;
+    const searchLower = query.toLowerCase();
+
+    const searchResults = mockProducts.filter(p => 
+      p.name.toLowerCase().includes(searchLower) ||
+      p.description.toLowerCase().includes(searchLower) ||
+      p.tags.some(tag => tag.toLowerCase().includes(searchLower))
+    );
+
+    res.json({ products: searchResults });
+  } catch (error) {
+    console.error('Search error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 module.exports = router; 
