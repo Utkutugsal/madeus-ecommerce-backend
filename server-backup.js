@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -293,20 +293,20 @@ app.post('/api/setup/sample-data', async (req, res) => {
         // Insert categories
         await db.query(`
             INSERT IGNORE INTO categories (name, slug, description) VALUES
-            ('YÃ¼z BakÄ±mÄ±', 'yuz-bakimi', 'YÃ¼z iÃ§in Ã¶zel bakÄ±m Ã¼rÃ¼nleri'),
-            ('VÃ¼cut BakÄ±mÄ±', 'vucut-bakimi', 'VÃ¼cut iÃ§in nemlendirici ve bakÄ±m Ã¼rÃ¼nleri'),
-            ('GÃ¼neÅŸ Koruma', 'gunes-koruma', 'SPF korumalÄ± gÃ¼neÅŸ kremi Ã¼rÃ¼nleri')
+            ('Yüz Bakımı', 'yuz-bakimi', 'Yüz için özel bakım ürünleri'),
+            ('Vücut Bakımı', 'vucut-bakimi', 'Vücut için nemlendirici ve bakım ürünleri'),
+            ('Güneş Koruma', 'gunes-koruma', 'SPF korumalı güneş kremi ürünleri')
         `);
 
         // Insert sample products
         await db.query(`
             INSERT IGNORE INTO products (name, slug, description, short_description, price, compare_price, featured_image, sku, category_id, brand, stock, is_featured) VALUES
-            ('Anti-Aging Serum', 'anti-aging-serum', 'YaÅŸlanma karÅŸÄ±tÄ± yoÄŸun bakÄ±m serumu', 'KÄ±rÄ±ÅŸÄ±klÄ±k ve yaÅŸlanma belirtilerini azaltÄ±r', 299.90, 399.90, '/images/anti-aging-serum.jpg', 'MDS-001', 1, 'Madeus', 50, true),
-            ('Hyaluronic Nemlendirici', 'hyaluronic-nemlendirici', 'YoÄŸun nemlendirici krem', 'HyalÃ¼ronik asit ile derin nemlendirme', 249.90, 329.90, '/images/hyaluronic-cream.jpg', 'MDS-002', 1, 'Madeus', 30, true),
-            ('Vitamin C Serum', 'vitamin-c-serum', 'AydÄ±nlatÄ±cÄ± vitamin C serumu', 'Cilt tonunu eÅŸitler ve aydÄ±nlatÄ±r', 199.90, 259.90, '/images/vitamin-c-serum.jpg', 'MDS-003', 1, 'Madeus', 40, true),
-            ('GÃ¼neÅŸ Kremi SPF 50', 'gunes-kremi-spf-50', 'YÃ¼ksek koruma gÃ¼neÅŸ kremi', 'UVA/UVB korumasÄ± ile geniÅŸ spektrum', 149.90, 199.90, '/images/sunscreen-spf50.jpg', 'MDS-004', 3, 'Madeus', 60, false),
-            ('VÃ¼cut Losyonu', 'vucut-losyonu', 'GÃ¼nlÃ¼k vÃ¼cut nemlendirici', 'TÃ¼m vÃ¼cut iÃ§in nemlendirici losyon', 89.90, 119.90, '/images/body-lotion.jpg', 'MDS-005', 2, 'Madeus', 25, false),
-            ('GÃ¶z Ã‡evresi Kremi', 'goz-cevresi-kremi', 'GÃ¶z Ã§evresi Ã¶zel bakÄ±m kremi', 'GÃ¶z altÄ± morluklarÄ± ve kÄ±rÄ±ÅŸÄ±klÄ±klar iÃ§in', 179.90, 229.90, '/images/eye-cream.jpg', 'MDS-006', 1, 'Madeus', 35, true)
+            ('Anti-Aging Serum', 'anti-aging-serum', 'Yaşlanma karşıtı yoğun bakım serumu', 'Kırışıklık ve yaşlanma belirtilerini azaltır', 299.90, 399.90, '/images/anti-aging-serum.jpg', 'MDS-001', 1, 'Madeus', 50, true),
+            ('Hyaluronic Nemlendirici', 'hyaluronic-nemlendirici', 'Yoğun nemlendirici krem', 'Hyalüronik asit ile derin nemlendirme', 249.90, 329.90, '/images/hyaluronic-cream.jpg', 'MDS-002', 1, 'Madeus', 30, true),
+            ('Vitamin C Serum', 'vitamin-c-serum', 'Aydınlatıcı vitamin C serumu', 'Cilt tonunu eşitler ve aydınlatır', 199.90, 259.90, '/images/vitamin-c-serum.jpg', 'MDS-003', 1, 'Madeus', 40, true),
+            ('Güneş Kremi SPF 50', 'gunes-kremi-spf-50', 'Yüksek koruma güneş kremi', 'UVA/UVB koruması ile geniş spektrum', 149.90, 199.90, '/images/sunscreen-spf50.jpg', 'MDS-004', 3, 'Madeus', 60, false),
+            ('Vücut Losyonu', 'vucut-losyonu', 'Günlük vücut nemlendirici', 'Tüm vücut için nemlendirici losyon', 89.90, 119.90, '/images/body-lotion.jpg', 'MDS-005', 2, 'Madeus', 25, false),
+            ('Göz Çevresi Kremi', 'goz-cevresi-kremi', 'Göz çevresi özel bakım kremi', 'Göz altı morlukları ve kırışıklıklar için', 179.90, 229.90, '/images/eye-cream.jpg', 'MDS-006', 1, 'Madeus', 35, true)
         `);
 
         res.json({
@@ -340,12 +340,12 @@ function loadRoute(routePath, mountPath) {
     try {
         if (fs.existsSync(path.join(__dirname, routePath))) {
             app.use(mountPath, require(routePath));
-            console.log(`âœ… Loaded route: ${mountPath}`);
+            console.log(`✅ Loaded route: ${mountPath}`);
         } else {
-            console.log(`âš ï¸  Route file not found: ${routePath}`);
+            console.log(`⚠️  Route file not found: ${routePath}`);
         }
     } catch (error) {
-        console.error(`âŒ Error loading route ${mountPath}:`, error.message);
+        console.error(`❌ Error loading route ${mountPath}:`, error.message);
     }
 }
 
@@ -371,7 +371,7 @@ app.get('/api/setup/email-config', (req, res) => {
         frontendUrl: process.env.FRONTEND_URL || 'not set'
     };
     
-    console.log('ğŸ“§ Email configuration check:', config);
+    console.log('📧 Email configuration check:', config);
     
     res.json({
         success: true,
@@ -384,12 +384,12 @@ app.get('/api/setup/email-config', (req, res) => {
 // Email connection test
 app.get('/api/setup/email-connection', async (req, res) => {
     try {
-        console.log('ğŸ” Email connection test baÅŸlatÄ±lÄ±yor...');
+        console.log('🔍 Email connection test başlatılıyor...');
         
         const emailService = require('./utils/email');
         const result = await emailService.testConnection();
         
-        console.log('âœ… Email connection test result:', result);
+        console.log('✅ Email connection test result:', result);
         
         res.json({
             success: true,
@@ -399,7 +399,7 @@ app.get('/api/setup/email-connection', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('âŒ Email connection test error:', error);
+        console.error('❌ Email connection test error:', error);
         res.status(500).json({
             success: false,
             error: error.message,
@@ -414,19 +414,19 @@ app.post('/api/setup/test-email', async (req, res) => {
     try {
         const { email = 'test@example.com', type = 'welcome' } = req.body;
         
-        console.log('ğŸ§ª Email test baÅŸlatÄ±lÄ±yor:', { email, type });
+        console.log('🧪 Email test başlatılıyor:', { email, type });
         
         const emailService = require('./utils/email');
         let result;
         
         if (type === 'welcome') {
             result = await emailService.sendWelcomeEmail({
-                name: 'Test KullanÄ±cÄ±',
+                name: 'Test Kullanıcı',
                 email: email
             });
         } else if (type === 'verification') {
             result = await emailService.sendVerificationEmail({
-                name: 'Test KullanÄ±cÄ±',
+                name: 'Test Kullanıcı',
                 email: email
             }, 'test-verification-token-123456');
         } else {
@@ -436,7 +436,7 @@ app.post('/api/setup/test-email', async (req, res) => {
             });
         }
         
-        console.log('ğŸ“§ Email test result:', result);
+        console.log('📧 Email test result:', result);
         
         res.json({
             success: true,
@@ -453,7 +453,7 @@ app.post('/api/setup/test-email', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('âŒ Test email error:', error);
+        console.error('❌ Test email error:', error);
         res.status(500).json({
             success: false,
             error: error.message,
@@ -476,7 +476,7 @@ app.post('/api/setup/direct-email-test', async (req, res) => {
         const { email = 'test@example.com' } = req.body;
         const nodemailer = require('nodemailer');
         
-        console.log('ğŸ”§ Direct nodemailer test baÅŸlatÄ±lÄ±yor...');
+        console.log('🔧 Direct nodemailer test başlatılıyor...');
         
         // Create transporter directly
         const transporter = nodemailer.createTransporter({
@@ -493,20 +493,20 @@ app.post('/api/setup/direct-email-test', async (req, res) => {
         });
         
         // Test connection
-        console.log('ğŸ” Testing connection...');
+        console.log('🔍 Testing connection...');
         const verified = await transporter.verify();
-        console.log('âœ… Connection verified:', verified);
+        console.log('✅ Connection verified:', verified);
         
         // Send test email
-        console.log('ğŸ“§ Sending test email...');
+        console.log('📧 Sending test email...');
         const info = await transporter.sendMail({
             from: process.env.EMAIL_FROM,
             to: email,
-            subject: 'ğŸ§ª Direct Test Email - Madeus Skincare',
+            subject: '🧪 Direct Test Email - Madeus Skincare',
             html: '<h1>Test Email</h1><p>Bu direkt nodemailer test emailidir.</p>'
         });
         
-        console.log('âœ… Email sent:', info.messageId);
+        console.log('✅ Email sent:', info.messageId);
         
         res.json({
             success: true,
@@ -522,7 +522,7 @@ app.post('/api/setup/direct-email-test', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('âŒ Direct email test failed:', error);
+        console.error('❌ Direct email test failed:', error);
         res.status(500).json({
             success: false,
             error: error.message,
@@ -532,7 +532,7 @@ app.post('/api/setup/direct-email-test', async (req, res) => {
 });
 
 // Routes to be created later
-console.log('ğŸ“ Routes to be created: orders, users, admin, payment');
+console.log('📝 Routes to be created: orders, users, admin, payment');
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -611,10 +611,108 @@ process.on('SIGINT', () => {
 
 // Start server
 const server = app.listen(PORT, () => {
-    console.log('ğŸš€ Madeus E-commerce Backend Server Started');
+    console.log('🚀 Madeus E-commerce Backend Server Started');
     console.log('==========================================');
-    console.log(`ğŸŒ Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`ğŸšª Port: ${PORT}`);
-    console.log(`ğŸ“¡ API URL: http://localhost:${PORT}/api`);
-    console.log(`â¤ï¸  Health Check: http://localhost:${PORT}/api/health`);
-    console.log(`ğŸ”— Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🚪 Port: ${PORT}`);
+    console.log(`📡 API URL: http://localhost:${PORT}/api`);
+    console.log(`❤️  Health Check: http://localhost:${PORT}/api/health`);
+    console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
+    console.log('==========================================');
+});
+
+// Export app for testing
+module.exports = app;
+
+// Routes to be created later
+console.log('📝 Routes to be created: orders, users, admin, payment');
+
+// 404 handler
+app.use('*', (req, res) => {
+    res.status(404).json({
+        error: 'Endpoint not found',
+        message: `${req.method} ${req.originalUrl} is not a valid route`,
+        availableEndpoints: [
+            'GET /api',
+            'GET /api/health',
+            'POST /api/auth/login',
+            'POST /api/auth/register',
+            'GET /api/products',
+            'GET /api/orders',
+            'GET /api/users/profile'
+        ]
+    });
+});
+
+// ===========================================
+// ERROR HANDLING
+// ===========================================
+
+// Global error handler
+app.use((err, req, res, next) => {
+    console.error('Error occurred:', {
+        message: err.message,
+        stack: err.stack,
+        url: req.url,
+        method: req.method,
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        timestamp: new Date().toISOString()
+    });
+
+    // Determine error status
+    const statusCode = err.statusCode || err.status || 500;
+    
+    // Prepare error response
+    const errorResponse = {
+        error: true,
+        message: err.message || 'Internal Server Error',
+        timestamp: new Date().toISOString()
+    };
+
+    // Add stack trace in development
+    if (process.env.NODE_ENV === 'development') {
+        errorResponse.stack = err.stack;
+        errorResponse.details = err;
+    }
+
+    res.status(statusCode).json(errorResponse);
+});
+
+// ===========================================
+// SERVER STARTUP
+// ===========================================
+
+const PORT = process.env.PORT || 5002;
+
+// Graceful shutdown handler
+process.on('SIGTERM', () => {
+    console.log('SIGTERM received, shutting down gracefully');
+    server.close(() => {
+        console.log('Process terminated');
+        process.exit(0);
+    });
+});
+
+process.on('SIGINT', () => {
+    console.log('SIGINT received, shutting down gracefully');
+    server.close(() => {
+        console.log('Process terminated');
+        process.exit(0);
+    });
+});
+
+// Start server
+const server = app.listen(PORT, () => {
+    console.log('🚀 Madeus E-commerce Backend Server Started');
+    console.log('==========================================');
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🚪 Port: ${PORT}`);
+    console.log(`📡 API URL: http://localhost:${PORT}/api`);
+    console.log(`❤️  Health Check: http://localhost:${PORT}/api/health`);
+    console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
+    console.log('==========================================');
+});
+
+// Export app for testing
+module.exports = app; 
