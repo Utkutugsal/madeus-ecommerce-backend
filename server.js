@@ -470,6 +470,243 @@ app.post('/api/setup/test-email', async (req, res) => {
     }
 });
 
+// Direct nodemailer test endpoint
+app.post('/api/setup/direct-email-test', async (req, res) => {
+    try {
+        const { email = 'test@example.com' } = req.body;
+        const nodemailer = require('nodemailer');
+        
+        console.log('🔧 Direct nodemailer test başlatılıyor...');
+        
+        // Create transporter directly
+        const transporter = nodemailer.createTransporter({
+            host: process.env.EMAIL_HOST,
+            port: parseInt(process.env.EMAIL_PORT),
+            secure: process.env.EMAIL_SECURE === 'true',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            },
+            tls: {
+                rejectUnauthorized: false
+            }
+        });
+        
+        // Test connection
+        console.log('🔍 Testing connection...');
+        const verified = await transporter.verify();
+        console.log('✅ Connection verified:', verified);
+        
+        // Send test email
+        console.log('📧 Sending test email...');
+        const info = await transporter.sendMail({
+            from: process.env.EMAIL_FROM,
+            to: email,
+            subject: '🧪 Direct Test Email - Madeus Skincare',
+            html: '<h1>Test Email</h1><p>Bu direkt nodemailer test emailidir.</p>'
+        });
+        
+        console.log('✅ Email sent:', info.messageId);
+        
+        res.json({
+            success: true,
+            message: 'Direct email test successful',
+            verified: verified,
+            messageId: info.messageId,
+            config: {
+                host: process.env.EMAIL_HOST,
+                port: process.env.EMAIL_PORT,
+                user: process.env.EMAIL_USER,
+                secure: process.env.EMAIL_SECURE
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Direct email test failed:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            stack: error.stack
+        });
+    }
+});
+
+// Routes to be created later
+console.log('📝 Routes to be created: orders, users, admin, payment');
+
+// 404 handler
+app.use('*', (req, res) => {
+    res.status(404).json({
+        error: 'Endpoint not found',
+        message: `${req.method} ${req.originalUrl} is not a valid route`,
+        availableEndpoints: [
+            'GET /api',
+            'GET /api/health',
+            'POST /api/auth/login',
+            'POST /api/auth/register',
+            'GET /api/products',
+            'GET /api/orders',
+            'GET /api/users/profile'
+        ]
+    });
+});
+
+// ===========================================
+// ERROR HANDLING
+// ===========================================
+
+// Global error handler
+app.use((err, req, res, next) => {
+    console.error('Error occurred:', {
+        message: err.message,
+        stack: err.stack,
+        url: req.url,
+        method: req.method,
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        timestamp: new Date().toISOString()
+    });
+
+    // Determine error status
+    const statusCode = err.statusCode || err.status || 500;
+    
+    // Prepare error response
+    const errorResponse = {
+        error: true,
+        message: err.message || 'Internal Server Error',
+        timestamp: new Date().toISOString()
+    };
+
+    // Add stack trace in development
+    if (process.env.NODE_ENV === 'development') {
+        errorResponse.stack = err.stack;
+        errorResponse.details = err;
+    }
+
+    res.status(statusCode).json(errorResponse);
+});
+
+// ===========================================
+// SERVER STARTUP
+// ===========================================
+
+const PORT = process.env.PORT || 5002;
+
+// Graceful shutdown handler
+process.on('SIGTERM', () => {
+    console.log('SIGTERM received, shutting down gracefully');
+    server.close(() => {
+        console.log('Process terminated');
+        process.exit(0);
+    });
+});
+
+process.on('SIGINT', () => {
+    console.log('SIGINT received, shutting down gracefully');
+    server.close(() => {
+        console.log('Process terminated');
+        process.exit(0);
+    });
+});
+
+// Start server
+const server = app.listen(PORT, () => {
+    console.log('🚀 Madeus E-commerce Backend Server Started');
+    console.log('==========================================');
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🚪 Port: ${PORT}`);
+    console.log(`📡 API URL: http://localhost:${PORT}/api`);
+    console.log(`❤️  Health Check: http://localhost:${PORT}/api/health`);
+    console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
+    console.log('==========================================');
+});
+
+// Export app for testing
+module.exports = app; 
+                from: process.env.EMAIL_FROM,
+                secure: process.env.EMAIL_SECURE
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Test email error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+            emailConfig: {
+                host: process.env.EMAIL_HOST || 'not set',
+                port: process.env.EMAIL_PORT || 'not set',
+                user: process.env.EMAIL_USER || 'not set',
+                hasPassword: !!process.env.EMAIL_PASS,
+                from: process.env.EMAIL_FROM || 'not set',
+                secure: process.env.EMAIL_SECURE || 'not set'
+            }
+        });
+    }
+});
+
+// Direct nodemailer test endpoint
+app.post('/api/setup/direct-email-test', async (req, res) => {
+    try {
+        const { email = 'test@example.com' } = req.body;
+        const nodemailer = require('nodemailer');
+        
+        console.log('🔧 Direct nodemailer test başlatılıyor...');
+        
+        // Create transporter directly
+        const transporter = nodemailer.createTransporter({
+            host: process.env.EMAIL_HOST,
+            port: parseInt(process.env.EMAIL_PORT),
+            secure: process.env.EMAIL_SECURE === 'true',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            },
+            tls: {
+                rejectUnauthorized: false
+            }
+        });
+        
+        // Test connection
+        console.log('🔍 Testing connection...');
+        const verified = await transporter.verify();
+        console.log('✅ Connection verified:', verified);
+        
+        // Send test email
+        console.log('📧 Sending test email...');
+        const info = await transporter.sendMail({
+            from: process.env.EMAIL_FROM,
+            to: email,
+            subject: '🧪 Direct Test Email - Madeus Skincare',
+            html: '<h1>Test Email</h1><p>Bu direkt nodemailer test emailidir.</p>'
+        });
+        
+        console.log('✅ Email sent:', info.messageId);
+        
+        res.json({
+            success: true,
+            message: 'Direct email test successful',
+            verified: verified,
+            messageId: info.messageId,
+            config: {
+                host: process.env.EMAIL_HOST,
+                port: process.env.EMAIL_PORT,
+                user: process.env.EMAIL_USER,
+                secure: process.env.EMAIL_SECURE
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Direct email test failed:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            stack: error.stack
+        });
+    }
+});
+
 // Routes to be created later
 console.log('📝 Routes to be created: orders, users, admin, payment');
 

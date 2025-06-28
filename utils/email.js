@@ -4,9 +4,27 @@ require('dotenv').config();
 class EmailService {
     constructor() {
         try {
+            console.log('🚀 Initializing email service...');
+            console.log('📧 Environment variables check:', {
+                EMAIL_HOST: process.env.EMAIL_HOST || 'not set',
+                EMAIL_PORT: process.env.EMAIL_PORT || 'not set',
+                EMAIL_USER: process.env.EMAIL_USER || 'not set',
+                EMAIL_PASS: process.env.EMAIL_PASS ? 'Set' : 'Not set',
+                EMAIL_SECURE: process.env.EMAIL_SECURE || 'not set',
+                EMAIL_FROM: process.env.EMAIL_FROM || 'not set'
+            });
+            
+            if (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+                console.warn('⚠️ Email configuration incomplete - service will be disabled');
+                this.transporter = null;
+                return;
+            }
+            
             this.transporter = this.createTransporter();
+            console.log('✅ Email service initialized successfully');
         } catch (error) {
-            console.error('❌ Email service initialization failed:', error.message);
+            console.error('❌ Email service initialization failed:', error);
+            console.error('Stack trace:', error.stack);
             this.transporter = null;
         }
     }
@@ -22,7 +40,7 @@ class EmailService {
             user: process.env.EMAIL_USER || 'not set'
         });
         
-        return nodemailer.createTransporter({
+        const config = {
             host: process.env.EMAIL_HOST || 'smtp.gmail.com',
             port: port,
             secure: isSecure, // true for 465 (SSL), false for 587 (TLS)
@@ -36,7 +54,23 @@ class EmailService {
             },
             debug: process.env.NODE_ENV === 'development',
             logger: process.env.NODE_ENV === 'development'
-        });
+        };
+        
+        // Turkish hosting providers (Turhost, trwww.com) specific settings
+        if (process.env.EMAIL_HOST && process.env.EMAIL_HOST.includes('trwww.com')) {
+            console.log('🇹🇷 Turkish hosting detected - applying specific settings');
+            config.pool = true;
+            config.maxConnections = 1;
+            config.rateDelta = 20000;
+            config.rateLimit = 5;
+            config.connectionTimeout = 60000;
+            config.greetingTimeout = 30000;
+            config.socketTimeout = 60000;
+        }
+        
+        console.log('📧 Final transporter config:', JSON.stringify(config, null, 2));
+        
+        return nodemailer.createTransporter(config);
     }
 
     async sendMail(mailOptions) {
@@ -331,6 +365,62 @@ class EmailService {
                                 <p><strong>${JSON.parse(order.shipping_address).first_name} ${JSON.parse(order.shipping_address).last_name}</strong></p>
                                 <p>${JSON.parse(order.shipping_address).address_line_1}</p>
                                 <p>${JSON.parse(order.shipping_address).district}, ${JSON.parse(order.shipping_address).city}</p>
+                                <p>Tel: ${JSON.parse(order.shipping_address).phone}</p>
+                            ` : 'Adres bilgisi bulunamadı'}
+                        </div>
+
+                        <div style="text-align: center;">
+                            <a href="${process.env.FRONTEND_URL}/orders/${order.id}" class="button">Siparişimi Takip Et 📦</a>
+                        </div>
+
+                        <p><strong>📞 Müşteri Hizmetleri:</strong> Herhangi bir sorunuz olursa bizimle iletişime geçebilirsiniz.</p>
+                        
+                        <p>Siparişiniz için teşekkür ederiz!<br>
+                        <strong>Madeus Skincare Ekibi</strong></p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `;
+
+        return await this.sendMail({
+            to: user.email,
+            subject: `🎉 Siparişiniz Alındı! #${order.order_number} - Madeus Skincare`,
+            html: htmlContent
+        });
+    }
+
+    // Test connection method
+    async testConnection() {
+        try {
+            if (!this.transporter) {
+                throw new Error('Email transporter not initialized');
+            }
+            
+            console.log('🔍 Testing email connection...');
+            const result = await this.transporter.verify();
+            console.log('✅ Email connection verified:', result);
+            
+            return {
+                success: true,
+                verified: result,
+                message: 'Email connection test successful'
+            };
+        } catch (error) {
+            console.error('❌ Email connection test failed:', error);
+            return {
+                success: false,
+                error: error.message,
+                message: 'Email connection test failed'
+            };
+        }
+    }
+}
+
+// Create singleton instance
+const emailService = new EmailService();
+
+module.exports = emailService; 
                                 <p>Tel: ${JSON.parse(order.shipping_address).phone}</p>
                             ` : 'Adres bilgisi bulunamadı'}
                         </div>

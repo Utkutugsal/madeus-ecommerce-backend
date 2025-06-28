@@ -667,3 +667,157 @@ router.post('/send-verification', async (req, res) => {
 });
 
 module.exports = router; 
+// ===================================
+// EMAIL TESTING ENDPOINTS
+// ===================================
+
+// Test email endpoint
+router.post('/test-email', async (req, res) => {
+    try {
+        const { email = 'test@example.com', type = 'welcome' } = req.body;
+        
+        console.log('🧪 Email test başlatılıyor:', { email, type });
+        
+        let result;
+        
+        if (type === 'welcome') {
+            result = await emailService.sendWelcomeEmail({
+                name: 'Test Kullanıcı',
+                email: email
+            });
+        } else if (type === 'verification') {
+            result = await emailService.sendVerificationEmail({
+                name: 'Test Kullanıcı',
+                email: email
+            }, 'test-verification-token-123456');
+        } else {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid email type. Use "welcome" or "verification"'
+            });
+        }
+        
+        console.log('📧 Email test result:', result);
+        
+        res.json({
+            success: true,
+            message: `Test ${type} email sent successfully to ${email}`,
+            result: result,
+            emailConfig: {
+                host: process.env.EMAIL_HOST,
+                port: process.env.EMAIL_PORT,
+                user: process.env.EMAIL_USER,
+                hasPassword: !!process.env.EMAIL_PASS,
+                from: process.env.EMAIL_FROM,
+                secure: process.env.EMAIL_SECURE
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Test email error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+            emailConfig: {
+                host: process.env.EMAIL_HOST || 'not set',
+                port: process.env.EMAIL_PORT || 'not set',
+                user: process.env.EMAIL_USER || 'not set',
+                hasPassword: !!process.env.EMAIL_PASS,
+                from: process.env.EMAIL_FROM || 'not set',
+                secure: process.env.EMAIL_SECURE || 'not set'
+            }
+        });
+    }
+});
+
+// Check email configuration
+router.get('/email-config', (req, res) => {
+    const config = {
+        host: process.env.EMAIL_HOST || 'not set',
+        port: process.env.EMAIL_PORT || 'not set',
+        user: process.env.EMAIL_USER || 'not set',
+        hasPassword: !!process.env.EMAIL_PASS,
+        secure: process.env.EMAIL_SECURE || 'not set',
+        from: process.env.EMAIL_FROM || 'not set',
+        frontendUrl: process.env.FRONTEND_URL || 'not set'
+    };
+    
+    console.log('📧 Email configuration check:', config);
+    
+    res.json({
+        success: true,
+        message: 'Email configuration retrieved',
+        config: config,
+        isConfigured: !!(config.host !== 'not set' && config.user !== 'not set' && config.hasPassword)
+    });
+});
+
+// Email service connection test
+router.get('/email-connection', async (req, res) => {
+    try {
+        console.log('🔍 Email connection test başlatılıyor...');
+        
+        // Test connection using nodemailer verify
+        const result = await emailService.testConnection();
+        
+        console.log('✅ Email connection test result:', result);
+        
+        res.json({
+            success: true,
+            message: 'Email connection test completed successfully',
+            result: result,
+            timestamp: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error('❌ Email connection test error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            message: 'Email connection test failed',
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+// Send verification email to specific user
+router.post('/send-verification', async (req, res) => {
+    try {
+        const { userId, email, name } = req.body;
+        
+        if (!email || !name) {
+            return res.status(400).json({
+                success: false,
+                error: 'Email and name are required'
+            });
+        }
+        
+        // Generate verification token
+        const crypto = require('crypto');
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        
+        console.log('📧 Verification email gönderiliyor:', { email, name });
+        
+        const result = await emailService.sendVerificationEmail({
+            name: name,
+            email: email
+        }, verificationToken);
+        
+        res.json({
+            success: true,
+            message: 'Verification email sent successfully',
+            result: result,
+            verificationToken: verificationToken // Dev environment için
+        });
+        
+    } catch (error) {
+        console.error('❌ Verification email error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+module.exports = router; 
