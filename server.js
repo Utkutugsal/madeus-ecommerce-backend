@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -7,13 +7,13 @@ const morgan = require('morgan');
 const compression = require('compression');
 require('dotenv').config();
 
+const Database = require('./config/database');
+const emailService = require('./utils/email');
+
 const app = express();
 
-// Trust proxy for Railway deployment
-app.set('trust proxy', 1);
-
 // ===========================================
-// MIDDLEWARE CONFIGURATION
+// MIDDLEWARE SETUP
 // ===========================================
 
 // Security middleware
@@ -21,347 +21,138 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'"],
-            scriptSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", "https://madeusskincare.com", "https://www.madeusskincare.com"],
-            fontSrc: ["'self'"],
-            objectSrc: ["'none'"],
-            mediaSrc: ["'self'"],
-            frameSrc: ["'none'"],
-        },
+            scriptSrc: ["'self'"],
+            connectSrc: ["'self'", "https://api.paytr.com"]
+        }
     },
     crossOriginEmbedderPolicy: false
 }));
 
 // CORS configuration
-app.use(cors({
+const corsOptions = {
     origin: [
-        'http://localhost:3000',
-        'http://localhost:5173', 
-        'http://localhost:8081',
         'https://madeusskincare.com',
-        'https://www.madeusskincare.com',
-        process.env.FRONTEND_URL
-    ].filter(Boolean),
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'http://localhost:8080'
+    ],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    optionsSuccessStatus: 200,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-}));
+};
 
-// Compression middleware
-app.use(compression());
-
-// Response time tracking
-app.use(responseTime());
-
-// Logging middleware
-if (process.env.NODE_ENV === 'development') {
-    app.use(morgan('dev'));
-} else {
-    app.use(morgan('combined'));
-}
+app.use(cors(corsOptions));
 
 // Rate limiting
-const generalLimiter = rateLimit({
-    windowMs: (process.env.RATE_LIMIT_WINDOW || 15) * 60 * 1000, // 15 minutes
-    max: process.env.RATE_LIMIT_MAX || 100,
-    message: {
-        error: 'Too many requests from this IP, please try again later.',
-        retryAfter: Math.ceil((process.env.RATE_LIMIT_WINDOW || 15) * 60)
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-app.use(generalLimiter);
-
-// Auth specific rate limiting
-const authLimiter = rateLimit({
+const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: process.env.AUTH_RATE_LIMIT_MAX || 5,
-    message: {
-        error: 'Too many authentication attempts, please try again later.',
-        retryAfter: 900 // 15 minutes in seconds
-    },
-    skipSuccessfulRequests: true
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false
 });
+
+app.use('/api/', limiter);
 
 // Body parsing middleware
-app.use(express.json({ 
-    limit: '10mb',
-    type: 'application/json'
-}));
-app.use(express.urlencoded({ 
-    extended: true, 
-    limit: '10mb' 
-}));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
 
-// Static files (uploads)
-app.use('/uploads', express.static('uploads'));
+// Performance monitoring
+app.use(responseTime());
+
+// Compression
+app.use(compression());
+
+// Logging
+if (process.env.NODE_ENV === 'production') {
+    app.use(morgan('combined'));
+} else {
+    app.use(morgan('dev'));
+}
 
 // ===========================================
-// ROUTES
+// DATABASE CONNECTION
+// ===========================================
+
+console.log('🔍 Using Railway MySQL variables for connection');
+
+let dbConfig;
+if (process.env.MYSQLHOST) {
+    // Railway production environment
+    dbConfig = {
+        host: process.env.MYSQLHOST,
+        port: process.env.MYSQLPORT || 3306,
+        user: process.env.MYSQLUSER,
+        password: process.env.MYSQLPASSWORD,
+        database: process.env.MYSQLDATABASE,
+        ssl: true
+    };
+} else {
+    // Local development fallback
+    dbConfig = {
+        host: process.env.DB_HOST || 'localhost',
+        port: process.env.DB_PORT || 3306,
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        database: process.env.DB_NAME || 'madeus_ecommerce'
+    };
+}
+
+console.log('🔍 Database connection config:', dbConfig);
+console.log('🔌 Attempting database connection...');
+
+const db = new Database();
+
+// Test database connection
+db.testConnection()
+    .then(() => {
+        console.log('✅ Database connection successful');
+    })
+    .catch((error) => {
+        console.error('❌ Database connection failed:', error);
+    });
+
+// ===========================================
+// BASIC ROUTES
 // ===========================================
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-    res.json({ 
+    res.json({
         status: 'OK', 
         timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV,
+        environment: process.env.NODE_ENV || 'development',
         version: '1.0.0'
     });
 });
 
-// API root
+// Main API endpoint  
 app.get('/api', (req, res) => {
     res.json({
-        message: 'Madeus E-commerce API',
-        version: '1.0.0',
+        message: 'Madeus Skincare API v1.0',
+        status: 'active',
         endpoints: {
-            auth: '/api/auth',
-            products: '/api/products',
-            orders: '/api/orders',
-            users: '/api/users',
-            admin: '/api/admin',
-            seo: '/api/seo',
-            setup: '/api/setup',
-            health: '/api/health'
-        }
-    });
-});
-
-// Temporary setup routes (until route files are pushed)
-app.get('/api/setup/test', (req, res) => {
-    res.json({
-        success: true,
-        message: 'Setup route is working!',
+            health: 'GET /api/health',
+            auth: 'POST /api/auth/*',
+            products: 'GET /api/products',
+            setup: 'GET /api/setup/*'
+        },
         timestamp: new Date().toISOString()
     });
 });
 
-app.get('/api/setup/debug', async (req, res) => {
-    try {
-        const { db } = require('./config/database');
-        
-        // Show connection config (without password)
-        const config = {
-            host: process.env.DB_HOST || 'not set',
-            port: process.env.DB_PORT || 'not set', 
-            user: process.env.DB_USER || 'not set',
-            database: process.env.DB_NAME || 'not set',
-            hasPassword: !!process.env.DB_PASS,
-            hasDatabaseUrl: !!process.env.DATABASE_URL,
-            mysqlHost: process.env.MYSQLHOST || 'not set',
-            mysqlPort: process.env.MYSQLPORT || 'not set',
-            mysqlUser: process.env.MYSQLUSER || 'not set',
-            mysqlDatabase: process.env.MYSQLDATABASE || 'not set',
-            hasMysqlPassword: !!process.env.MYSQLPASSWORD
-        };
-        
-        // Test basic query
-        try {
-            await db.query('SELECT 1 as test');
-            config.connectionTest = 'SUCCESS';
-        } catch (error) {
-            config.connectionTest = `FAILED: ${error.message}`;
-        }
-        
-        res.json({
-            success: true,
-            config: config,
-            timestamp: new Date().toISOString()
-        });
-        
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            error: error.message,
-            timestamp: new Date().toISOString()
-        });
-    }
-});
-
-// Temporary products endpoint removed - now handled by routes/products.js
-
-app.post('/api/setup/create-tables', async (req, res) => {
-    try {
-        const { db } = require('./config/database');
-        
-        // Create users table
-        await db.query(`
-            CREATE TABLE IF NOT EXISTS users (
-                id INT PRIMARY KEY AUTO_INCREMENT,
-                name VARCHAR(255) NOT NULL,
-                email VARCHAR(255) UNIQUE NOT NULL,
-                password VARCHAR(255) NOT NULL,
-                phone VARCHAR(20),
-                skin_type VARCHAR(50),
-                role ENUM('customer', 'admin') DEFAULT 'customer',
-                is_verified BOOLEAN DEFAULT FALSE,
-                is_active BOOLEAN DEFAULT TRUE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            )
-        `);
-
-        // Create categories table
-        await db.query(`
-            CREATE TABLE IF NOT EXISTS categories (
-                id INT PRIMARY KEY AUTO_INCREMENT,
-                name VARCHAR(100) NOT NULL,
-                slug VARCHAR(100) UNIQUE NOT NULL,
-                description TEXT,
-                is_active BOOLEAN DEFAULT TRUE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-
-        // Create products table
-        await db.query(`
-            CREATE TABLE IF NOT EXISTS products (
-                id INT PRIMARY KEY AUTO_INCREMENT,
-                name VARCHAR(255) NOT NULL,
-                slug VARCHAR(255) UNIQUE NOT NULL,
-                description TEXT,
-                short_description VARCHAR(500),
-                price DECIMAL(10,2) NOT NULL,
-                compare_price DECIMAL(10,2),
-                featured_image VARCHAR(255),
-                sku VARCHAR(100) UNIQUE,
-                category_id INT,
-                brand VARCHAR(100),
-                stock INT DEFAULT 0,
-                rating DECIMAL(3,2) DEFAULT 0,
-                reviews_count INT DEFAULT 0,
-                is_active BOOLEAN DEFAULT TRUE,
-                is_featured BOOLEAN DEFAULT FALSE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (category_id) REFERENCES categories(id)
-            )
-        `);
-
-        // Create orders table
-        await db.query(`
-            CREATE TABLE IF NOT EXISTS orders (
-                id INT PRIMARY KEY AUTO_INCREMENT,
-                user_id INT,
-                order_number VARCHAR(50) UNIQUE NOT NULL,
-                subtotal DECIMAL(10,2) NOT NULL,
-                total_amount DECIMAL(10,2) NOT NULL,
-                status ENUM('pending', 'confirmed', 'shipped', 'delivered', 'cancelled') DEFAULT 'pending',
-                payment_status ENUM('pending', 'paid', 'failed', 'refunded') DEFAULT 'pending',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users(id)
-            )
-        `);
-
-        // Create order_items table
-        await db.query(`
-            CREATE TABLE IF NOT EXISTS order_items (
-                id INT PRIMARY KEY AUTO_INCREMENT,
-                order_id INT NOT NULL,
-                product_id INT NOT NULL,
-                quantity INT NOT NULL,
-                unit_price DECIMAL(10,2) NOT NULL,
-                total_price DECIMAL(10,2) NOT NULL,
-                FOREIGN KEY (order_id) REFERENCES orders(id),
-                FOREIGN KEY (product_id) REFERENCES products(id)
-            )
-        `);
-
-        res.json({
-            success: true,
-            message: 'Database tables created successfully!',
-            tables: ['users', 'categories', 'products', 'orders', 'order_items']
-        });
-
-    } catch (error) {
-        console.error('Table creation error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to create tables',
-            error: error.message
-        });
-    }
-});
-
-app.post('/api/setup/sample-data', async (req, res) => {
-    try {
-        const { db } = require('./config/database');
-        
-        // Insert categories
-        await db.query(`
-            INSERT IGNORE INTO categories (name, slug, description) VALUES
-            ('Yüz Bakımı', 'yuz-bakimi', 'Yüz için özel bakım ürünleri'),
-            ('Vücut Bakımı', 'vucut-bakimi', 'Vücut için nemlendirici ve bakım ürünleri'),
-            ('Güneş Koruma', 'gunes-koruma', 'SPF korumalı güneş kremi ürünleri')
-        `);
-
-        // Insert sample products
-        await db.query(`
-            INSERT IGNORE INTO products (name, slug, description, short_description, price, compare_price, featured_image, sku, category_id, brand, stock, is_featured) VALUES
-            ('Anti-Aging Serum', 'anti-aging-serum', 'Yaşlanma karşıtı yoğun bakım serumu', 'Kırışıklık ve yaşlanma belirtilerini azaltır', 299.90, 399.90, '/images/anti-aging-serum.jpg', 'MDS-001', 1, 'Madeus', 50, true),
-            ('Hyaluronic Nemlendirici', 'hyaluronic-nemlendirici', 'Yoğun nemlendirici krem', 'Hyalüronik asit ile derin nemlendirme', 249.90, 329.90, '/images/hyaluronic-cream.jpg', 'MDS-002', 1, 'Madeus', 30, true),
-            ('Vitamin C Serum', 'vitamin-c-serum', 'Aydınlatıcı vitamin C serumu', 'Cilt tonunu eşitler ve aydınlatır', 199.90, 259.90, '/images/vitamin-c-serum.jpg', 'MDS-003', 1, 'Madeus', 40, true),
-            ('Güneş Kremi SPF 50', 'gunes-kremi-spf-50', 'Yüksek koruma güneş kremi', 'UVA/UVB koruması ile geniş spektrum', 149.90, 199.90, '/images/sunscreen-spf50.jpg', 'MDS-004', 3, 'Madeus', 60, false),
-            ('Vücut Losyonu', 'vucut-losyonu', 'Günlük vücut nemlendirici', 'Tüm vücut için nemlendirici losyon', 89.90, 119.90, '/images/body-lotion.jpg', 'MDS-005', 2, 'Madeus', 25, false),
-            ('Göz Çevresi Kremi', 'goz-cevresi-kremi', 'Göz çevresi özel bakım kremi', 'Göz altı morlukları ve kırışıklıklar için', 179.90, 229.90, '/images/eye-cream.jpg', 'MDS-006', 1, 'Madeus', 35, true)
-        `);
-
-        res.json({
-            success: true,
-            message: 'Sample data inserted successfully!',
-            data: {
-                categories: 3,
-                products: 6
-            }
-        });
-
-    } catch (error) {
-        console.error('Sample data insertion error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to insert sample data',
-            error: error.message
-        });
-    }
-});
-
-// Apply auth rate limiter to auth routes
-app.use('/api/auth', authLimiter);
-
-// Route imports - load existing routes individually
-const fs = require('fs');
-const path = require('path');
-
-// Helper function to safely load routes
-function loadRoute(routePath, mountPath) {
-    try {
-        if (fs.existsSync(path.join(__dirname, routePath))) {
-            app.use(mountPath, require(routePath));
-            console.log(`✅ Loaded route: ${mountPath}`);
-        } else {
-            console.log(`❌  Route file not found: ${routePath}`);
-        }
-    } catch (error) {
-        console.error(`❌ Error loading route ${mountPath}:`, error.message);
-    }
-}
-
-// Load existing routes
-loadRoute('./routes/auth.js', '/api/auth');
-loadRoute('./routes/products.js', '/api/products');
-loadRoute('./routes/seo.js', '/api/seo');
-loadRoute('./routes/setup.js', '/api/setup');
-
-// ===================================
-// TEMPORARY EMAIL ENDPOINTS (Direct)
-// ===================================
+// ===========================================
+// EMAIL TEST ENDPOINTS
+// ===========================================
 
 // Email configuration check
 app.get('/api/setup/email-config', (req, res) => {
-    const config = {
+    console.log('🚀 Email configuration check:', {
         host: process.env.EMAIL_HOST || 'not set',
         port: process.env.EMAIL_PORT || 'not set',
         user: process.env.EMAIL_USER || 'not set',
@@ -369,35 +160,37 @@ app.get('/api/setup/email-config', (req, res) => {
         secure: process.env.EMAIL_SECURE || 'not set',
         from: process.env.EMAIL_FROM || 'not set',
         frontendUrl: process.env.FRONTEND_URL || 'not set'
-    };
-    
-    console.log('🚀 Email configuration check:', config);
-    
+    });
+
     res.json({
         success: true,
         message: 'Email configuration retrieved',
-        config: config,
-        isConfigured: !!(config.host !== 'not set' && config.user !== 'not set' && config.hasPassword)
+        config: {
+            host: process.env.EMAIL_HOST,
+            port: process.env.EMAIL_PORT,
+            user: process.env.EMAIL_USER,
+            hasPassword: !!process.env.EMAIL_PASS,
+            secure: process.env.EMAIL_SECURE,
+            from: process.env.EMAIL_FROM,
+            frontendUrl: process.env.FRONTEND_URL
+        },
+        isConfigured: !!(process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASS)
     });
 });
 
 // Email connection test
 app.get('/api/setup/email-connection', async (req, res) => {
     try {
-        console.log('🚀 Email connection test başlatılıyor...');
-        
-        const emailService = require('./utils/email');
+        console.log('🚀 Testing email connection...');
         const result = await emailService.testConnection();
         
-        console.log('✅ Email connection test result:', result);
-        
         res.json({
-            success: true,
-            message: 'Email connection test completed successfully',
-            result: result,
+            success: result.success,
+            message: result.message,
+            verified: result.verified,
             timestamp: new Date().toISOString()
         });
-        
+
     } catch (error) {
         console.error('❌ Email connection test error:', error);
         res.status(500).json({
@@ -409,24 +202,29 @@ app.get('/api/setup/email-connection', async (req, res) => {
     }
 });
 
-// Test email endpoint
+// Send test email
 app.post('/api/setup/test-email', async (req, res) => {
     try {
-        const { email = 'test@example.com', type = 'welcome' } = req.body;
+        const { email, type = 'welcome' } = req.body;
         
-        console.log('🚀 Email test başlatılıyor:', { email, type });
-        
-        const emailService = require('./utils/email');
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                error: 'Email address is required'
+            });
+        }
+
+        console.log(`🚀 Sending ${type} test email to: ${email}`);
+
         let result;
-        
         if (type === 'welcome') {
             result = await emailService.sendWelcomeEmail({
-                name: 'Test Kullanıcı',
+                name: 'Test Kullanici',
                 email: email
             });
         } else if (type === 'verification') {
             result = await emailService.sendVerificationEmail({
-                name: 'Test Kullanıcı',
+                name: 'Test Kullanici',
                 email: email
             }, 'test-verification-token-123456');
         } else {
@@ -457,7 +255,6 @@ app.post('/api/setup/test-email', async (req, res) => {
         res.status(500).json({
             success: false,
             error: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
             emailConfig: {
                 host: process.env.EMAIL_HOST || 'not set',
                 port: process.env.EMAIL_PORT || 'not set',
@@ -476,9 +273,8 @@ app.post('/api/setup/direct-email-test', async (req, res) => {
         const { email = 'test@example.com' } = req.body;
         const nodemailer = require('nodemailer');
         
-        console.log('🚀 Direct nodemailer test başlatılıyor...');
+        console.log('🚀 Direct nodemailer test baslatiliyor...');
         
-        // Create transporter directly
         const transporter = nodemailer.createTransport({
             host: process.env.EMAIL_HOST,
             port: parseInt(process.env.EMAIL_PORT),
@@ -492,12 +288,10 @@ app.post('/api/setup/direct-email-test', async (req, res) => {
             }
         });
         
-        // Test connection
         console.log('🚀 Testing connection...');
         const verified = await transporter.verify();
         console.log('✅ Connection verified:', verified);
         
-        // Send test email
         console.log('🚀 Sending test email...');
         const info = await transporter.sendMail({
             from: process.env.EMAIL_FROM,
@@ -531,10 +325,39 @@ app.post('/api/setup/direct-email-test', async (req, res) => {
     }
 });
 
-// Routes to be created later
+// ===========================================
+// DYNAMIC ROUTE LOADING
+// ===========================================
+
+const fs = require('fs');
+const path = require('path');
+
+function loadRoute(routePath, mountPath) {
+    try {
+        if (fs.existsSync(routePath)) {
+            const route = require(routePath);
+            app.use(mountPath, route);
+            console.log(`✅ Loaded route: ${mountPath}`);
+        } else {
+            console.log(`⚠️ Route file not found: ${routePath}`);
+        }
+    } catch (error) {
+        console.error(`❌ Error loading route ${mountPath}:`, error.message);
+    }
+}
+
+// Load routes
+loadRoute('./routes/auth.js', '/api/auth');
+loadRoute('./routes/products.js', '/api/products');  
+loadRoute('./routes/seo.js', '/api/seo');
+loadRoute('./routes/setup.js', '/api/setup');
+
 console.log('🚀 Routes to be created: orders, users, admin, payment');
 
-// 404 handler
+// ===========================================
+// 404 HANDLER
+// ===========================================
+
 app.use('*', (req, res) => {
     res.status(404).json({
         error: 'Endpoint not found',
@@ -545,8 +368,7 @@ app.use('*', (req, res) => {
             'POST /api/auth/login',
             'POST /api/auth/register',
             'GET /api/products',
-            'GET /api/orders',
-            'GET /api/users/profile'
+            'GET /api/setup/email-config'
         ]
     });
 });
@@ -555,7 +377,6 @@ app.use('*', (req, res) => {
 // ERROR HANDLING
 // ===========================================
 
-// Global error handler
 app.use((err, req, res, next) => {
     console.error('Error occurred:', {
         message: err.message,
@@ -567,17 +388,14 @@ app.use((err, req, res, next) => {
         timestamp: new Date().toISOString()
     });
 
-    // Determine error status
     const statusCode = err.statusCode || err.status || 500;
     
-    // Prepare error response
     const errorResponse = {
         error: true,
         message: err.message || 'Internal Server Error',
         timestamp: new Date().toISOString()
     };
 
-    // Add stack trace in development
     if (process.env.NODE_ENV === 'development') {
         errorResponse.stack = err.stack;
         errorResponse.details = err;
@@ -592,7 +410,18 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5002;
 
-// Graceful shutdown handler
+const server = app.listen(PORT, () => {
+    console.log('🚀 Madeus E-commerce Backend Server Started');
+    console.log('==========================================');
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🚪 Port: ${PORT}`);
+    console.log(`📡 API URL: http://localhost:${PORT}/api`);
+    console.log(`❤️  Health Check: http://localhost:${PORT}/api/health`);
+    console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
+    console.log('==========================================');
+});
+
+// Graceful shutdown
 process.on('SIGTERM', () => {
     console.log('SIGTERM received, shutting down gracefully');
     server.close(() => {
@@ -609,17 +438,4 @@ process.on('SIGINT', () => {
     });
 });
 
-// Start server
-const server = app.listen(PORT, () => {
-    console.log('🚀 Madeus E-commerce Backend Server Started');
-    console.log('==========================================');
-    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🚪 Port: ${PORT}`);
-    console.log(`📡 API URL: http://localhost:${PORT}/api`);
-    console.log(`❤️  Health Check: http://localhost:${PORT}/api/health`);
-    console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
-    console.log('==========================================');
-});
-
-// Export app for testing
-module.exports = app;
+module.exports = app; 
