@@ -70,7 +70,7 @@ class EmailService {
         
         console.log('📧 Final transporter config:', JSON.stringify(config, null, 2));
         
-        return nodemailer.createTransporter(config);
+        return nodemailer.createTransport(config);
     }
 
     async sendMail(mailOptions) {
