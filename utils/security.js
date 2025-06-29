@@ -49,3 +49,4 @@ const securityConfig = {
 };
 
 module.exports = securityConfig; 
+ 

@@ -533,8 +533,7 @@ router.post('/refresh', authenticateToken, async (req, res) => {
     }
 });
 
-module.exports = router; 
-            'user_sessions',
+module.exports = router;             'user_sessions',
             {
                 token_hash: newTokenHash,
                 expires_at: expiresAt
