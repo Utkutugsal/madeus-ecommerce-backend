@@ -11,6 +11,47 @@ const router = express.Router();
 // Trendyol Madeus mağazasından alınan gerçek ürün verileri
 const mockProducts = [
   {
+    id: 7,
+    name: "%100 Doğal Sivrisinek, Sinek Ve Kene Kovucu Sprey",
+    slug: "madeus-dogal-sivrisinek-kovucu-sprey-100ml",
+    description: "Bebek ve çocuklar için %100 doğal sivrisinek, sinek ve kene kovucu sprey. Kimyasal içermez, güvenle kullanılabilir.",
+    longDescription: "%100 doğal sivrisinek, sinek ve kene kovucu sprey. Bebek ve çocuklar için güvenle kullanılabilir. Doğal aktif bileşenlerle formüle edilmiş bu sprey, zararlı kimyasallar içermeden etkili koruma sağlar. Bebek ve çocukların hassas cildi için özel olarak geliştirilmiştir. Sivrisinek, sinek ve kene gibi zararlı böceklere karşı uzun süreli koruma sağlar.",
+    price: 89.90,
+    originalPrice: 129.90,
+    discount: 31,
+    category: "Baby & Child Care",
+    brand: "Madeus",
+    stock: 2, // "Son 2 Ürün!"
+    rating: 4.9,
+    reviewCount: 23,
+    mainImage: "/images/products/madeus-repellent-1.webp",
+    images: [
+      "/images/products/madeus-repellent-1.webp",
+      "/images/products/madeus-repellent-2.webp",
+      "/images/products/madeus-repellent-3.webp",
+      "/images/products/madeus-repellent-4.webp",
+      "/images/products/madeus-repellent-5.webp",
+      "/images/products/madeus-repellent-6.webp",
+      "/images/products/madeus-repellent-7.webp"
+    ],
+    ingredients: ["Doğal Esansiyel Yağlar", "Sitronella", "Lavanta Yağı", "Neem Yağı", "Aloe Vera"],
+    skinType: ["Bebek Cildi", "Çocuk Cildi", "Hassas Cilt"],
+    benefits: ["Sivrisinek Kovucu", "Sinek Kovucu", "Kene Kovucu", "Doğal Koruma", "Kimyasal Free"],
+    usage: "Ciltten 15-20 cm uzaklıktan spreyleyin. 2-3 saatte bir tekrarlayın. Göz çevresinden kaçının.",
+    features: ["100% Doğal", "Kimyasal İçermez", "Bebek Güvenli", "PETA Onaylı", "Vegan"],
+    volume: "100ml",
+    tags: ["doğal", "bebek", "çocuk", "sivrisinek-kovucu", "kimyasal-free", "repellent"],
+    isNew: true,
+    isBestSeller: false,
+    isFeatured: true,
+    trendyolUrl: "https://www.trendyol.com/madeus/100-dogal-sivrisinek-sinek-ve-kene-kovucu-sprey-bebek-cocuk-kimyasal-icermez-100-ml-p-944516808",
+    stockStatus: "limited", // Son 2 ürün
+    ageGroup: "0-12 yaş",
+    activeIngredients: "Sitronella Oil, Lavanta Oil",
+    certification: "PETA Approved",
+    safetyNote: "Bebek ve çocuklarda test edilmiştir. Alerjik reaksiyon durumunda kullanımı bırakın."
+  },
+  {
     id: 1,
     name: "Madeus Vitamin C Serum",
     slug: "madeus-vitamin-c-serum",
