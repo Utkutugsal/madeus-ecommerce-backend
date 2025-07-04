@@ -533,24 +533,4 @@ router.post('/refresh', authenticateToken, async (req, res) => {
     }
 });
 
-module.exports = router;             'user_sessions',
-            {
-                token_hash: newTokenHash,
-                expires_at: expiresAt
-            },
-            'user_id = ? AND token_hash = ?',
-            [req.user.userId, oldTokenHash]
-        );
-
-        res.json({
-            message: 'Token refreshed successfully',
-            token: newToken
-        });
-
-    } catch (error) {
-        console.error('Token refresh error:', error);
-        res.status(500).json({ error: 'Token refresh failed' });
-    }
-});
-
 module.exports = router; 
