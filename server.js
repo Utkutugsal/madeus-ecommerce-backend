@@ -7,7 +7,7 @@ const morgan = require('morgan');
 const compression = require('compression');
 require('dotenv').config();
 
-const Database = require('./config/database');
+const { Database } = require('./config/database');
 const emailService = require('./utils/email');
 
 const app = express();
