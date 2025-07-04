@@ -348,7 +348,8 @@ function loadRoute(routePath, mountPath) {
 
 // Load routes
 loadRoute('./routes/auth.js', '/api/auth');
-loadRoute('./routes/products.js', '/api/products');  
+// loadRoute('./routes/products.js', '/api/products'); // DEACTIVATED - Using DB version
+loadRoute('./routes/products-db.js', '/api/products');  
 loadRoute('./routes/seo.js', '/api/seo');
 loadRoute('./routes/setup.js', '/api/setup');
 
