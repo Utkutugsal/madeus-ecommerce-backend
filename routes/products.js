@@ -1,8 +1,119 @@
 const express = require('express');
 const { body, query, validationResult } = require('express-validator');
-const db = require('../config/database');
+const { Database } = require('../config/database');
 
 const router = express.Router();
+const db = new Database();
+
+// ===========================================
+// DATABASE FUNCTIONS
+// ===========================================
+
+// Database'e ürün kaydetme fonksiyonu
+async function insertProductToDatabase(product) {
+  const query = `
+    INSERT INTO products (
+      id, name, slug, description, short_description, price, compare_price,
+      featured_image, gallery_images, sku, brand, ingredients, skin_type,
+      stock, rating, reviews_count, category_id, is_active, is_featured,
+      meta_title, meta_description, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+    ON DUPLICATE KEY UPDATE
+      name = VALUES(name),
+      price = VALUES(price),
+      stock = VALUES(stock),
+      updated_at = NOW()
+  `;
+
+  const values = [
+    product.id,
+    product.name,
+    product.slug,
+    product.description || product.longDescription,
+    product.description,
+    product.price,
+    product.originalPrice || product.compare_price,
+    product.mainImage || product.featured_image,
+    JSON.stringify(product.images || []),
+    `MADEUS-${product.id}`,
+    product.brand,
+    JSON.stringify(product.ingredients || []),
+    JSON.stringify(product.skinType || []),
+    product.stock,
+    product.rating,
+    product.reviewCount || 0,
+    1, // Default category ID
+    true,
+    product.isFeatured || false,
+    product.name,
+    product.description
+  ];
+
+  try {
+    await db.query(query, values);
+    console.log(`✅ Ürün database'e kaydedildi: ${product.name}`);
+    return true;
+  } catch (error) {
+    console.error(`❌ Ürün kaydetme hatası: ${product.name}`, error);
+    return false;
+  }
+}
+
+// Database'den ürünleri getirme fonksiyonu
+async function getProductsFromDatabase(filters = {}) {
+  try {
+    let query = `
+      SELECT 
+        id, name, slug, description, short_description as shortDescription,
+        price, compare_price as originalPrice, featured_image as mainImage,
+        gallery_images as images, sku, brand, ingredients, skin_type as skinType,
+        stock, rating, reviews_count as reviewCount, is_featured as isFeatured,
+        created_at, updated_at
+      FROM products 
+      WHERE is_active = TRUE
+    `;
+    
+    const values = [];
+
+    // Filtreleme
+    if (filters.category) {
+      query += ` AND brand = ?`;
+      values.push(filters.category);
+    }
+
+    if (filters.featured) {
+      query += ` AND is_featured = TRUE`;
+    }
+
+    if (filters.limit) {
+      query += ` LIMIT ?`;
+      values.push(parseInt(filters.limit));
+    }
+
+    query += ` ORDER BY created_at DESC`;
+
+    const results = await db.query(query, values);
+    
+    // JSON alanlarını parse et
+    return results.map(product => ({
+      ...product,
+      images: JSON.parse(product.images || '[]'),
+      ingredients: JSON.parse(product.ingredients || '[]'),
+      skinType: JSON.parse(product.skinType || '[]'),
+      discount: product.originalPrice ? 
+        Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0,
+      tags: [],
+      benefits: [],
+      features: [],
+      isNew: false,
+      isBestSeller: product.rating >= 4.5
+    }));
+
+  } catch (error) {
+    console.error('❌ Database\'den ürün getirme hatası:', error);
+    return [];
+  }
+}
 
 // ===========================================
 // PRODUCT ROUTES

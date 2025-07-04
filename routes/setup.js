@@ -1,5 +1,5 @@
 const express = require('express');
-const Database = require('../config/database');
+const { Database } = require('../config/database');
 const emailService = require('../utils/email');
 
 const router = express.Router();
@@ -666,158 +666,172 @@ router.post('/send-verification', async (req, res) => {
     }
 });
 
-module.exports = router; 
-// ===================================
-// EMAIL TESTING ENDPOINTS
-// ===================================
+// Mock products for migration
+const mockProducts = [
+  {
+    id: 7,
+    name: "%100 Doğal Sivrisinek, Sinek Ve Kene Kovucu Sprey",
+    slug: "madeus-dogal-sivrisinek-kovucu-sprey-100ml",
+    description: "Bebek ve çocuklar için %100 doğal sivrisinek, sinek ve kene kovucu sprey. Kimyasal içermez, güvenle kullanılabilir.",
+    price: 89.90,
+    originalPrice: 129.90,
+    mainImage: "/images/products/madeus-repellent-1.webp",
+    stock: 2,
+    rating: 4.9,
+    reviewCount: 23,
+    brand: "Madeus",
+    isFeatured: true,
+    trendyolUrl: "https://www.trendyol.com/madeus/100-dogal-sivrisinek-sinek-ve-kene-kovucu-sprey-bebek-cocuk-kimyasal-icermez-100-ml-p-944516808"
+  },
+  {
+    id: 1,
+    name: "Madeus Vitamin C Serum",
+    slug: "madeus-vitamin-c-serum", 
+    description: "Cilde parlaklık ve canlılık kazandıran güçlü antioksidan vitamin C serumu.",
+    price: 299.99,
+    originalPrice: 399.99,
+    mainImage: "/images/products/madeus-vitamin-c-serum-main.jpg",
+    stock: 50,
+    rating: 4.8,
+    reviewCount: 124,
+    brand: "Madeus",
+    isFeatured: true
+  },
+  {
+    id: 2,
+    name: "Madeus Hydra Moisture Cream",
+    slug: "madeus-hydra-moisture-cream",
+    description: "24 saat etkili nemlendirici krem. Hyaluronic acid ve ceramide içeriği ile derin nemlendirme sağlar.",
+    price: 199.99,
+    originalPrice: 249.99,
+    mainImage: "/images/products/madeus-hydra-moisture-main.jpg",
+    stock: 75,
+    rating: 4.6,
+    reviewCount: 89,
+    brand: "Madeus",
+    isFeatured: true
+  }
+];
 
-// Test email endpoint
-router.post('/test-email', async (req, res) => {
-    try {
-        const { email = 'test@example.com', type = 'welcome' } = req.body;
-        
-        console.log('🧪 Email test başlatılıyor:', { email, type });
-        
-        let result;
-        
-        if (type === 'welcome') {
-            result = await emailService.sendWelcomeEmail({
-                name: 'Test Kullanıcı',
-                email: email
-            });
-        } else if (type === 'verification') {
-            result = await emailService.sendVerificationEmail({
-                name: 'Test Kullanıcı',
-                email: email
-            }, 'test-verification-token-123456');
-        } else {
-            return res.status(400).json({
-                success: false,
-                error: 'Invalid email type. Use "welcome" or "verification"'
-            });
-        }
-        
-        console.log('📧 Email test result:', result);
-        
-        res.json({
-            success: true,
-            message: `Test ${type} email sent successfully to ${email}`,
-            result: result,
-            emailConfig: {
-                host: process.env.EMAIL_HOST,
-                port: process.env.EMAIL_PORT,
-                user: process.env.EMAIL_USER,
-                hasPassword: !!process.env.EMAIL_PASS,
-                from: process.env.EMAIL_FROM,
-                secure: process.env.EMAIL_SECURE
-            }
-        });
-        
-    } catch (error) {
-        console.error('❌ Test email error:', error);
-        res.status(500).json({
-            success: false,
-            error: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
-            emailConfig: {
-                host: process.env.EMAIL_HOST || 'not set',
-                port: process.env.EMAIL_PORT || 'not set',
-                user: process.env.EMAIL_USER || 'not set',
-                hasPassword: !!process.env.EMAIL_PASS,
-                from: process.env.EMAIL_FROM || 'not set',
-                secure: process.env.EMAIL_SECURE || 'not set'
-            }
-        });
-    }
-});
-
-// Check email configuration
-router.get('/email-config', (req, res) => {
-    const config = {
-        host: process.env.EMAIL_HOST || 'not set',
-        port: process.env.EMAIL_PORT || 'not set',
-        user: process.env.EMAIL_USER || 'not set',
-        hasPassword: !!process.env.EMAIL_PASS,
-        secure: process.env.EMAIL_SECURE || 'not set',
-        from: process.env.EMAIL_FROM || 'not set',
-        frontendUrl: process.env.FRONTEND_URL || 'not set'
-    };
+// Database migration endpoint
+router.post('/migrate-products', async (req, res) => {
+  const db = new Database();
+  
+  try {
+    console.log('🚀 Database migration başlatılıyor...');
     
-    console.log('📧 Email configuration check:', config);
+    // Test connection
+    await db.testConnection();
+    console.log('✅ Database bağlantısı başarılı');
+    
+    // Create products table if not exists
+    const createTableQuery = `
+      CREATE TABLE IF NOT EXISTS products (
+        id INT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        slug VARCHAR(255) UNIQUE NOT NULL,
+        description TEXT,
+        price DECIMAL(10,2) NOT NULL,
+        compare_price DECIMAL(10,2),
+        featured_image VARCHAR(255),
+        stock INT DEFAULT 0,
+        rating DECIMAL(3,2) DEFAULT 0,
+        reviews_count INT DEFAULT 0,
+        brand VARCHAR(100),
+        is_active BOOLEAN DEFAULT TRUE,
+        is_featured BOOLEAN DEFAULT FALSE,
+        trendyol_url VARCHAR(500),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `;
+    
+    await db.query(createTableQuery);
+    console.log('✅ Products tablosu hazır');
+    
+    let insertedCount = 0;
+    
+    // Insert each product
+    for (const product of mockProducts) {
+      const insertQuery = `
+        INSERT INTO products (
+          id, name, slug, description, price, compare_price, featured_image,
+          stock, rating, reviews_count, brand, is_active, is_featured, trendyol_url
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          price = VALUES(price),
+          stock = VALUES(stock),
+          rating = VALUES(rating),
+          updated_at = NOW()
+      `;
+      
+      const values = [
+        product.id,
+        product.name,
+        product.slug,
+        product.description,
+        product.price,
+        product.originalPrice || null,
+        product.mainImage,
+        product.stock,
+        product.rating,
+        product.reviewCount || 0,
+        product.brand,
+        true,
+        product.isFeatured || false,
+        product.trendyolUrl || null
+      ];
+      
+      await db.query(insertQuery, values);
+      insertedCount++;
+      console.log(`✅ ${product.name} kaydedildi`);
+    }
+    
+    // Get final count
+    const countResult = await db.query('SELECT COUNT(*) as count FROM products WHERE is_active = TRUE');
     
     res.json({
-        success: true,
-        message: 'Email configuration retrieved',
-        config: config,
-        isConfigured: !!(config.host !== 'not set' && config.user !== 'not set' && config.hasPassword)
+      success: true,
+      message: 'Products başarıyla database\'e migrate edildi',
+      inserted: insertedCount,
+      totalInDatabase: countResult[0].count,
+      products: mockProducts.map(p => ({ id: p.id, name: p.name, price: p.price }))
     });
+    
+  } catch (error) {
+    console.error('❌ Migration hatası:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: 'Database migration başarısız'
+    });
+  }
 });
 
-// Email service connection test
-router.get('/email-connection', async (req, res) => {
-    try {
-        console.log('🔍 Email connection test başlatılıyor...');
-        
-        // Test connection using nodemailer verify
-        const result = await emailService.testConnection();
-        
-        console.log('✅ Email connection test result:', result);
-        
-        res.json({
-            success: true,
-            message: 'Email connection test completed successfully',
-            result: result,
-            timestamp: new Date().toISOString()
-        });
-        
-    } catch (error) {
-        console.error('❌ Email connection test error:', error);
-        res.status(500).json({
-            success: false,
-            error: error.message,
-            message: 'Email connection test failed',
-            timestamp: new Date().toISOString()
-        });
-    }
-});
-
-// Send verification email to specific user
-router.post('/send-verification', async (req, res) => {
-    try {
-        const { userId, email, name } = req.body;
-        
-        if (!email || !name) {
-            return res.status(400).json({
-                success: false,
-                error: 'Email and name are required'
-            });
-        }
-        
-        // Generate verification token
-        const crypto = require('crypto');
-        const verificationToken = crypto.randomBytes(32).toString('hex');
-        
-        console.log('📧 Verification email gönderiliyor:', { email, name });
-        
-        const result = await emailService.sendVerificationEmail({
-            name: name,
-            email: email
-        }, verificationToken);
-        
-        res.json({
-            success: true,
-            message: 'Verification email sent successfully',
-            result: result,
-            verificationToken: verificationToken // Dev environment için
-        });
-        
-    } catch (error) {
-        console.error('❌ Verification email error:', error);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
+// Test database connection
+router.get('/database-test', async (req, res) => {
+  const db = new Database();
+  
+  try {
+    await db.testConnection();
+    
+    // Test products table
+    const products = await db.query('SELECT COUNT(*) as count FROM products WHERE is_active = TRUE');
+    
+    res.json({
+      success: true,
+      message: 'Database bağlantısı başarılı',
+      productsCount: products[0].count,
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: 'Database bağlantı hatası'
+    });
+  }
 });
 
 module.exports = router; 
