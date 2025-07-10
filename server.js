@@ -131,6 +131,16 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// Railway healthcheck endpoint (without /api prefix)
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'OK',
+        message: 'Madeus Skincare API is healthy',
+        timestamp: new Date().toISOString(),
+        version: '1.0.0'
+    });
+});
+
 // Main API endpoint  
 app.get('/api', (req, res) => {
     res.json({
