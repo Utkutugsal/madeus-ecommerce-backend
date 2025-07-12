@@ -613,12 +613,12 @@ router.post('/addresses', authenticateToken, async (req, res) => {
             first_name,
             last_name,
             address_line_1,
-            address_line_2,
+            address_line_2 || null, // undefined'ı null'a çevir
             city,
             district,
             postal_code,
             phone,
-            is_default || false
+            is_default ? 1 : 0 // boolean'ı integer'a çevir
         ];
         
         console.log('📍 SQL:', sql);
