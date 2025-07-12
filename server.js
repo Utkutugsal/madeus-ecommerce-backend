@@ -361,6 +361,7 @@ function loadRoute(routePath, mountPath) {
 
 // Load routes
 loadRoute('./routes/auth.js', '/api/auth');
+loadRoute('./routes/users.js', '/api/users');
 loadRoute('./routes/products.js', '/api/products'); // ACTIVATED - Using fixed version
 // loadRoute('./routes/products-db.js', '/api/products'); // DEACTIVATED - Old version with bugs
 loadRoute('./routes/orders.js', '/api/orders');
@@ -368,7 +369,7 @@ loadRoute('./routes/seo.js', '/api/seo');
 loadRoute('./routes/setup.js', '/api/setup');
 loadRoute('./routes/admin.js', '/api/admin');
 
-console.log('🚀 Routes loaded: auth, products, orders, seo, setup, admin');
+console.log('🚀 Routes loaded: auth, users, products, orders, seo, setup, admin');
 
 // ===========================================
 // 404 HANDLER
