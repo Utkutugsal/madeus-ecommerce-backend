@@ -74,8 +74,8 @@ async function getProductsFromDatabase(filters = {}) {
 
     // Toplam ürün sayısı için sorgu
     const countQuery = query.replace(/SELECT .*? FROM/, 'SELECT COUNT(*) as total FROM');
-    const [totalResult] = await db.query(countQuery, values);
-    const total = totalResult.total;
+    const countResult = await db.query(countQuery, values);
+    const total = countResult && countResult.length > 0 ? countResult[0].total : 0;
 
     // Sıralama
     const sortBy = filters.sortBy || 'created_at';

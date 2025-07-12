@@ -53,9 +53,7 @@ const registerValidation = [
     body('name').trim().isLength({ min: 2, max: 50 }).withMessage('Name must be between 2-50 characters'),
     body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
     body('password')
-        .isLength({ min: 8, max: 128 }).withMessage('Password must be between 8-128 characters')
-        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
-        .withMessage('Password must contain at least: 1 lowercase letter, 1 uppercase letter, 1 number, and 1 special character (@$!%*?&)'),
+        .isLength({ min: 6, max: 128 }).withMessage('Password must be between 6-128 characters'),
     body('phone').optional().isMobilePhone('tr-TR').withMessage('Valid Turkish phone number required'),
     body('name').custom((value) => {
         // XSS protection - no HTML tags allowed
