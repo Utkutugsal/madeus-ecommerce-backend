@@ -1,9 +1,12 @@
 const express = require('express');
 const { body, query, validationResult } = require('express-validator');
-const { db } = require('../config/database');
+const { Database } = require('../config/database');
 const emailService = require('../utils/email');
 
 const router = express.Router();
+
+// Database instance'ını oluştur
+const db = new Database();
 
 // ===========================================
 // DATABASE FUNCTIONS
@@ -18,7 +21,7 @@ async function getProductsFromDatabase(filters = {}) {
         p.price, p.compare_price as originalPrice, p.featured_image as mainImage,
         p.gallery_images as images, p.sku, p.brand, p.ingredients, p.skin_type as skinType,
         p.stock, p.rating, p.reviews_count as reviewCount, p.is_featured as isFeatured,
-        p.is_new as isNew, p.created_at, p.updated_at, c.name as categoryName
+        p.created_at, p.updated_at, c.name as categoryName
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       WHERE p.is_active = TRUE
@@ -44,7 +47,8 @@ async function getProductsFromDatabase(filters = {}) {
     }
 
     if (filters.isNew) {
-      query += ` AND p.is_new = TRUE`;
+      // is_new kolonu yok, bunun yerine son 30 gün içinde eklenen ürünleri getir
+      query += ` AND p.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)`;
     }
 
     if (filters.bestSeller) {
@@ -73,19 +77,16 @@ async function getProductsFromDatabase(filters = {}) {
     const [totalResult] = await db.query(countQuery, values);
     const total = totalResult.total;
 
-
     // Sıralama
     const sortBy = filters.sortBy || 'created_at';
     const order = filters.order === 'desc' ? 'DESC' : 'ASC';
     query += ` ORDER BY p.${sortBy} ${order}`;
-
 
     // Sayfalama
     const limit = parseInt(filters.limit) || 10;
     const offset = parseInt(filters.offset) || 0;
     query += ` LIMIT ? OFFSET ?`;
     values.push(limit, offset);
-
 
     const results = await db.query(query, values);
     
@@ -100,7 +101,8 @@ async function getProductsFromDatabase(filters = {}) {
       tags: [], // Tags veritabanında ayrı bir tabloda olabilir, şimdilik boş
       benefits: [],
       features: [],
-      isBestSeller: product.rating >= 4.5
+      isBestSeller: product.rating >= 4.5,
+      isNew: new Date(product.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Son 30 gün
     }));
 
     return {

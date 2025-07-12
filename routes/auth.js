@@ -3,10 +3,13 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { body, validationResult } = require('express-validator');
-const db = require('../config/database');
+const { Database } = require('../config/database');
 const emailService = require('../utils/email');
 
 const router = express.Router();
+
+// Database instance'ını oluştur
+const db = new Database();
 
 // ===========================================
 // MIDDLEWARE
