@@ -46,6 +46,50 @@ router.get('/create-user-sessions', async (req, res) => {
     }
 });
 
+// Create user_addresses table
+router.get('/create-user-addresses', async (req, res) => {
+    try {
+        const db = new Database();
+        
+        // Create user_addresses table
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS user_addresses (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                user_id INT NOT NULL,
+                title VARCHAR(100) NOT NULL,
+                first_name VARCHAR(100) NOT NULL,
+                last_name VARCHAR(100) NOT NULL,
+                address_line_1 VARCHAR(255) NOT NULL,
+                address_line_2 VARCHAR(255),
+                city VARCHAR(100) NOT NULL,
+                district VARCHAR(100) NOT NULL,
+                postal_code VARCHAR(20) NOT NULL,
+                phone VARCHAR(20) NOT NULL,
+                is_default BOOLEAN DEFAULT FALSE,
+                address_type ENUM('billing', 'shipping', 'both') DEFAULT 'both',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_user_id (user_id),
+                INDEX idx_is_default (is_default)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+
+        res.json({
+            success: true,
+            message: 'user_addresses table created successfully!',
+            note: 'Users can now save and manage their addresses.'
+        });
+
+    } catch (error) {
+        console.error('User addresses table creation error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to create user_addresses table',
+            error: error.message
+        });
+    }
+});
+
 // Simple test route to verify setup is working
 router.get('/test', (req, res) => {
     res.json({
