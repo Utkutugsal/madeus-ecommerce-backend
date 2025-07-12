@@ -1468,4 +1468,126 @@ router.post('/populate-products', async (req, res) => {
     }
 });
 
+// Fix orders table - add missing columns
+router.get('/fix-orders-table', async (req, res) => {
+    try {
+        const db = new Database();
+        
+        // Check if orders table exists and get its structure
+        const columns = await db.query(`
+            SELECT COLUMN_NAME 
+            FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'orders'
+        `);
+        
+        const existingColumns = columns.map(col => col.COLUMN_NAME);
+        console.log('Existing columns in orders table:', existingColumns);
+        
+        // Add missing columns
+        const columnsToAdd = [];
+        
+        if (!existingColumns.includes('user_email')) {
+            columnsToAdd.push('ADD COLUMN user_email VARCHAR(255)');
+        }
+        if (!existingColumns.includes('user_name')) {
+            columnsToAdd.push('ADD COLUMN user_name VARCHAR(255)');
+        }
+        if (!existingColumns.includes('user_phone')) {
+            columnsToAdd.push('ADD COLUMN user_phone VARCHAR(20)');
+        }
+        if (!existingColumns.includes('shipping_address')) {
+            columnsToAdd.push('ADD COLUMN shipping_address JSON');
+        }
+        if (!existingColumns.includes('total_amount')) {
+            columnsToAdd.push('ADD COLUMN total_amount DECIMAL(10,2)');
+        }
+        if (!existingColumns.includes('shipping_cost')) {
+            columnsToAdd.push('ADD COLUMN shipping_cost DECIMAL(10,2) DEFAULT 0');
+        }
+        if (!existingColumns.includes('status')) {
+            columnsToAdd.push('ADD COLUMN status ENUM("pending", "confirmed", "shipped", "delivered", "cancelled") DEFAULT "pending"');
+        }
+        if (!existingColumns.includes('created_at')) {
+            columnsToAdd.push('ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+        }
+        if (!existingColumns.includes('updated_at')) {
+            columnsToAdd.push('ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
+        }
+        
+        if (columnsToAdd.length > 0) {
+            const alterQuery = `ALTER TABLE orders ${columnsToAdd.join(', ')}`;
+            console.log('Executing ALTER query:', alterQuery);
+            await db.query(alterQuery);
+            
+            res.json({
+                success: true,
+                message: 'Orders table updated successfully!',
+                addedColumns: columnsToAdd,
+                note: 'Orders can now be created with all required fields.'
+            });
+        } else {
+            res.json({
+                success: true,
+                message: 'Orders table already has all required columns.',
+                existingColumns: existingColumns
+            });
+        }
+
+    } catch (error) {
+        console.error('Orders table fix error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fix orders table',
+            error: error.message
+        });
+    }
+});
+
+// Recreate orders table completely
+router.get('/recreate-orders-table', async (req, res) => {
+    try {
+        const db = new Database();
+        
+        // Drop existing table
+        await db.query(`DROP TABLE IF EXISTS orders`);
+        
+        // Create orders table with all required columns
+        await db.query(`
+            CREATE TABLE orders (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                user_id INT NOT NULL,
+                user_email VARCHAR(255) NOT NULL,
+                user_name VARCHAR(255) NOT NULL,
+                user_phone VARCHAR(20),
+                shipping_address JSON NOT NULL,
+                total_amount DECIMAL(10,2) NOT NULL,
+                shipping_cost DECIMAL(10,2) DEFAULT 0,
+                status ENUM('pending', 'confirmed', 'shipped', 'delivered', 'cancelled') DEFAULT 'pending',
+                payment_status ENUM('pending', 'paid', 'failed', 'refunded') DEFAULT 'pending',
+                order_number VARCHAR(50) UNIQUE,
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_user_id (user_id),
+                INDEX idx_status (status),
+                INDEX idx_created_at (created_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+
+        res.json({
+            success: true,
+            message: 'Orders table recreated successfully!',
+            note: 'All existing orders were deleted. New orders can now be created.'
+        });
+
+    } catch (error) {
+        console.error('Orders table recreation error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to recreate orders table',
+            error: error.message
+        });
+    }
+});
+
 module.exports = router; 
