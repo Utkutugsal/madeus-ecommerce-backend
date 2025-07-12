@@ -1543,19 +1543,23 @@ router.get('/fix-orders-table', async (req, res) => {
     }
 });
 
-// Recreate orders table completely
-router.get('/recreate-orders-table', async (req, res) => {
+// Recreate orders and order_items tables completely (with foreign key handling)
+router.get('/recreate-orders-complete', async (req, res) => {
     try {
         const db = new Database();
         
-        // Drop existing table
+        // Disable foreign key checks
+        await db.query(`SET FOREIGN_KEY_CHECKS = 0`);
+        
+        // Drop existing tables
+        await db.query(`DROP TABLE IF EXISTS order_items`);
         await db.query(`DROP TABLE IF EXISTS orders`);
         
         // Create orders table with all required columns
         await db.query(`
             CREATE TABLE orders (
                 id INT PRIMARY KEY AUTO_INCREMENT,
-                user_id INT NOT NULL,
+                user_id INT,
                 user_email VARCHAR(255) NOT NULL,
                 user_name VARCHAR(255) NOT NULL,
                 user_phone VARCHAR(20),
@@ -1573,18 +1577,37 @@ router.get('/recreate-orders-table', async (req, res) => {
                 INDEX idx_created_at (created_at)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `);
+        
+        // Create order_items table
+        await db.query(`
+            CREATE TABLE order_items (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                order_id INT NOT NULL,
+                product_id INT,
+                product_name VARCHAR(255) NOT NULL,
+                quantity INT NOT NULL,
+                price DECIMAL(10,2) NOT NULL,
+                total DECIMAL(10,2) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+                INDEX idx_order_id (order_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+        
+        // Re-enable foreign key checks
+        await db.query(`SET FOREIGN_KEY_CHECKS = 1`);
 
         res.json({
             success: true,
-            message: 'Orders table recreated successfully!',
+            message: 'Orders and order_items tables recreated successfully!',
             note: 'All existing orders were deleted. New orders can now be created.'
         });
 
     } catch (error) {
-        console.error('Orders table recreation error:', error);
+        console.error('Orders tables recreation error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to recreate orders table',
+            message: 'Failed to recreate orders tables',
             error: error.message
         });
     }
