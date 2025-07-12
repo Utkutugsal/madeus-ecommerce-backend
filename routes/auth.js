@@ -516,7 +516,7 @@ router.post('/logout', authenticateToken, async (req, res) => {
 router.get('/profile', authenticateToken, async (req, res) => {
     try {
         const user = await db.findOne(
-            'SELECT id, name, email, phone, skin_type, role, birth_date, gender, newsletter_subscribed, created_at FROM users WHERE id = ?',
+            'SELECT id, name, email, phone, skin_type, role, created_at FROM users WHERE id = ?',
             [req.user.userId]
         );
 
@@ -532,9 +532,6 @@ router.get('/profile', authenticateToken, async (req, res) => {
             phone: user.phone,
             skin_type: user.skin_type,
             role: user.role,
-            birth_date: user.birth_date,
-            gender: user.gender,
-            newsletter_subscribed: user.newsletter_subscribed,
             created_at: user.created_at
         });
 
