@@ -360,6 +360,115 @@ class EmailService {
         }
     }
 
+    async sendOrderNotification(orderDetails) {
+        try {
+            const { orderId, customerName, customerEmail, customerPhone, items, totalAmount, shippingCost, shippingAddress } = orderDetails;
+            
+            const itemsHtml = items.map(item => `
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${item.name}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">${item.quantity}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">${item.price} TL</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">${(item.quantity * item.price).toFixed(2)} TL</td>
+                </tr>
+            `).join('');
+
+            const htmlTemplate = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <title>🚨 YENİ SİPARİŞ ALINDI!</title>
+                </head>
+                <body style="font-family: 'Arial', sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; padding: 20px;">
+                    <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 30px;">
+                        <h1 style="color: white; margin: 0; font-size: 28px;">🚨 YENİ SİPARİŞ!</h1>
+                        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Sipariş #${orderId}</p>
+                    </div>
+                    
+                    <div style="background: #f8fafc; padding: 30px; border-radius: 10px; margin-bottom: 20px;">
+                        <h2 style="color: #dc2626; margin-bottom: 20px;">👤 Müşteri Bilgileri</h2>
+                        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                            <p><strong>Ad Soyad:</strong> ${customerName}</p>
+                            <p><strong>Email:</strong> ${customerEmail}</p>
+                            <p><strong>Telefon:</strong> ${customerPhone || 'Belirtilmemiş'}</p>
+                        </div>
+
+                        <h3 style="color: #dc2626; margin-bottom: 15px;">📦 Sipariş Detayları</h3>
+                        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: #f1f5f9;">
+                                        <th style="padding: 10px; text-align: left; border-bottom: 2px solid #e2e8f0;">Ürün</th>
+                                        <th style="padding: 10px; text-align: center; border-bottom: 2px solid #e2e8f0;">Adet</th>
+                                        <th style="padding: 10px; text-align: right; border-bottom: 2px solid #e2e8f0;">Fiyat</th>
+                                        <th style="padding: 10px; text-align: right; border-bottom: 2px solid #e2e8f0;">Toplam</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${itemsHtml}
+                                </tbody>
+                            </table>
+                            
+                            <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e2e8f0;">
+                                <p style="text-align: right; margin: 5px 0;"><strong>Kargo:</strong> ${shippingCost || 0} TL</p>
+                                <p style="text-align: right; margin: 5px 0; font-size: 18px; color: #dc2626;"><strong>TOPLAM: ${totalAmount} TL</strong></p>
+                            </div>
+                        </div>
+
+                        <h3 style="color: #dc2626; margin-bottom: 15px;">🏠 Teslimat Adresi</h3>
+                        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                            <p><strong>${shippingAddress?.title || 'Adres'}:</strong></p>
+                            <p>${shippingAddress?.fullName || customerName}</p>
+                            <p>${shippingAddress?.address || 'Adres bilgisi eksik'}</p>
+                            <p>${shippingAddress?.district || ''} ${shippingAddress?.city || ''} ${shippingAddress?.postalCode || ''}</p>
+                            <p><strong>Tel:</strong> ${shippingAddress?.phone || customerPhone || 'Belirtilmemiş'}</p>
+                        </div>
+                        
+                        <div style="background: #fef2f2; padding: 20px; border-radius: 8px; border-left: 4px solid #dc2626;">
+                            <p style="margin: 0; color: #dc2626; font-size: 16px;">
+                                <strong>⚡ HEMEN HAZIRLAYIP GÖNDERMELİSİN!</strong>
+                            </p>
+                            <p style="margin: 10px 0 0 0; color: #7f1d1d; font-size: 14px;">
+                                Sipariş zamanı: ${new Date().toLocaleString('tr-TR')}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; padding: 20px; border-top: 1px solid #e2e8f0;">
+                        <p style="margin: 0; color: #64748b; font-size: 14px;">
+                            © 2024 Madeus Skincare - Sipariş Bildirimi
+                        </p>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            const mailOptions = {
+                from: process.env.EMAIL_FROM || 'Madeus Skincare <noreply@madeusskincare.com>',
+                to: process.env.ADMIN_EMAIL || 'admin@madeusskincare.com',
+                subject: `🚨 YENİ SİPARİŞ #${orderId} - ${customerName} - ${totalAmount} TL`,
+                html: htmlTemplate
+            };
+
+            const result = await this.transporter.sendMail(mailOptions);
+            console.log('✅ Order notification email sent successfully:', result.messageId);
+            
+            return {
+                success: true,
+                messageId: result.messageId,
+                message: 'Order notification email sent successfully'
+            };
+        } catch (error) {
+            console.error('❌ Failed to send order notification email:', error);
+            return {
+                success: false,
+                error: error.message,
+                message: 'Failed to send order notification email'
+            };
+        }
+    }
+
     async sendCustomEmail(to, subject, htmlContent) {
         try {
             const mailOptions = {

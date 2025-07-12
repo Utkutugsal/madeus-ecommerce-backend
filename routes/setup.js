@@ -1,6 +1,7 @@
 const express = require('express');
 const { Database } = require('../config/database');
 const emailService = require('../utils/email');
+const bcrypt = require('bcryptjs');
 
 const router = express.Router();
 
@@ -13,8 +14,54 @@ router.get('/test', (req, res) => {
     });
 });
 
+// Create admin user
+router.get('/create-admin', async (req, res) => {
+    try {
+        const db = new Database();
+        
+        // Check if admin already exists
+        const existingAdmin = await db.query(
+            'SELECT id FROM users WHERE email = ? AND role = ?',
+            ['admin@madeusskincare.com', 'admin']
+        );
+
+        if (existingAdmin && existingAdmin.length > 0) {
+            return res.json({
+                success: false,
+                message: 'Admin user already exists'
+            });
+        }
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash('Admin123!', 10);
+
+        // Create admin user
+        await db.query(
+            'INSERT INTO users (name, email, password, role, is_verified) VALUES (?, ?, ?, ?, ?)',
+            ['Admin User', 'admin@madeusskincare.com', hashedPassword, 'admin', true]
+        );
+
+        res.json({
+            success: true,
+            message: 'Admin user created successfully!',
+            credentials: {
+                email: 'admin@madeusskincare.com',
+                password: 'Admin123!'
+            }
+        });
+
+    } catch (error) {
+        console.error('Admin creation error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to create admin user',
+            error: error.message
+        });
+    }
+});
+
 // Create database tables
-router.post('/create-tables', async (req, res) => {
+router.get('/create-tables', async (req, res) => {
     try {
         const db = new Database();
         
@@ -153,7 +200,7 @@ router.post('/create-tables', async (req, res) => {
 });
 
 // Insert sample data
-router.post('/sample-data', async (req, res) => {
+router.get('/sample-data', async (req, res) => {
     try {
         const db = new Database();
         

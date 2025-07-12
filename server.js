@@ -12,6 +12,9 @@ const emailService = require('./utils/email');
 
 const app = express();
 
+// Trust proxy for Railway
+app.set('trust proxy', 1);
+
 // ===========================================
 // MIDDLEWARE SETUP
 // ===========================================
@@ -360,11 +363,12 @@ function loadRoute(routePath, mountPath) {
 loadRoute('./routes/auth.js', '/api/auth');
 // loadRoute('./routes/products.js', '/api/products'); // DEACTIVATED - Using DB version
 loadRoute('./routes/products-db.js', '/api/products');  
+loadRoute('./routes/orders.js', '/api/orders');
 loadRoute('./routes/seo.js', '/api/seo');
 loadRoute('./routes/setup.js', '/api/setup');
 loadRoute('./routes/admin.js', '/api/admin');
 
-console.log('🚀 Routes loaded: auth, products, seo, setup, admin');
+console.log('🚀 Routes loaded: auth, products, orders, seo, setup, admin');
 
 // ===========================================
 // 404 HANDLER
