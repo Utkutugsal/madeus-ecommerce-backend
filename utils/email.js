@@ -24,8 +24,8 @@ class EmailService {
         const emailConfig = {
             service: 'gmail',
             auth: {
-                user: process.env.GMAIL_USER || 'noreply@madeusskincare.com
-                pass: process.env.GMAIL_PASS || '05319759947Utku
+                user: process.env.GMAIL_USER || 'noreply@madeusskincare.com',
+                pass: process.env.GMAIL_PASS || '05319759947Utku.
             },
             tls: {
                 rejectUnauthorized: false
