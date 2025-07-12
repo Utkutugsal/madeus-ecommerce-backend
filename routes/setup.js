@@ -5,6 +5,47 @@ const bcrypt = require('bcryptjs');
 
 const router = express.Router();
 
+// Create user_sessions table
+router.get('/create-user-sessions', async (req, res) => {
+    try {
+        const db = new Database();
+        
+        // Create user_sessions table
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS user_sessions (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                user_id INT NOT NULL,
+                token_hash VARCHAR(255) NOT NULL,
+                device_info TEXT,
+                ip_address VARCHAR(45),
+                is_active BOOLEAN DEFAULT TRUE,
+                expires_at TIMESTAMP NOT NULL,
+                logout_at TIMESTAMP NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_user_id (user_id),
+                INDEX idx_token_hash (token_hash),
+                INDEX idx_is_active (is_active),
+                INDEX idx_expires_at (expires_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+
+        res.json({
+            success: true,
+            message: 'user_sessions table created successfully!',
+            note: 'Users can now login and sessions will be tracked.'
+        });
+
+    } catch (error) {
+        console.error('User sessions table creation error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to create user_sessions table',
+            error: error.message
+        });
+    }
+});
+
 // Simple test route to verify setup is working
 router.get('/test', (req, res) => {
     res.json({
