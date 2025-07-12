@@ -90,6 +90,53 @@ router.get('/create-user-addresses', async (req, res) => {
     }
 });
 
+// Recreate user_addresses table (drop and create)
+router.get('/recreate-user-addresses', async (req, res) => {
+    try {
+        const db = new Database();
+        
+        // Drop existing table
+        await db.query(`DROP TABLE IF EXISTS user_addresses`);
+        
+        // Create user_addresses table
+        await db.query(`
+            CREATE TABLE user_addresses (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                user_id INT NOT NULL,
+                title VARCHAR(100) NOT NULL,
+                first_name VARCHAR(100) NOT NULL,
+                last_name VARCHAR(100) NOT NULL,
+                address_line_1 VARCHAR(255) NOT NULL,
+                address_line_2 VARCHAR(255),
+                city VARCHAR(100) NOT NULL,
+                district VARCHAR(100) NOT NULL,
+                postal_code VARCHAR(20) NOT NULL,
+                phone VARCHAR(20) NOT NULL,
+                is_default BOOLEAN DEFAULT FALSE,
+                address_type ENUM('billing', 'shipping', 'both') DEFAULT 'both',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_user_id (user_id),
+                INDEX idx_is_default (is_default)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+
+        res.json({
+            success: true,
+            message: 'user_addresses table recreated successfully!',
+            note: 'All existing addresses were deleted. Users can now save new addresses.'
+        });
+
+    } catch (error) {
+        console.error('User addresses table recreation error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to recreate user_addresses table',
+            error: error.message
+        });
+    }
+});
+
 // Simple test route to verify setup is working
 router.get('/test', (req, res) => {
     res.json({

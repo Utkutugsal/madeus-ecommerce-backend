@@ -594,16 +594,21 @@ router.post('/addresses', authenticateToken, async (req, res) => {
         // If this is default address, make others non-default
         if (is_default) {
             console.log('📍 Making other addresses non-default');
-            await db.update(
-                'user_addresses',
-                { is_default: false },
-                'user_id = ?',
+            await db.query(
+                'UPDATE user_addresses SET is_default = FALSE WHERE user_id = ?',
                 [req.user.userId]
             );
         }
 
-        const addressData = {
-            user_id: req.user.userId,
+        // Insert new address with direct SQL
+        const sql = `
+            INSERT INTO user_addresses 
+            (user_id, title, first_name, last_name, address_line_1, address_line_2, city, district, postal_code, phone, is_default) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        
+        const params = [
+            req.user.userId,
             title,
             first_name,
             last_name,
@@ -613,12 +618,13 @@ router.post('/addresses', authenticateToken, async (req, res) => {
             district,
             postal_code,
             phone,
-            is_default: is_default || false
-        };
+            is_default || false
+        ];
         
-        console.log('📍 Address data to insert:', addressData);
+        console.log('📍 SQL:', sql);
+        console.log('📍 Params:', params);
 
-        const result = await db.insert('user_addresses', addressData);
+        const result = await db.query(sql, params);
         
         console.log('📍 Insert result:', result);
 
