@@ -106,6 +106,10 @@ router.post('/register', registerValidation, async (req, res) => {
 
         const { name, email, password, phone, skin_type } = req.body;
 
+        console.log('📝 Registration request:', { name, email, phone, skin_type });
+        console.log('🔐 Password received:', password ? 'provided' : 'missing');
+        console.log('🔐 Password length:', password ? password.length : 0);
+
         // Check if user already exists
         const existingUser = await db.findOne(
             'SELECT id, email, is_verified FROM users WHERE email = ?',
@@ -119,7 +123,10 @@ router.post('/register', registerValidation, async (req, res) => {
                 });
             } else {
                 // User exists but not verified, update and resend verification
+                console.log('🔐 Hashing password for existing user update...');
                 const hashedPassword = await bcrypt.hash(password, parseInt(process.env.BCRYPT_ROUNDS) || 12);
+                console.log('🔐 Password hashed successfully for update');
+                
                 const verificationToken = crypto.randomBytes(32).toString('hex');
                 const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
@@ -151,13 +158,17 @@ router.post('/register', registerValidation, async (req, res) => {
         }
 
         // Hash password
+        console.log('🔐 Hashing password for new user...');
         const hashedPassword = await bcrypt.hash(password, parseInt(process.env.BCRYPT_ROUNDS) || 12);
+        console.log('🔐 Password hashed successfully');
+        console.log('🔐 Hash length:', hashedPassword.length);
 
         // Generate verification token
         const verificationToken = crypto.randomBytes(32).toString('hex');
         const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
         // Create user
+        console.log('💾 Creating user in database...');
         const result = await db.insert('users', {
             name,
             email,
@@ -169,6 +180,7 @@ router.post('/register', registerValidation, async (req, res) => {
             is_verified: false,
             role: 'customer'
         });
+        console.log('✅ User created with ID:', result.insertId);
 
         // Send verification email
         await emailService.sendVerificationEmail(
@@ -486,7 +498,7 @@ router.post('/logout', authenticateToken, async (req, res) => {
 router.get('/profile', authenticateToken, async (req, res) => {
     try {
         const user = await db.findOne(
-            'SELECT id, name, email, phone, skin_type, birth_date, gender, newsletter_subscribed, created_at FROM users WHERE id = ?',
+            'SELECT id, name, email, phone, skin_type, role, birth_date, gender, newsletter_subscribed, created_at FROM users WHERE id = ?',
             [req.user.userId]
         );
 
@@ -494,11 +506,148 @@ router.get('/profile', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        res.json({ user });
+        // Frontend'in beklediği format
+        res.json({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            skin_type: user.skin_type,
+            role: user.role,
+            birth_date: user.birth_date,
+            gender: user.gender,
+            newsletter_subscribed: user.newsletter_subscribed,
+            created_at: user.created_at
+        });
 
     } catch (error) {
         console.error('Get profile error:', error);
         res.status(500).json({ error: 'Failed to get profile' });
+    }
+});
+
+// Update profile
+router.put('/profile', authenticateToken, async (req, res) => {
+    try {
+        const { name, phone, skin_type, birth_date, gender } = req.body;
+        
+        await db.update(
+            'users',
+            { name, phone, skin_type, birth_date, gender },
+            'id = ?',
+            [req.user.userId]
+        );
+
+        res.json({ message: 'Profile updated successfully' });
+
+    } catch (error) {
+        console.error('Update profile error:', error);
+        res.status(500).json({ error: 'Failed to update profile' });
+    }
+});
+
+// Get user addresses
+router.get('/addresses', authenticateToken, async (req, res) => {
+    try {
+        const addresses = await db.query(
+            'SELECT * FROM user_addresses WHERE user_id = ? ORDER BY is_default DESC, created_at DESC',
+            [req.user.userId]
+        );
+
+        res.json(addresses || []);
+
+    } catch (error) {
+        console.error('Get addresses error:', error);
+        res.status(500).json({ error: 'Failed to get addresses' });
+    }
+});
+
+// Add address
+router.post('/addresses', authenticateToken, async (req, res) => {
+    try {
+        const { title, first_name, last_name, address_line_1, address_line_2, city, district, postal_code, phone, is_default } = req.body;
+        
+        // If this is default address, make others non-default
+        if (is_default) {
+            await db.update(
+                'user_addresses',
+                { is_default: false },
+                'user_id = ?',
+                [req.user.userId]
+            );
+        }
+
+        const result = await db.insert('user_addresses', {
+            user_id: req.user.userId,
+            title,
+            first_name,
+            last_name,
+            address_line_1,
+            address_line_2,
+            city,
+            district,
+            postal_code,
+            phone,
+            is_default: is_default || false
+        });
+
+        res.json({ 
+            message: 'Address added successfully',
+            addressId: result.insertId 
+        });
+
+    } catch (error) {
+        console.error('Add address error:', error);
+        res.status(500).json({ error: 'Failed to add address' });
+    }
+});
+
+// Update address
+router.put('/addresses/:id', authenticateToken, async (req, res) => {
+    try {
+        const addressId = parseInt(req.params.id);
+        const { title, first_name, last_name, address_line_1, address_line_2, city, district, postal_code, phone, is_default } = req.body;
+        
+        // If this is default address, make others non-default
+        if (is_default) {
+            await db.update(
+                'user_addresses',
+                { is_default: false },
+                'user_id = ?',
+                [req.user.userId]
+            );
+        }
+
+        await db.update(
+            'user_addresses',
+            { title, first_name, last_name, address_line_1, address_line_2, city, district, postal_code, phone, is_default: is_default || false },
+            'id = ? AND user_id = ?',
+            [addressId, req.user.userId]
+        );
+
+        res.json({ message: 'Address updated successfully' });
+
+    } catch (error) {
+        console.error('Update address error:', error);
+        res.status(500).json({ error: 'Failed to update address' });
+    }
+});
+
+// Delete address
+router.delete('/addresses/:id', authenticateToken, async (req, res) => {
+    try {
+        const addressId = parseInt(req.params.id);
+        
+        await db.query(
+            'DELETE FROM user_addresses WHERE id = ? AND user_id = ?',
+            [addressId, req.user.userId]
+        );
+
+        res.json({ message: 'Address deleted successfully' });
+
+    } catch (error) {
+        console.error('Delete address error:', error);
+        res.status(500).json({ error: 'Failed to delete address' });
     }
 });
 
