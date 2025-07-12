@@ -310,7 +310,7 @@ router.post('/login', loginValidation, async (req, res) => {
         };
 
         const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
-            expiresIn: process.env.JWT_EXPIRE || '24h'
+            expiresIn: '24h' // Sabit değer kullan
         });
 
         // Store session
