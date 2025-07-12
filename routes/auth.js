@@ -147,10 +147,17 @@ router.post('/register', registerValidation, async (req, res) => {
                 );
 
                 // Send verification email
-                await emailService.sendVerificationEmail(
-                    { name, email },
-                    verificationToken
-                );
+                try {
+                    await emailService.sendVerificationEmail(
+                        { name, email },
+                        verificationToken
+                    );
+                    console.log('✅ Verification email sent successfully');
+                } catch (emailError) {
+                    console.error('❌ Failed to send verification email:', emailError);
+                    // Email gönderim hatası kayıt işlemini durdurmasın
+                    // Kullanıcı manuel olarak email doğrulama yapabilir
+                }
 
                 return res.status(200).json({
                     message: 'Registration updated. Please check your email for verification.',
@@ -185,15 +192,24 @@ router.post('/register', registerValidation, async (req, res) => {
         console.log('✅ User created with ID:', result.insertId);
 
         // Send verification email
-        await emailService.sendVerificationEmail(
-            { name, email },
-            verificationToken
-        );
+        try {
+            await emailService.sendVerificationEmail(
+                { name, email },
+                verificationToken
+            );
+            console.log('✅ Verification email sent successfully');
+        } catch (emailError) {
+            console.error('❌ Failed to send verification email:', emailError);
+            // Email gönderim hatası kayıt işlemini durdurmasın
+            // Kullanıcı manuel olarak email doğrulama yapabilir
+        }
 
         res.status(201).json({
             message: 'User registered successfully. Please check your email for verification.',
             userId: result.insertId,
-            requires_verification: true
+            requires_verification: true,
+            email_sent: false, // Email gönderim durumu
+            note: 'Email verification will be available soon. You can login with your credentials.'
         });
 
     } catch (error) {

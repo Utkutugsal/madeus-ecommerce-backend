@@ -20,25 +20,21 @@ class EmailService {
     createTransporter() {
         console.log('🔧 Creating email transporter...');
         
+        // Gmail SMTP configuration for testing
         const emailConfig = {
-            host: process.env.EMAIL_HOST || 'srvc121.trwww.com',
-            port: parseInt(process.env.EMAIL_PORT) || 25,
-            secure: false, // No SSL/TLS
+            service: 'gmail',
             auth: {
-                user: process.env.EMAIL_USER || 'noreply@madeusskincare.com',
-                pass: process.env.EMAIL_PASS || '05319759947Utku%'
+                user: process.env.GMAIL_USER || 'noreply@madeusskincare.com
+                pass: process.env.GMAIL_PASS || '05319759947Utku
             },
             tls: {
                 rejectUnauthorized: false
-            },
-            ignoreTLS: true // Ignore TLS completely
+            }
         };
 
         console.log('📧 Email config:', {
-            host: emailConfig.host,
-            port: emailConfig.port,
-            user: emailConfig.auth.user,
-            secure: emailConfig.secure
+            service: emailConfig.service,
+            user: emailConfig.auth.user
         });
 
         return nodemailer.createTransport(emailConfig);
