@@ -580,10 +580,20 @@ router.get('/addresses', authenticateToken, async (req, res) => {
 // Add address
 router.post('/addresses', authenticateToken, async (req, res) => {
     try {
+        console.log('📍 Add address request received');
+        console.log('📍 User ID:', req.user.userId);
+        console.log('📍 Request body:', req.body);
+        
         const { title, first_name, last_name, address_line_1, address_line_2, city, district, postal_code, phone, is_default } = req.body;
+        
+        console.log('📍 Extracted data:', {
+            title, first_name, last_name, address_line_1, address_line_2, 
+            city, district, postal_code, phone, is_default
+        });
         
         // If this is default address, make others non-default
         if (is_default) {
+            console.log('📍 Making other addresses non-default');
             await db.update(
                 'user_addresses',
                 { is_default: false },
@@ -592,7 +602,7 @@ router.post('/addresses', authenticateToken, async (req, res) => {
             );
         }
 
-        const result = await db.insert('user_addresses', {
+        const addressData = {
             user_id: req.user.userId,
             title,
             first_name,
@@ -604,7 +614,13 @@ router.post('/addresses', authenticateToken, async (req, res) => {
             postal_code,
             phone,
             is_default: is_default || false
-        });
+        };
+        
+        console.log('📍 Address data to insert:', addressData);
+
+        const result = await db.insert('user_addresses', addressData);
+        
+        console.log('📍 Insert result:', result);
 
         res.json({ 
             message: 'Address added successfully',
@@ -612,7 +628,8 @@ router.post('/addresses', authenticateToken, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Add address error:', error);
+        console.error('❌ Add address error:', error);
+        console.error('❌ Error stack:', error.stack);
         res.status(500).json({ error: 'Failed to add address' });
     }
 });
