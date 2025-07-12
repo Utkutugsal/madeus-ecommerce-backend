@@ -60,6 +60,60 @@ router.get('/create-admin', async (req, res) => {
     }
 });
 
+// Fix users table - drop and recreate with all columns
+router.get('/fix-users-table', async (req, res) => {
+    try {
+        const db = new Database();
+        
+        // Disable foreign key checks
+        await db.query(`SET FOREIGN_KEY_CHECKS = 0`);
+        
+        // Drop users table if exists
+        await db.query(`DROP TABLE IF EXISTS users`);
+        
+        // Create users table with all required columns
+        await db.query(`
+            CREATE TABLE users (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                name VARCHAR(100) NOT NULL,
+                email VARCHAR(100) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                phone VARCHAR(20),
+                skin_type VARCHAR(100),
+                role ENUM('customer', 'admin') DEFAULT 'customer',
+                is_verified BOOLEAN DEFAULT FALSE,
+                verification_token VARCHAR(255),
+                verification_expires TIMESTAMP NULL,
+                reset_token VARCHAR(255),
+                reset_token_expires TIMESTAMP NULL,
+                login_attempts INT DEFAULT 0,
+                locked_until TIMESTAMP NULL,
+                last_login TIMESTAMP NULL,
+                is_active BOOLEAN DEFAULT TRUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            )
+        `);
+        
+        // Re-enable foreign key checks
+        await db.query(`SET FOREIGN_KEY_CHECKS = 1`);
+
+        res.json({
+            success: true,
+            message: 'Users table fixed successfully!',
+            note: 'All existing users were deleted. You can now register new users.'
+        });
+
+    } catch (error) {
+        console.error('Users table fix error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fix users table',
+            error: error.message
+        });
+    }
+});
+
 // Create database tables
 router.get('/create-tables', async (req, res) => {
     try {
