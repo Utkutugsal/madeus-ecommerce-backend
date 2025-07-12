@@ -109,6 +109,8 @@ router.post('/register', registerValidation, async (req, res) => {
         console.log('📝 Registration request:', { name, email, phone, skin_type });
         console.log('🔐 Password received:', password ? 'provided' : 'missing');
         console.log('🔐 Password length:', password ? password.length : 0);
+        console.log('🔐 Password actual value:', password);
+        console.log('🔐 Full request body:', req.body);
 
         // Check if user already exists
         const existingUser = await db.findOne(
