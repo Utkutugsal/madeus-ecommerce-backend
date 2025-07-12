@@ -361,8 +361,8 @@ function loadRoute(routePath, mountPath) {
 
 // Load routes
 loadRoute('./routes/auth.js', '/api/auth');
-// loadRoute('./routes/products.js', '/api/products'); // DEACTIVATED - Using DB version
-loadRoute('./routes/products-db.js', '/api/products');  
+loadRoute('./routes/products.js', '/api/products'); // ACTIVATED - Using fixed version
+// loadRoute('./routes/products-db.js', '/api/products'); // DEACTIVATED - Old version with bugs
 loadRoute('./routes/orders.js', '/api/orders');
 loadRoute('./routes/seo.js', '/api/seo');
 loadRoute('./routes/setup.js', '/api/setup');
