@@ -73,11 +73,16 @@ router.get('/create-tables', async (req, res) => {
                 email VARCHAR(100) UNIQUE NOT NULL,
                 password VARCHAR(255) NOT NULL,
                 phone VARCHAR(20),
+                skin_type VARCHAR(100),
                 role ENUM('customer', 'admin') DEFAULT 'customer',
                 is_verified BOOLEAN DEFAULT FALSE,
                 verification_token VARCHAR(255),
+                verification_expires TIMESTAMP NULL,
                 reset_token VARCHAR(255),
                 reset_token_expires TIMESTAMP NULL,
+                login_attempts INT DEFAULT 0,
+                locked_until TIMESTAMP NULL,
+                last_login TIMESTAMP NULL,
                 is_active BOOLEAN DEFAULT TRUE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -185,13 +190,28 @@ router.get('/create-tables', async (req, res) => {
             )
         `);
 
+        // Create user_sessions table
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS user_sessions (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                user_id INT NOT NULL,
+                token_hash VARCHAR(255) NOT NULL,
+                device_info TEXT,
+                ip_address VARCHAR(45),
+                is_active BOOLEAN DEFAULT TRUE,
+                expires_at TIMESTAMP NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        `);
+
         // Re-enable foreign key checks
         await db.query(`SET FOREIGN_KEY_CHECKS = 1`);
 
         res.json({
             success: true,
             message: 'Database tables created successfully!',
-            tables: ['users', 'categories', 'products', 'orders', 'order_items', 'order_status_history']
+            tables: ['users', 'categories', 'products', 'orders', 'order_items', 'order_status_history', 'user_sessions']
         });
 
     } catch (error) {

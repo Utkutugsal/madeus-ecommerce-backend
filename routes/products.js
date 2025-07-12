@@ -72,7 +72,7 @@ async function getProductsFromDatabase(filters = {}) {
         values.push(`%${filters.skinType}%`);
     }
 
-    // Toplam ürün sayısı için sorgu
+    // Toplam ürün sayısı için sorgu (LIMIT/OFFSET olmadan)
     const countQuery = query.replace(/SELECT .*? FROM/, 'SELECT COUNT(*) as total FROM');
     const countResult = await db.query(countQuery, values);
     const total = countResult && countResult.length > 0 ? countResult[0].total : 0;
@@ -82,13 +82,14 @@ async function getProductsFromDatabase(filters = {}) {
     const order = filters.order === 'desc' ? 'DESC' : 'ASC';
     query += ` ORDER BY p.${sortBy} ${order}`;
 
-    // Sayfalama
+    // Sayfalama - yeni parameters array'i oluştur
     const limit = parseInt(filters.limit) || 10;
     const offset = parseInt(filters.offset) || 0;
     query += ` LIMIT ? OFFSET ?`;
-    values.push(limit, offset);
-
-    const results = await db.query(query, values);
+    
+    // Products query için ayrı parameters array'i
+    const productsParams = [...values, limit, offset];
+    const results = await db.query(query, productsParams);
     
     // JSON alanlarını parse et
     const products = results.map(product => ({
