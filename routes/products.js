@@ -83,17 +83,16 @@ async function getProductsFromDatabase(filters = {}) {
     const order = filters.order === 'desc' ? 'DESC' : 'ASC';
     query += ` ORDER BY p.${sortBy} ${order}`;
 
-    // Sayfalama - main query için ayrı parameters array'i oluştur
+    // Sayfalama - LIMIT ve OFFSET'i doğrudan query'ye ekle
     const limit = Math.max(1, parseInt(filters.limit) || 10);
     const offset = Math.max(0, parseInt(filters.offset) || 0);
-    query += ` LIMIT ? OFFSET ?`;
+    query += ` LIMIT ${limit} OFFSET ${offset}`;
     
-    // Products query için ayrı parameters array'i (values + limit + offset)
-    const productsParams = [...values, limit, offset];
+    // Products query için sadece values array'ini kullan
     console.log('🔍 Products query:', query);
-    console.log('🔍 Products params:', productsParams);
+    console.log('🔍 Products params:', values);
     
-    const results = await db.query(query, productsParams);
+    const results = await db.query(query, values);
     
     // JSON alanlarını parse et
     const products = results.map(product => ({
