@@ -209,12 +209,16 @@ router.post('/login', loginValidation, async (req, res) => {
         );
 
         if (!user) {
+            console.log('❌ User not found:', email);
             return res.status(401).json({ error: 'Invalid email or password' });
         }
+
+        console.log('✅ User found:', user.email, 'ID:', user.id);
 
         // Check if account is locked
         if (user.locked_until && new Date() < new Date(user.locked_until)) {
             const lockTime = Math.ceil((new Date(user.locked_until) - new Date()) / 60000);
+            console.log('🔒 Account locked:', user.email, 'minutes remaining:', lockTime);
             return res.status(423).json({
                 error: 'Account temporarily locked',
                 minutes_remaining: lockTime
@@ -222,9 +226,15 @@ router.post('/login', loginValidation, async (req, res) => {
         }
 
         // Verify password
+        console.log('🔐 Verifying password for:', user.email);
+        console.log('🔐 Password from request:', password ? 'provided' : 'missing');
+        console.log('🔐 Stored password hash:', user.password ? 'exists' : 'missing');
+        
         const isPasswordValid = await bcrypt.compare(password, user.password);
+        console.log('🔐 Password valid:', isPasswordValid);
 
         if (!isPasswordValid) {
+            console.log('❌ Invalid password for:', user.email);
             // Increment login attempts
             const attempts = (user.login_attempts || 0) + 1;
             const maxAttempts = parseInt(process.env.MAX_LOGIN_ATTEMPTS) || 5;
@@ -244,12 +254,10 @@ router.post('/login', loginValidation, async (req, res) => {
             });
         }
 
-        // Check if email is verified
+        // Check if email is verified (warning only for now)
         if (!user.is_verified) {
-            return res.status(401).json({
-                error: 'Email not verified',
-                requires_verification: true
-            });
+            console.log('⚠️ User login without email verification:', user.email);
+            // Allow login but warn - we'll enforce this later
         }
 
         // Reset login attempts and update last login

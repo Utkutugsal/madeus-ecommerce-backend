@@ -28,7 +28,6 @@ async function getProductsFromDatabase(filters = {}) {
     `;
     
     const values = [];
-    const countQueryValues = [];
 
     // Filtreleme
     if (filters.category) {
@@ -74,7 +73,9 @@ async function getProductsFromDatabase(filters = {}) {
 
     // Toplam ürün sayısı için sorgu (LIMIT/OFFSET olmadan)
     const countQuery = query.replace(/SELECT .*? FROM/, 'SELECT COUNT(*) as total FROM');
-    const countResult = await db.query(countQuery, values);
+    // Count query için aynı values array'inin kopyasını kullan
+    const countValues = [...values];
+    const countResult = await db.query(countQuery, countValues);
     const total = countResult && countResult.length > 0 ? countResult[0].total : 0;
 
     // Sıralama
@@ -82,12 +83,12 @@ async function getProductsFromDatabase(filters = {}) {
     const order = filters.order === 'desc' ? 'DESC' : 'ASC';
     query += ` ORDER BY p.${sortBy} ${order}`;
 
-    // Sayfalama - yeni parameters array'i oluştur
+    // Sayfalama - main query için ayrı parameters array'i oluştur
     const limit = parseInt(filters.limit) || 10;
     const offset = parseInt(filters.offset) || 0;
     query += ` LIMIT ? OFFSET ?`;
     
-    // Products query için ayrı parameters array'i
+    // Products query için ayrı parameters array'i (values + limit + offset)
     const productsParams = [...values, limit, offset];
     const results = await db.query(query, productsParams);
     

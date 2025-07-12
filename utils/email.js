@@ -22,15 +22,16 @@ class EmailService {
         
         const emailConfig = {
             host: process.env.EMAIL_HOST || 'srvc121.trwww.com',
-            port: parseInt(process.env.EMAIL_PORT) || 465,
-            secure: process.env.EMAIL_SECURE === 'true' || true,
+            port: parseInt(process.env.EMAIL_PORT) || 25,
+            secure: false, // No SSL/TLS
             auth: {
                 user: process.env.EMAIL_USER || 'noreply@madeusskincare.com',
                 pass: process.env.EMAIL_PASS || '05319759947Utku%'
             },
             tls: {
                 rejectUnauthorized: false
-            }
+            },
+            ignoreTLS: true // Ignore TLS completely
         };
 
         console.log('📧 Email config:', {
