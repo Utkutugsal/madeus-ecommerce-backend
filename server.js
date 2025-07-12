@@ -362,8 +362,9 @@ loadRoute('./routes/auth.js', '/api/auth');
 loadRoute('./routes/products-db.js', '/api/products');  
 loadRoute('./routes/seo.js', '/api/seo');
 loadRoute('./routes/setup.js', '/api/setup');
+loadRoute('./routes/admin.js', '/api/admin');
 
-console.log('🚀 Routes to be created: orders, users, admin, payment');
+console.log('🚀 Routes loaded: auth, products, seo, setup, admin');
 
 // ===========================================
 // 404 HANDLER

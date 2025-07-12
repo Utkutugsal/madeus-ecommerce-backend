@@ -22,13 +22,15 @@ router.post('/create-tables', async (req, res) => {
         await db.query(`
             CREATE TABLE IF NOT EXISTS users (
                 id INT PRIMARY KEY AUTO_INCREMENT,
-                name VARCHAR(255) NOT NULL,
-                email VARCHAR(255) UNIQUE NOT NULL,
+                name VARCHAR(100) NOT NULL,
+                email VARCHAR(100) UNIQUE NOT NULL,
                 password VARCHAR(255) NOT NULL,
                 phone VARCHAR(20),
-                skin_type VARCHAR(50),
                 role ENUM('customer', 'admin') DEFAULT 'customer',
                 is_verified BOOLEAN DEFAULT FALSE,
+                verification_token VARCHAR(255),
+                reset_token VARCHAR(255),
+                reset_token_expires TIMESTAMP NULL,
                 is_active BOOLEAN DEFAULT TRUE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -89,10 +91,19 @@ router.post('/create-tables', async (req, res) => {
                 user_id INT,
                 order_number VARCHAR(50) UNIQUE NOT NULL,
                 subtotal DECIMAL(10,2) NOT NULL,
+                shipping_cost DECIMAL(10,2) DEFAULT 0,
+                tax_amount DECIMAL(10,2) DEFAULT 0,
                 total_amount DECIMAL(10,2) NOT NULL,
-                status ENUM('pending', 'confirmed', 'shipped', 'delivered', 'cancelled') DEFAULT 'pending',
+                status ENUM('pending', 'confirmed', 'preparing', 'shipped', 'delivered', 'cancelled') DEFAULT 'pending',
                 payment_status ENUM('pending', 'paid', 'failed', 'refunded') DEFAULT 'pending',
+                payment_method VARCHAR(50),
+                shipping_address JSON,
+                billing_address JSON,
+                admin_notes TEXT,
+                customer_notes TEXT,
+                tracking_number VARCHAR(100),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id)
             )
         `);
@@ -108,6 +119,20 @@ router.post('/create-tables', async (req, res) => {
                 total_price DECIMAL(10,2) NOT NULL,
                 FOREIGN KEY (order_id) REFERENCES orders(id),
                 FOREIGN KEY (product_id) REFERENCES products(id)
+            )
+        `);
+
+        // Create order_status_history table
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS order_status_history (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                order_id INT NOT NULL,
+                status VARCHAR(50) NOT NULL,
+                changed_by INT,
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (order_id) REFERENCES orders(id),
+                FOREIGN KEY (changed_by) REFERENCES users(id)
             )
         `);
 
