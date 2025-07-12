@@ -96,7 +96,9 @@ router.get('/create-tables', async (req, res) => {
             )
         `);
 
-        // Create products table
+        // Create products table (with proper foreign key handling)
+        await db.query(`SET FOREIGN_KEY_CHECKS = 0`);
+        
         await db.query(`
             DROP TABLE IF EXISTS products
         `);
@@ -183,10 +185,13 @@ router.get('/create-tables', async (req, res) => {
             )
         `);
 
+        // Re-enable foreign key checks
+        await db.query(`SET FOREIGN_KEY_CHECKS = 1`);
+
         res.json({
             success: true,
             message: 'Database tables created successfully!',
-            tables: ['users', 'categories', 'products', 'orders', 'order_items']
+            tables: ['users', 'categories', 'products', 'orders', 'order_items', 'order_status_history']
         });
 
     } catch (error) {
