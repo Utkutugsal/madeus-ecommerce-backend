@@ -49,26 +49,37 @@ router.post('/create-tables', async (req, res) => {
 
         // Create products table
         await db.query(`
-            CREATE TABLE IF NOT EXISTS products (
+            DROP TABLE IF EXISTS products
+        `);
+        
+        await db.query(`
+            CREATE TABLE products (
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 name VARCHAR(255) NOT NULL,
                 slug VARCHAR(255) UNIQUE NOT NULL,
                 description TEXT,
-                short_description VARCHAR(500),
+                short_description TEXT,
                 price DECIMAL(10,2) NOT NULL,
                 compare_price DECIMAL(10,2),
-                featured_image VARCHAR(255),
+                featured_image VARCHAR(500),
+                gallery_images JSON,
                 sku VARCHAR(100) UNIQUE,
-                category_id INT,
                 brand VARCHAR(100),
+                ingredients JSON,
+                skin_type JSON,
                 stock INT DEFAULT 0,
                 rating DECIMAL(3,2) DEFAULT 0,
                 reviews_count INT DEFAULT 0,
-                is_active BOOLEAN DEFAULT TRUE,
                 is_featured BOOLEAN DEFAULT FALSE,
+                is_active BOOLEAN DEFAULT TRUE,
+                category_id INT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (category_id) REFERENCES categories(id)
-            )
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_is_active (is_active),
+                INDEX idx_is_featured (is_featured),
+                INDEX idx_brand (brand),
+                INDEX idx_category (category_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `);
 
         // Create orders table
