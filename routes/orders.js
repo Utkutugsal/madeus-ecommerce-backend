@@ -107,9 +107,30 @@ router.post('/create', async (req, res) => {
             };
 
             await emailService.sendOrderNotification(orderDetails);
-            console.log('✅ Order notification email sent');
+            console.log('✅ Order notification email sent to admin');
         } catch (emailError) {
-            console.error('❌ Email notification error:', emailError);
+            console.error('❌ Admin email notification error:', emailError);
+            // Don't fail the order if email fails
+        }
+
+        // Send confirmation email to customer
+        try {
+            const orderDetails = {
+                orderNumber,
+                orderId,
+                customerName: user_name,
+                customerEmail: user_email,
+                customerPhone: user_phone,
+                items,
+                total: `${total_amount.toFixed(2)} TL`,
+                shippingCost: shipping_cost,
+                shippingAddress: shipping_address
+            };
+
+            await emailService.sendOrderConfirmationEmail(user_email, orderDetails);
+            console.log('✅ Order confirmation email sent to customer');
+        } catch (emailError) {
+            console.error('❌ Customer email confirmation error:', emailError);
             // Don't fail the order if email fails
         }
 

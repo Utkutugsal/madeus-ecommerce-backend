@@ -100,6 +100,65 @@ router.get('/orders', authenticateToken, async (req, res) => {
     }
 });
 
+// Get single order details
+router.get('/orders/:orderId', authenticateToken, async (req, res) => {
+    try {
+        const orderId = parseInt(req.params.orderId);
+        
+        // Get order details
+        const order = await db.findOne(`
+            SELECT 
+                o.id,
+                o.order_number,
+                o.total_amount,
+                o.shipping_cost,
+                o.status,
+                o.created_at,
+                o.updated_at,
+                o.shipping_address,
+                o.user_name,
+                o.user_email,
+                o.user_phone
+            FROM orders o
+            WHERE o.id = ? AND o.user_id = ?
+        `, [orderId, req.user.userId]);
+
+        if (!order) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        // Get order items
+        const items = await db.query(`
+            SELECT 
+                oi.id,
+                oi.product_id,
+                oi.product_name,
+                oi.quantity,
+                oi.price,
+                oi.total
+            FROM order_items oi
+            WHERE oi.order_id = ?
+        `, [orderId]);
+
+        // Parse shipping address
+        const shippingAddress = order.shipping_address ? 
+            JSON.parse(order.shipping_address) : null;
+
+        res.json({
+            success: true,
+            data: {
+                ...order,
+                items,
+                shipping_address: shippingAddress
+            }
+        });
+
+    } catch (error) {
+        console.error('Get order details error:', error);
+        res.status(500).json({ error: 'Failed to get order details' });
+    }
+});
+
 // Get user addresses
 router.get('/addresses', authenticateToken, async (req, res) => {
     try {
