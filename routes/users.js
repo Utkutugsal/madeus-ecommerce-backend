@@ -40,6 +40,11 @@ router.get('/orders', authenticateToken, async (req, res) => {
         const offset = (page - 1) * limit;
         
         console.log('🔍 Getting orders for user:', req.user.userId);
+        console.log('🔍 Query params:', {
+            userId: req.user.userId,
+            limit: parseInt(limit),
+            offset: parseInt(offset)
+        });
         
         // Get user orders
         const orders = await db.query(`
