@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const db = require('../config/database');
+const { Database } = require('../config/database');
+
+const db = new Database();
 
 // JWT token verification middleware
 const authenticateToken = async (req, res, next) => {
