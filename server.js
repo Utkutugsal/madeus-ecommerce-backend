@@ -298,6 +298,50 @@ async function initializeDatabase() {
                 } catch (error) {
                     console.log('⚠️ is_active column check failed:', error.message);
                 }
+
+                // Check if gallery_images column exists
+                try {
+                    const checkGallery = await db.query(`
+                        SELECT COLUMN_NAME 
+                        FROM INFORMATION_SCHEMA.COLUMNS 
+                        WHERE TABLE_NAME = 'products' 
+                        AND COLUMN_NAME = 'gallery_images'
+                    `);
+                    
+                    if (checkGallery.length === 0) {
+                        await db.query(`
+                            ALTER TABLE products 
+                            ADD COLUMN gallery_images TEXT DEFAULT NULL
+                        `);
+                        console.log('✅ gallery_images column added to products table');
+                    } else {
+                        console.log('✅ gallery_images column exists');
+                    }
+                } catch (error) {
+                    console.log('⚠️ gallery_images column check failed:', error.message);
+                }
+
+                // Check if brand column exists
+                try {
+                    const checkBrand = await db.query(`
+                        SELECT COLUMN_NAME 
+                        FROM INFORMATION_SCHEMA.COLUMNS 
+                        WHERE TABLE_NAME = 'products' 
+                        AND COLUMN_NAME = 'brand'
+                    `);
+                    
+                    if (checkBrand.length === 0) {
+                        await db.query(`
+                            ALTER TABLE products 
+                            ADD COLUMN brand VARCHAR(100) DEFAULT 'MADEUS'
+                        `);
+                        console.log('✅ brand column added to products table');
+                    } else {
+                        console.log('✅ brand column exists');
+                    }
+                } catch (error) {
+                    console.log('⚠️ brand column check failed:', error.message);
+                }
             }
         } catch (error) {
             console.log('⚠️ Products table check failed:', error.message);

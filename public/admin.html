@@ -713,6 +713,278 @@
         .hidden {
             display: none;
         }
+
+        /* New styles for product modal */
+        .form-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .form-section:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 15px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group.form-group-full {
+            flex: 1;
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            background: #f8fafc;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        .image-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .image-slots {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .image-slot {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border: 1px dashed #e2e8f0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .image-slot.has-image {
+            border: 1px solid #e2e8f0;
+            background: #e2e8f0;
+        }
+
+        .image-slot.has-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-slot .image-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-size: 20px;
+        }
+
+        .image-slot .image-placeholder i {
+            margin-bottom: 5px;
+        }
+
+        .image-slot .image-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .image-slot .remove-image {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            z-index: 1;
+        }
+
+        .image-slot .remove-image:hover {
+            background: #dc2626;
+        }
+
+        /* Advanced Product Modal Styles */
+        .form-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .form-section:last-child {
+            border-bottom: none;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #3b82f6;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-textarea {
+            height: 80px;
+            resize: vertical;
+        }
+
+        /* Image Gallery Styles */
+        .image-gallery {
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .image-slots {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .image-slot {
+            position: relative;
+            aspect-ratio: 1;
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            background: white;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .image-slot:hover {
+            border-color: #3b82f6;
+            background: #f0f9ff;
+        }
+
+        .image-slot.has-image {
+            border-style: solid;
+            border-color: #10b981;
+        }
+
+        .image-placeholder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #64748b;
+        }
+
+        .image-placeholder i {
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .image-placeholder span {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .image-input {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            right: 8px;
+            padding: 6px 8px;
+            font-size: 11px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .remove-image {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 20px;
+            height: 20px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 12px;
+            cursor: pointer;
+            display: none;
+        }
+
+        .image-slot.has-image .remove-image {
+            display: block;
+        }
+
+        .image-preview {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
     </style>
 </head>
 <body>
@@ -922,50 +1194,132 @@
 
     <!-- Product Modal -->
     <div id="productModal" class="modal-overlay">
-        <div class="modal" style="max-width: 600px;">
+        <div class="modal" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
             <div class="modal-header">
                 <h3 class="modal-title" id="productModalTitle">Yeni Ürün Ekle</h3>
             </div>
             <div class="modal-body">
-                <div class="form-group">
-                    <label for="productName">Ürün Adı</label>
-                    <input type="text" id="productName" placeholder="Ürün adını girin" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <!-- Basic Info -->
+                <div class="form-section">
+                    <h4 class="section-title">Temel Bilgiler</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productName">Ürün Adı</label>
+                            <input type="text" id="productName" placeholder="Ürün adını girin" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="productBrand">Marka</label>
+                            <input type="text" id="productBrand" placeholder="MADEUS" class="form-input">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="productDescription">Açıklama</label>
+                        <textarea id="productDescription" placeholder="Ürün açıklaması" class="form-textarea"></textarea>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="productDescription">Açıklama</label>
-                    <textarea id="productDescription" placeholder="Ürün açıklaması" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; height: 80px;"></textarea>
+
+                <!-- Price Info -->
+                <div class="form-section">
+                    <h4 class="section-title">Fiyat Bilgileri</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productPrice">Satış Fiyatı (₺)</label>
+                            <input type="number" id="productPrice" placeholder="0.00" step="0.01" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="productOriginalPrice">Orijinal Fiyat (₺)</label>
+                            <input type="number" id="productOriginalPrice" placeholder="0.00" step="0.01" class="form-input">
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="productPrice">Fiyat (₺)</label>
-                    <input type="number" id="productPrice" placeholder="0.00" step="0.01" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+
+                <!-- Category & Stock -->
+                <div class="form-section">
+                    <h4 class="section-title">Kategori & Stok</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productCategory">Kategori</label>
+                            <select id="productCategory" class="form-select">
+                                <option value="serum">Serum</option>
+                                <option value="cream">Krem</option>
+                                <option value="cleanser">Temizlik</option>
+                                <option value="mask">Maske</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="productStock">Stok Miktarı</label>
+                            <input type="number" id="productStock" placeholder="0" class="form-input">
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="productOriginalPrice">Orijinal Fiyat (₺)</label>
-                    <input type="number" id="productOriginalPrice" placeholder="0.00" step="0.01" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+
+                <!-- Image Gallery -->
+                <div class="form-section">
+                    <h4 class="section-title">Ürün Görselleri (En fazla 6 adet)</h4>
+                    <div class="image-gallery">
+                        <div class="image-slots">
+                            <div class="image-slot" data-index="0">
+                                <div class="image-placeholder">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Ana Görsel</span>
+                                </div>
+                                <input type="text" class="image-input" placeholder="Görsel URL'si">
+                                <button type="button" class="remove-image">×</button>
+                            </div>
+                            <div class="image-slot" data-index="1">
+                                <div class="image-placeholder">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Görsel 2</span>
+                                </div>
+                                <input type="text" class="image-input" placeholder="Görsel URL'si">
+                                <button type="button" class="remove-image">×</button>
+                            </div>
+                            <div class="image-slot" data-index="2">
+                                <div class="image-placeholder">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Görsel 3</span>
+                                </div>
+                                <input type="text" class="image-input" placeholder="Görsel URL'si">
+                                <button type="button" class="remove-image">×</button>
+                            </div>
+                            <div class="image-slot" data-index="3">
+                                <div class="image-placeholder">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Görsel 4</span>
+                                </div>
+                                <input type="text" class="image-input" placeholder="Görsel URL'si">
+                                <button type="button" class="remove-image">×</button>
+                            </div>
+                            <div class="image-slot" data-index="4">
+                                <div class="image-placeholder">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Görsel 5</span>
+                                </div>
+                                <input type="text" class="image-input" placeholder="Görsel URL'si">
+                                <button type="button" class="remove-image">×</button>
+                            </div>
+                            <div class="image-slot" data-index="5">
+                                <div class="image-placeholder">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Görsel 6</span>
+                                </div>
+                                <input type="text" class="image-input" placeholder="Görsel URL'si">
+                                <button type="button" class="remove-image">×</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="productCategory">Kategori</label>
-                    <select id="productCategory" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                        <option value="serum">Serum</option>
-                        <option value="cream">Krem</option>
-                        <option value="cleanser">Temizlik</option>
-                        <option value="mask">Maske</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="productStock">Stok Miktarı</label>
-                    <input type="number" id="productStock" placeholder="0" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                </div>
-                <div class="form-group">
-                    <label for="productImageUrl">Resim URL</label>
-                    <input type="text" id="productImageUrl" placeholder="https://example.com/image.jpg" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                </div>
-                <div class="form-group">
-                    <label for="productActive">Durum</label>
-                    <select id="productActive" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                        <option value="1">Aktif</option>
-                        <option value="0">Pasif</option>
-                    </select>
+
+                <!-- Status -->
+                <div class="form-section">
+                    <h4 class="section-title">Durum</h4>
+                    <div class="form-group">
+                        <label for="productActive">Ürün Durumu</label>
+                        <select id="productActive" class="form-select">
+                            <option value="1">Aktif</option>
+                            <option value="0">Pasif</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -996,6 +1350,7 @@
 
             init() {
                 this.bindEvents();
+                this.bindImageEvents();
                 
                 if (this.token) {
                     this.showDashboard();
@@ -1627,13 +1982,26 @@
                 
                 // Clear form
                 document.getElementById('productName').value = '';
+                document.getElementById('productBrand').value = ''; // Added
                 document.getElementById('productDescription').value = '';
                 document.getElementById('productPrice').value = '';
                 document.getElementById('productOriginalPrice').value = '';
                 document.getElementById('productCategory').value = 'serum';
                 document.getElementById('productStock').value = '';
-                document.getElementById('productImageUrl').value = '';
                 document.getElementById('productActive').value = '1';
+                
+                // Clear image slots
+                document.querySelectorAll('.image-slot').forEach(slot => {
+                    slot.classList.remove('has-image');
+                    slot.innerHTML = `
+                        <div class="image-placeholder">
+                            <i class="fas fa-plus"></i>
+                            <span>Görsel 1</span>
+                        </div>
+                        <input type="text" class="image-input" placeholder="Görsel URL'si">
+                        <button type="button" class="remove-image">×</button>
+                    `;
+                });
                 
                 document.getElementById('productModal').classList.add('active');
             }
@@ -1646,13 +2014,38 @@
                 
                 // Fill form
                 document.getElementById('productName').value = this.currentProduct.name;
+                document.getElementById('productBrand').value = this.currentProduct.brand || 'MADEUS';
                 document.getElementById('productDescription').value = this.currentProduct.description || '';
                 document.getElementById('productPrice').value = this.currentProduct.price;
                 document.getElementById('productOriginalPrice').value = this.currentProduct.original_price || '';
                 document.getElementById('productCategory').value = this.currentProduct.category;
                 document.getElementById('productStock').value = this.currentProduct.stock;
-                document.getElementById('productImageUrl').value = this.currentProduct.image_url || '';
                 document.getElementById('productActive').value = this.currentProduct.is_active;
+
+                // Fill image slots
+                const images = this.currentProduct.gallery_images 
+                    ? JSON.parse(this.currentProduct.gallery_images) 
+                    : [this.currentProduct.image_url];
+                
+                document.querySelectorAll('.image-slot').forEach((slot, index) => {
+                    const imageUrl = images[index] || '';
+                    const input = slot.querySelector('.image-input');
+                    
+                    if (imageUrl) {
+                        input.value = imageUrl;
+                        this.updateImageSlot(slot, imageUrl);
+                    } else {
+                        slot.classList.remove('has-image');
+                        slot.innerHTML = `
+                            <div class="image-placeholder">
+                                <i class="fas fa-plus"></i>
+                                <span>Görsel ${index + 1}</span>
+                            </div>
+                            <input type="text" class="image-input" placeholder="Görsel URL'si">
+                            <button type="button" class="remove-image">×</button>
+                        `;
+                    }
+                });
 
                 document.getElementById('productModal').classList.add('active');
             }
@@ -1668,15 +2061,19 @@
                 btn.disabled = true;
 
                 try {
+                    const imageUrls = this.collectImageUrls();
+                    
                     const productData = {
                         name: document.getElementById('productName').value,
+                        brand: document.getElementById('productBrand').value || 'MADEUS',
                         description: document.getElementById('productDescription').value,
                         price: parseFloat(document.getElementById('productPrice').value),
                         original_price: parseFloat(document.getElementById('productOriginalPrice').value) || null,
                         category: document.getElementById('productCategory').value,
                         stock: parseInt(document.getElementById('productStock').value) || 0,
-                        image_url: document.getElementById('productImageUrl').value,
-                        is_active: parseInt(document.getElementById('productActive').value)
+                        is_active: parseInt(document.getElementById('productActive').value),
+                        image_url: imageUrls[0] || '', // Main image
+                        gallery_images: JSON.stringify(imageUrls) // All images as JSON
                     };
 
                     const url = this.currentProduct ? 
@@ -1743,6 +2140,61 @@
                     mask: 'Maske'
                 };
                 return categoryMap[category] || category;
+            }
+
+            // Image Management Functions
+            updateImageSlot(slot, imageUrl) {
+                if (imageUrl) {
+                    slot.classList.add('has-image');
+                    slot.innerHTML = `
+                        <img src="${imageUrl}" alt="Product Image" class="image-preview">
+                        <input type="text" class="image-input" value="${imageUrl}" placeholder="Görsel URL'si">
+                        <button type="button" class="remove-image">×</button>
+                    `;
+                } else {
+                    slot.classList.remove('has-image');
+                    const index = slot.dataset.index;
+                    slot.innerHTML = `
+                        <div class="image-placeholder">
+                            <i class="fas fa-plus"></i>
+                            <span>Görsel ${parseInt(index) + 1}</span>
+                        </div>
+                        <input type="text" class="image-input" placeholder="Görsel URL'si">
+                        <button type="button" class="remove-image">×</button>
+                    `;
+                }
+            }
+
+            bindImageEvents() {
+                // Image input change events
+                document.addEventListener('input', (e) => {
+                    if (e.target.classList.contains('image-input')) {
+                        const slot = e.target.closest('.image-slot');
+                        const imageUrl = e.target.value.trim();
+                        this.updateImageSlot(slot, imageUrl);
+                    }
+                });
+
+                // Remove image events
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('remove-image')) {
+                        const slot = e.target.closest('.image-slot');
+                        const input = slot.querySelector('.image-input');
+                        input.value = '';
+                        this.updateImageSlot(slot, '');
+                    }
+                });
+            }
+
+            collectImageUrls() {
+                const imageUrls = [];
+                document.querySelectorAll('.image-slot .image-input').forEach(input => {
+                    const url = input.value.trim();
+                    if (url) {
+                        imageUrls.push(url);
+                    }
+                });
+                return imageUrls;
             }
         }
 

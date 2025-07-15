@@ -417,7 +417,7 @@ router.get('/products', adminAuth, async (req, res) => {
         const products = await db.query(`
             SELECT 
                 id, name, description, price, original_price, 
-                category, stock, image_url, is_active, 
+                category, stock, image_url, gallery_images, brand, is_active, 
                 created_at, updated_at
             FROM products
             ${whereClause}
@@ -491,7 +491,7 @@ router.post('/products', adminAuth, async (req, res) => {
         const db = new Database();
         const { 
             name, description, price, original_price, 
-            category, stock, image_url, is_active 
+            category, stock, image_url, gallery_images, brand, is_active 
         } = req.body;
         
         if (!name || !price || !category) {
@@ -504,12 +504,13 @@ router.post('/products', adminAuth, async (req, res) => {
         const result = await db.query(`
             INSERT INTO products (
                 name, description, price, original_price, 
-                category, stock, image_url, is_active, 
+                category, stock, image_url, gallery_images, brand, is_active, 
                 created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
         `, [
             name, description, price, original_price || price, 
-            category, stock || 0, image_url || '', is_active || 1
+            category, stock || 0, image_url || '', gallery_images || '[]', 
+            brand || 'MADEUS', is_active || 1
         ]);
         
         const newProduct = await db.query('SELECT * FROM products WHERE id = ?', [result.insertId]);
@@ -537,7 +538,7 @@ router.put('/products/:productId', adminAuth, async (req, res) => {
         const { productId } = req.params;
         const { 
             name, description, price, original_price, 
-            category, stock, image_url, is_active 
+            category, stock, image_url, gallery_images, brand, is_active 
         } = req.body;
         
         const updateFields = [];
@@ -576,6 +577,16 @@ router.put('/products/:productId', adminAuth, async (req, res) => {
         if (image_url !== undefined) {
             updateFields.push('image_url = ?');
             updateValues.push(image_url);
+        }
+        
+        if (gallery_images !== undefined) {
+            updateFields.push('gallery_images = ?');
+            updateValues.push(gallery_images);
+        }
+        
+        if (brand !== undefined) {
+            updateFields.push('brand = ?');
+            updateValues.push(brand);
         }
         
         if (is_active !== undefined) {
