@@ -82,7 +82,18 @@ router.get('/orders', authenticateToken, async (req, res) => {
             processedOrders.push({
                 ...order,
                 items: items || [],
-                shipping_address: order.shipping_address ? JSON.parse(order.shipping_address) : null
+                shipping_address: (() => {
+                    try {
+                        if (!order.shipping_address) return null;
+                        if (typeof order.shipping_address === 'string') {
+                            return JSON.parse(order.shipping_address);
+                        }
+                        return order.shipping_address;
+                    } catch (error) {
+                        console.error('Error parsing shipping_address:', error);
+                        return null;
+                    }
+                })()
             });
         }
 
