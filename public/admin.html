@@ -6,174 +6,356 @@
     <title>Madeus Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-        .sidebar-transition { transition: transform 0.3s ease-in-out; }
-        .fade-in { animation: fadeIn 0.5s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .card-hover { transition: all 0.3s ease; }
-        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .card-shadow-lg {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .hover-scale {
+            transition: all 0.3s ease;
+        }
+        
+        .hover-scale:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .sidebar-gradient {
+            background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%);
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .table-row {
+            transition: all 0.2s ease;
+        }
+        
+        .table-row:hover {
+            background-color: #f8fafc;
+            transform: scale(1.01);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.4);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px 0 rgba(16, 185, 129, 0.5);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.4);
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px 0 rgba(99, 102, 241, 0.5);
+        }
+        
+        .modal-backdrop {
+            backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        .loading-spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #10b981;
+            border-radius: 50%;
+            width: 2rem;
+            height: 2rem;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+        
+        .pulse-success {
+            animation: pulseSuccess 2s infinite;
+        }
+        
+        @keyframes pulseSuccess {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            50% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
     </style>
 </head>
-<body class="bg-gray-100" x-data="adminApp()" x-init="init()">
+<body class="bg-gray-50 min-h-screen" x-data="adminApp()" x-init="init()">
     <!-- Loading Screen -->
-    <div x-show="loading" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
-        <div class="text-center">
-            <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-emerald-600 mx-auto"></div>
-            <p class="mt-4 text-gray-600">Yükleniyor...</p>
+    <div x-show="loading" class="fixed inset-0 z-50 flex items-center justify-center gradient-bg">
+        <div class="text-center text-white">
+            <div class="loading-spinner mx-auto mb-4"></div>
+            <h3 class="text-xl font-semibold mb-2">Madeus Admin Panel</h3>
+            <p class="text-blue-100">Yükleniyor...</p>
         </div>
     </div>
 
-    <!-- Login Form -->
-    <div x-show="!isLoggedIn && !loading" class="min-h-screen flex items-center justify-center bg-gray-50">
-        <div class="max-w-md w-full space-y-8">
-            <div class="text-center">
-                <h2 class="mt-6 text-3xl font-extrabold text-gray-900">Admin Giriş</h2>
-                <p class="mt-2 text-sm text-gray-600">Madeus Admin Paneli</p>
-            </div>
-            <form class="mt-8 space-y-6" @submit.prevent="login">
-                <div class="rounded-md shadow-sm -space-y-px">
-                    <div>
-                        <input x-model="loginForm.username" type="text" required 
-                               class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 focus:z-10 sm:text-sm" 
-                               placeholder="Kullanıcı Adı">
+    <!-- Login Page -->
+    <div x-show="!isLoggedIn && !loading" class="min-h-screen flex items-center justify-center gradient-bg">
+        <div class="max-w-md w-full mx-4">
+            <div class="glass-effect rounded-2xl p-8 card-shadow-lg">
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-crown text-2xl text-blue-600"></i>
                     </div>
-                    <div>
-                        <input x-model="loginForm.password" type="password" required 
-                               class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 focus:z-10 sm:text-sm" 
-                               placeholder="Şifre">
-                    </div>
+                    <h2 class="text-2xl font-bold text-white mb-2">Madeus Admin</h2>
+                    <p class="text-blue-100">Yönetim Paneli</p>
                 </div>
-                <div>
-                    <button type="submit" :disabled="loginLoading"
-                            class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50">
+                
+                <form @submit.prevent="login" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-blue-100 mb-2">Kullanıcı Adı</label>
+                        <div class="relative">
+                            <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input x-model="loginForm.username" type="text" required
+                                   class="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent"
+                                   placeholder="Kullanıcı adınızı girin">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-blue-100 mb-2">Şifre</label>
+                        <div class="relative">
+                            <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input x-model="loginForm.password" type="password" required
+                                   class="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent"
+                                   placeholder="Şifrenizi girin">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" :disabled="loginLoading" 
+                            class="w-full bg-white text-blue-600 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-all duration-300 disabled:opacity-50">
                         <span x-show="!loginLoading">Giriş Yap</span>
-                        <span x-show="loginLoading">Giriş Yapılıyor...</span>
+                        <span x-show="loginLoading" class="flex items-center justify-center">
+                            <div class="loading-spinner mr-2" style="width: 1rem; height: 1rem; border-width: 2px;"></div>
+                            Giriş Yapılıyor...
+                        </span>
                     </button>
-                </div>
-                <div x-show="loginError" class="text-red-600 text-sm text-center" x-text="loginError"></div>
-            </form>
+                    
+                    <div x-show="loginError" class="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-red-100 text-sm text-center" x-text="loginError"></div>
+                </form>
+            </div>
         </div>
     </div>
 
     <!-- Admin Dashboard -->
-    <div x-show="isLoggedIn && !loading" class="min-h-screen bg-gray-100">
+    <div x-show="isLoggedIn && !loading" class="min-h-screen bg-gray-50">
         <!-- Sidebar -->
-        <div class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg sidebar-transition" 
+        <div class="fixed inset-y-0 left-0 z-40 w-64 sidebar-gradient transform transition-transform duration-300 ease-in-out slide-in"
              :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
-            <div class="flex items-center justify-center h-16 bg-emerald-600">
-                <h1 class="text-white text-xl font-bold">Madeus Admin</h1>
+            
+            <!-- Logo -->
+            <div class="flex items-center justify-center h-16 bg-black/20">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+                        <i class="fas fa-crown text-blue-600"></i>
+                    </div>
+                    <span class="text-xl font-bold text-white">Madeus</span>
+                </div>
             </div>
-            <nav class="mt-8">
-                <div class="px-4 space-y-2">
+            
+            <!-- Navigation -->
+            <nav class="mt-8 px-4">
+                <div class="space-y-2">
                     <a @click="currentView = 'dashboard'" 
-                       :class="currentView === 'dashboard' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-600 hover:bg-gray-50'"
-                       class="flex items-center px-4 py-2 text-sm font-medium rounded-md cursor-pointer">
-                        <i class="fas fa-tachometer-alt mr-3"></i>
-                        Dashboard
+                       :class="currentView === 'dashboard' ? 'bg-white/20 text-white' : 'text-blue-100 hover:bg-white/10'"
+                       class="flex items-center px-4 py-3 rounded-lg cursor-pointer transition-all duration-200 group">
+                        <i class="fas fa-chart-line mr-3 text-lg"></i>
+                        <span class="font-medium">Dashboard</span>
                     </a>
+                    
                     <a @click="currentView = 'orders'" 
-                       :class="currentView === 'orders' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-600 hover:bg-gray-50'"
-                       class="flex items-center px-4 py-2 text-sm font-medium rounded-md cursor-pointer">
-                        <i class="fas fa-shopping-cart mr-3"></i>
-                        Siparişler
+                       :class="currentView === 'orders' ? 'bg-white/20 text-white' : 'text-blue-100 hover:bg-white/10'"
+                       class="flex items-center px-4 py-3 rounded-lg cursor-pointer transition-all duration-200 group">
+                        <i class="fas fa-shopping-cart mr-3 text-lg"></i>
+                        <span class="font-medium">Siparişler</span>
                         <span x-show="stats.pending_orders > 0" 
-                              class="ml-auto bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full"
+                              class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full pulse-success"
                               x-text="stats.pending_orders"></span>
                     </a>
-                    <a @click="logout" class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 cursor-pointer">
-                        <i class="fas fa-sign-out-alt mr-3"></i>
-                        Çıkış Yap
+                    
+                    <a @click="logout" 
+                       class="flex items-center px-4 py-3 rounded-lg cursor-pointer text-blue-100 hover:bg-red-500/20 hover:text-red-200 transition-all duration-200 group">
+                        <i class="fas fa-sign-out-alt mr-3 text-lg"></i>
+                        <span class="font-medium">Çıkış Yap</span>
                     </a>
                 </div>
             </nav>
+            
+            <!-- User Info -->
+            <div class="absolute bottom-0 left-0 right-0 p-4 bg-black/20">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-white"></i>
+                    </div>
+                    <div>
+                        <p class="text-white font-medium">Admin</p>
+                        <p class="text-blue-200 text-sm">Yönetici</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Main Content -->
-        <div class="lg:ml-64 flex flex-col flex-1">
-            <!-- Top Navigation -->
-            <div class="bg-white shadow-sm border-b border-gray-200">
-                <div class="flex items-center justify-between px-4 py-3">
-                    <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden text-gray-600">
-                        <i class="fas fa-bars"></i>
-                    </button>
+        <div class="lg:ml-64 transition-all duration-300">
+            <!-- Top Bar -->
+            <div class="bg-white border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-4">
-                        <div class="text-sm text-gray-600">
+                        <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden text-gray-600 hover:text-gray-900">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        <h1 class="text-2xl font-bold text-gray-900" x-text="currentView === 'dashboard' ? 'Dashboard' : 'Siparişler'"></h1>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <div class="text-sm text-gray-500">
+                            <i class="fas fa-clock mr-1"></i>
                             Son Güncelleme: <span x-text="lastUpdate"></span>
                         </div>
-                        <button @click="refreshData" class="text-emerald-600 hover:text-emerald-700">
+                        <button @click="refreshData" 
+                                class="p-2 text-gray-500 hover:text-blue-600 transition-colors duration-200">
                             <i class="fas fa-sync-alt" :class="refreshing ? 'animate-spin' : ''"></i>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Dashboard View -->
-            <div x-show="currentView === 'dashboard'" class="flex-1 p-6">
-                <div class="mb-6">
-                    <h2 class="text-2xl font-bold text-gray-900">Dashboard</h2>
-                    <p class="text-gray-600">Genel bakış ve istatistikler</p>
-                </div>
-
+            <!-- Dashboard Content -->
+            <div x-show="currentView === 'dashboard'" class="p-6 fade-in">
                 <!-- Stats Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <div class="bg-white rounded-lg shadow p-6 card-hover">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-blue-100 text-blue-600">
-                                <i class="fas fa-shopping-cart text-xl"></i>
+                    <div class="bg-white rounded-xl p-6 card-shadow hover-scale">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 mb-1">Toplam Sipariş</p>
+                                <p class="text-3xl font-bold text-gray-900" x-text="stats.total_orders || 0"></p>
+                                <p class="text-xs text-green-600 mt-1">
+                                    <i class="fas fa-arrow-up mr-1"></i>
+                                    +12% bu ay
+                                </p>
                             </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-600">Toplam Sipariş</p>
-                                <p class="text-2xl font-bold text-gray-900" x-text="stats.total_orders || 0"></p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-lg shadow p-6 card-hover">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
-                                <i class="fas fa-clock text-xl"></i>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-600">Bekleyen</p>
-                                <p class="text-2xl font-bold text-gray-900" x-text="stats.pending_orders || 0"></p>
+                            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-shopping-cart text-blue-600 text-xl"></i>
                             </div>
                         </div>
                     </div>
-
-                    <div class="bg-white rounded-lg shadow p-6 card-hover">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-green-100 text-green-600">
-                                <i class="fas fa-check-circle text-xl"></i>
+                    
+                    <div class="bg-white rounded-xl p-6 card-shadow hover-scale">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 mb-1">Bekleyen</p>
+                                <p class="text-3xl font-bold text-yellow-600" x-text="stats.pending_orders || 0"></p>
+                                <p class="text-xs text-yellow-600 mt-1">
+                                    <i class="fas fa-clock mr-1"></i>
+                                    İşlem bekliyor
+                                </p>
                             </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-600">Teslim Edilen</p>
-                                <p class="text-2xl font-bold text-gray-900" x-text="stats.delivered_orders || 0"></p>
+                            <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-hourglass-half text-yellow-600 text-xl"></i>
                             </div>
                         </div>
                     </div>
-
-                    <div class="bg-white rounded-lg shadow p-6 card-hover">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-emerald-100 text-emerald-600">
-                                <i class="fas fa-lira-sign text-xl"></i>
+                    
+                    <div class="bg-white rounded-xl p-6 card-shadow hover-scale">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 mb-1">Teslim Edilen</p>
+                                <p class="text-3xl font-bold text-green-600" x-text="stats.delivered_orders || 0"></p>
+                                <p class="text-xs text-green-600 mt-1">
+                                    <i class="fas fa-check-circle mr-1"></i>
+                                    Tamamlandı
+                                </p>
                             </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-600">Toplam Gelir</p>
-                                <p class="text-2xl font-bold text-gray-900" x-text="formatPrice(stats.total_revenue || 0)"></p>
+                            <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl p-6 card-shadow hover-scale">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 mb-1">Toplam Gelir</p>
+                                <p class="text-3xl font-bold text-emerald-600" x-text="formatPrice(stats.total_revenue || 0)"></p>
+                                <p class="text-xs text-emerald-600 mt-1">
+                                    <i class="fas fa-arrow-up mr-1"></i>
+                                    +8% bu ay
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-lira-sign text-emerald-600 text-xl"></i>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Recent Orders -->
-                <div class="bg-white rounded-lg shadow">
+                <div class="bg-white rounded-xl card-shadow overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-200">
-                        <h3 class="text-lg font-medium text-gray-900">Son Siparişler</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">Son Siparişler</h3>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
+                        <table class="w-full">
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sipariş</th>
@@ -185,20 +367,30 @@
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 <template x-for="order in recentOrders" :key="order.id">
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900" x-text="'#' + order.order_number"></div>
-                                            <div class="text-sm text-gray-500" x-text="order.item_count + ' ürün'"></div>
+                                    <tr class="table-row">
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                                    <i class="fas fa-receipt text-blue-600 text-sm"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="text-sm font-medium text-gray-900" x-text="'#' + order.order_number"></div>
+                                                    <div class="text-sm text-gray-500" x-text="order.item_count + ' ürün'"></div>
+                                                </div>
+                                            </div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
+                                        <td class="px-6 py-4">
                                             <div class="text-sm font-medium text-gray-900" x-text="order.user_name"></div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="formatPrice(order.total_amount)"></td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" 
-                                                  :class="getStatusColor(order.status)" x-text="getStatusText(order.status)"></span>
+                                        <td class="px-6 py-4">
+                                            <div class="text-sm font-bold text-gray-900" x-text="formatPrice(order.total_amount)"></div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(order.created_at)"></td>
+                                        <td class="px-6 py-4">
+                                            <span class="status-badge" :class="getStatusColor(order.status)" x-text="getStatusText(order.status)"></span>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="text-sm text-gray-500" x-text="formatDate(order.created_at)"></div>
+                                        </td>
                                     </tr>
                                 </template>
                             </tbody>
@@ -207,16 +399,14 @@
                 </div>
             </div>
 
-            <!-- Orders View -->
-            <div x-show="currentView === 'orders'" class="flex-1 p-6">
-                <div class="mb-6">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <h2 class="text-2xl font-bold text-gray-900">Siparişler</h2>
-                            <p class="text-gray-600">Tüm siparişleri yönetin</p>
-                        </div>
-                        <div class="mt-4 sm:mt-0 flex space-x-3">
-                            <select x-model="orderFilter" @change="loadOrders" class="border border-gray-300 rounded-md px-3 py-2 text-sm">
+            <!-- Orders Content -->
+            <div x-show="currentView === 'orders'" class="p-6 fade-in">
+                <!-- Filters -->
+                <div class="bg-white rounded-xl p-6 card-shadow mb-6">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                            <select x-model="orderFilter" @change="loadOrders" 
+                                    class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                 <option value="all">Tüm Siparişler</option>
                                 <option value="pending">Bekleyen</option>
                                 <option value="confirmed">Onaylanan</option>
@@ -224,52 +414,75 @@
                                 <option value="delivered">Teslim Edilen</option>
                                 <option value="cancelled">İptal Edilen</option>
                             </select>
-                            <input x-model="searchTerm" @input="debounceSearch" type="text" placeholder="Ara..." 
-                                   class="border border-gray-300 rounded-md px-3 py-2 text-sm">
+                            
+                            <div class="relative">
+                                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                <input x-model="searchTerm" @input="debounceSearch" type="text" 
+                                       placeholder="Sipariş ara..." 
+                                       class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                        </div>
+                        
+                        <div class="text-sm text-gray-500">
+                            Toplam <span class="font-semibold" x-text="totalOrders"></span> sipariş
                         </div>
                     </div>
                 </div>
 
                 <!-- Orders Table -->
-                <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="bg-white rounded-xl card-shadow overflow-hidden">
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
+                        <table class="w-full">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sipariş</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Müşteri</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tutar</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durum</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kargo</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">İşlemler</th>
+                                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sipariş</th>
+                                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Müşteri</th>
+                                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tutar</th>
+                                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durum</th>
+                                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kargo</th>
+                                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">İşlemler</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 <template x-for="order in orders" :key="order.id">
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900" x-text="'#' + order.order_number"></div>
-                                            <div class="text-sm text-gray-500" x-text="formatDate(order.created_at)"></div>
+                                    <tr class="table-row">
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center">
+                                                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                                    <i class="fas fa-receipt text-blue-600"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="text-sm font-medium text-gray-900" x-text="'#' + order.order_number"></div>
+                                                    <div class="text-xs text-gray-500" x-text="formatDate(order.created_at)"></div>
+                                                </div>
+                                            </div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900" x-text="order.user_name"></div>
-                                            <div class="text-sm text-gray-500" x-text="order.user_email"></div>
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
+                                                    <i class="fas fa-user text-gray-600 text-sm"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="text-sm font-medium text-gray-900" x-text="order.user_name"></div>
+                                                    <div class="text-xs text-gray-500" x-text="order.user_email"></div>
+                                                </div>
+                                            </div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900" x-text="formatPrice(order.total_amount)"></div>
-                                            <div class="text-sm text-gray-500" x-text="order.item_count + ' ürün'"></div>
+                                        <td class="px-6 py-4">
+                                            <div class="text-sm font-bold text-gray-900" x-text="formatPrice(order.total_amount)"></div>
+                                            <div class="text-xs text-gray-500" x-text="order.item_count + ' ürün'"></div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" 
-                                                  :class="getStatusColor(order.status)" x-text="getStatusText(order.status)"></span>
+                                        <td class="px-6 py-4">
+                                            <span class="status-badge" :class="getStatusColor(order.status)" x-text="getStatusText(order.status)"></span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            <div x-text="order.cargo_company || '-'"></div>
-                                            <div class="text-gray-500" x-text="order.cargo_tracking_number || '-'"></div>
+                                        <td class="px-6 py-4">
+                                            <div class="text-sm text-gray-900" x-text="order.cargo_company || 'Belirtilmemiş'"></div>
+                                            <div class="text-xs text-gray-500" x-text="order.cargo_tracking_number || 'Takip No Yok'"></div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <button @click="openOrderModal(order)" class="text-emerald-600 hover:text-emerald-900 mr-3">
-                                                <i class="fas fa-edit"></i> Düzenle
+                                        <td class="px-6 py-4">
+                                            <button @click="openOrderModal(order)" class="btn-secondary">
+                                                <i class="fas fa-edit mr-2"></i>
+                                                Düzenle
                                             </button>
                                         </td>
                                     </tr>
@@ -277,81 +490,75 @@
                             </tbody>
                         </table>
                     </div>
-                    
-                    <!-- Pagination -->
-                    <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-                        <div class="flex-1 flex justify-between sm:hidden">
-                            <button @click="prevPage" :disabled="currentPage <= 1" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                Önceki
-                            </button>
-                            <button @click="nextPage" :disabled="currentPage >= totalPages" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                Sonraki
-                            </button>
-                        </div>
-                        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                            <div>
-                                <p class="text-sm text-gray-700">
-                                    Toplam <span class="font-medium" x-text="totalOrders"></span> siparişten 
-                                    <span class="font-medium" x-text="((currentPage - 1) * ordersPerPage) + 1"></span> - 
-                                    <span class="font-medium" x-text="Math.min(currentPage * ordersPerPage, totalOrders)"></span> arası gösteriliyor
-                                </p>
-                            </div>
-                            <div>
-                                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                                    <button @click="prevPage" :disabled="currentPage <= 1" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                        <i class="fas fa-chevron-left"></i>
-                                    </button>
-                                    <template x-for="page in getPageNumbers()" :key="page">
-                                        <button @click="goToPage(page)" 
-                                                :class="page === currentPage ? 'bg-emerald-50 border-emerald-500 text-emerald-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'"
-                                                class="relative inline-flex items-center px-4 py-2 border text-sm font-medium" x-text="page"></button>
-                                    </template>
-                                    <button @click="nextPage" :disabled="currentPage >= totalPages" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                        <i class="fas fa-chevron-right"></i>
-                                    </button>
-                                </nav>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Order Update Modal -->
-    <div x-show="showOrderModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" x-transition>
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="mt-3">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Sipariş Güncelle</h3>
-                <div class="space-y-4">
+    <div x-show="showOrderModal" class="fixed inset-0 z-50 modal-backdrop" x-transition>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all" 
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100">
+                
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-xl font-semibold text-gray-900">Sipariş Güncelle</h3>
+                    <p class="text-sm text-gray-500 mt-1">Sipariş durumunu ve kargo bilgilerini güncelleyin</p>
+                </div>
+                
+                <div class="p-6 space-y-6">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Sipariş Durumu</label>
-                        <select x-model="editingOrder.status" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                            <option value="pending">Beklemede</option>
-                            <option value="confirmed">Onaylandı</option>
-                            <option value="shipped">Kargoya Verildi</option>
-                            <option value="delivered">Teslim Edildi</option>
-                            <option value="cancelled">İptal Edildi</option>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-truck mr-2"></i>
+                            Sipariş Durumu
+                        </label>
+                        <select x-model="editingOrder.status" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="pending">🕐 Beklemede</option>
+                            <option value="confirmed">✅ Onaylandı</option>
+                            <option value="shipped">🚚 Kargoya Verildi</option>
+                            <option value="delivered">📦 Teslim Edildi</option>
+                            <option value="cancelled">❌ İptal Edildi</option>
                         </select>
                     </div>
+                    
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Kargo Firması</label>
-                        <input x-model="editingOrder.cargo_company" type="text" placeholder="Örn: Aras Kargo" 
-                               class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-building mr-2"></i>
+                            Kargo Firması
+                        </label>
+                        <input x-model="editingOrder.cargo_company" type="text" 
+                               placeholder="Örn: Aras Kargo, Yurtiçi Kargo"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </div>
+                    
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Kargo Takip Numarası</label>
-                        <input x-model="editingOrder.cargo_tracking_number" type="text" placeholder="Örn: 123456789" 
-                               class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-barcode mr-2"></i>
+                            Kargo Takip Numarası
+                        </label>
+                        <input x-model="editingOrder.cargo_tracking_number" type="text" 
+                               placeholder="Örn: 123456789"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </div>
                 </div>
-                <div class="flex justify-end space-x-3 mt-6">
-                    <button @click="showOrderModal = false" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+                
+                <div class="p-6 bg-gray-50 rounded-b-2xl flex justify-end space-x-3">
+                    <button @click="showOrderModal = false" 
+                            class="px-6 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">
                         İptal
                     </button>
-                    <button @click="updateOrder" :disabled="updating" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-md hover:bg-emerald-700 disabled:opacity-50">
-                        <span x-show="!updating">Güncelle</span>
-                        <span x-show="updating">Güncelleniyor...</span>
+                    <button @click="updateOrder" :disabled="updating" class="btn-primary">
+                        <span x-show="!updating" class="flex items-center">
+                            <i class="fas fa-save mr-2"></i>
+                            Güncelle
+                        </span>
+                        <span x-show="updating" class="flex items-center">
+                            <div class="loading-spinner mr-2" style="width: 1rem; height: 1rem; border-width: 2px;"></div>
+                            Güncelleniyor...
+                        </span>
                     </button>
                 </div>
             </div>
@@ -359,18 +566,36 @@
     </div>
 
     <!-- Toast Notifications -->
-    <div x-show="toast.show" x-transition class="fixed top-4 right-4 z-50">
-        <div class="bg-white rounded-lg shadow-lg p-4 border-l-4" :class="toast.type === 'success' ? 'border-green-500' : 'border-red-500'">
-            <div class="flex">
-                <div class="flex-shrink-0">
-                    <i :class="toast.type === 'success' ? 'fas fa-check-circle text-green-500' : 'fas fa-exclamation-circle text-red-500'"></i>
+    <div x-show="toast.show" 
+         class="fixed top-4 right-4 z-50 max-w-sm w-full"
+         x-transition:enter="transform ease-out duration-300 transition"
+         x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+         x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0">
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i :class="toast.type === 'success' ? 'fas fa-check-circle text-green-500' : 'fas fa-exclamation-circle text-red-500'" class="text-xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-gray-900" x-text="toast.message"></p>
+                    </div>
                 </div>
-                <div class="ml-3">
-                    <p class="text-sm font-medium text-gray-900" x-text="toast.message"></p>
-                </div>
+            </div>
+            <div class="h-1 bg-gray-200">
+                <div :class="toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'" 
+                     class="h-full transition-all duration-3000 ease-linear" 
+                     style="width: 100%; animation: shrink 3s linear;"></div>
             </div>
         </div>
     </div>
+
+    <style>
+        @keyframes shrink {
+            from { width: 100%; }
+            to { width: 0%; }
+        }
+    </style>
 
     <script>
         function adminApp() {
@@ -592,16 +817,16 @@
                         console.log('Update response data:', data);
                         
                         if (data.success) {
-                            this.showToast('Sipariş başarıyla güncellendi', 'success');
+                            this.showToast('✅ Sipariş başarıyla güncellendi!', 'success');
                             this.showOrderModal = false;
                             await this.loadOrders();
                             await this.loadDashboard(); // Refresh stats
                         } else {
-                            this.showToast(data.message || 'Güncelleme başarısız', 'error');
+                            this.showToast('❌ ' + (data.message || 'Güncelleme başarısız'), 'error');
                         }
                     } catch (error) {
                         console.error('Update error:', error);
-                        this.showToast('Güncelleme sırasında hata oluştu', 'error');
+                        this.showToast('❌ Güncelleme sırasında hata oluştu', 'error');
                     }
                     
                     this.updating = false;
@@ -613,38 +838,6 @@
                         this.currentPage = 1;
                         this.loadOrders();
                     }, 500);
-                },
-                
-                // Pagination methods
-                prevPage() {
-                    if (this.currentPage > 1) {
-                        this.currentPage--;
-                        this.loadOrders();
-                    }
-                },
-                
-                nextPage() {
-                    if (this.currentPage < this.totalPages) {
-                        this.currentPage++;
-                        this.loadOrders();
-                    }
-                },
-                
-                goToPage(page) {
-                    this.currentPage = page;
-                    this.loadOrders();
-                },
-                
-                getPageNumbers() {
-                    const pages = [];
-                    const start = Math.max(1, this.currentPage - 2);
-                    const end = Math.min(this.totalPages, this.currentPage + 2);
-                    
-                    for (let i = start; i <= end; i++) {
-                        pages.push(i);
-                    }
-                    
-                    return pages;
                 },
                 
                 // Watch for view changes
@@ -691,12 +884,12 @@
                 
                 getStatusColor(status) {
                     switch (status) {
-                        case 'pending': return 'bg-yellow-100 text-yellow-800';
-                        case 'confirmed': return 'bg-blue-100 text-blue-800';
-                        case 'shipped': return 'bg-purple-100 text-purple-800';
-                        case 'delivered': return 'bg-green-100 text-green-800';
-                        case 'cancelled': return 'bg-red-100 text-red-800';
-                        default: return 'bg-gray-100 text-gray-800';
+                        case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+                        case 'confirmed': return 'bg-blue-100 text-blue-800 border-blue-200';
+                        case 'shipped': return 'bg-purple-100 text-purple-800 border-purple-200';
+                        case 'delivered': return 'bg-green-100 text-green-800 border-green-200';
+                        case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
+                        default: return 'bg-gray-100 text-gray-800 border-gray-200';
                     }
                 },
                 
