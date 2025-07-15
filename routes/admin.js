@@ -68,7 +68,7 @@ router.get('/dashboard/stats', adminAuth, async (req, res) => {
     try {
         const db = new Database();
         
-        // Get order statistics
+        // Get basic order statistics
         const orderStats = await db.query(`
             SELECT 
                 COUNT(*) as total_orders,
@@ -77,8 +77,8 @@ router.get('/dashboard/stats', adminAuth, async (req, res) => {
                 SUM(CASE WHEN status = 'shipped' THEN 1 ELSE 0 END) as shipped_orders,
                 SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) as delivered_orders,
                 SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_orders,
-                SUM(total_amount) as total_revenue,
-                AVG(total_amount) as avg_order_value
+                COALESCE(SUM(total_amount), 0) as total_revenue,
+                COALESCE(AVG(total_amount), 0) as avg_order_value
             FROM orders
             WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
         `);
@@ -86,15 +86,26 @@ router.get('/dashboard/stats', adminAuth, async (req, res) => {
         // Get recent orders
         const recentOrders = await db.query(`
             SELECT 
-                o.id, o.order_number, o.user_name, o.total_amount, 
-                o.status, o.created_at,
-                COUNT(oi.id) as item_count
+                o.id, 
+                o.order_number, 
+                o.user_name, 
+                o.total_amount, 
+                o.status, 
+                o.created_at
             FROM orders o
-            LEFT JOIN order_items oi ON o.id = oi.order_id
-            GROUP BY o.id
             ORDER BY o.created_at DESC
             LIMIT 10
         `);
+        
+        // Add item counts to recent orders
+        for (let order of recentOrders) {
+            const itemCount = await db.query(`
+                SELECT COUNT(*) as count 
+                FROM order_items 
+                WHERE order_id = ?
+            `, [order.id]);
+            order.item_count = itemCount[0].count || 0;
+        }
         
         // Get top products
         const topProducts = await db.query(`
@@ -113,15 +124,28 @@ router.get('/dashboard/stats', adminAuth, async (req, res) => {
         res.json({
             success: true,
             data: {
-                stats: orderStats[0],
-                recentOrders,
-                topProducts
+                stats: orderStats[0] || {
+                    total_orders: 0,
+                    pending_orders: 0,
+                    confirmed_orders: 0,
+                    shipped_orders: 0,
+                    delivered_orders: 0,
+                    cancelled_orders: 0,
+                    total_revenue: 0,
+                    avg_order_value: 0
+                },
+                recentOrders: recentOrders || [],
+                topProducts: topProducts || []
             }
         });
         
     } catch (error) {
         console.error('Dashboard stats error:', error);
-        res.status(500).json({ success: false, message: 'İstatistikler yüklenemedi' });
+        res.status(500).json({ 
+            success: false, 
+            message: 'İstatistikler yüklenemedi',
+            error: error.message 
+        });
     }
 });
 
@@ -138,31 +162,48 @@ router.get('/orders', adminAuth, async (req, res) => {
         let whereClause = '';
         let queryParams = [];
         
-        if (status && status !== 'all') {
+        if (status && status !== 'all' && status !== '') {
             whereClause = 'WHERE o.status = ?';
             queryParams.push(status);
         }
         
-        if (search) {
+        if (search && search.trim() !== '') {
             whereClause = whereClause ? 
                 `${whereClause} AND (o.order_number LIKE ? OR o.user_name LIKE ? OR o.user_email LIKE ?)` :
                 'WHERE (o.order_number LIKE ? OR o.user_name LIKE ? OR o.user_email LIKE ?)';
             queryParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
         }
         
+        // Simple query without complex GROUP_CONCAT
         const orders = await db.query(`
             SELECT 
-                o.id, o.order_number, o.user_name, o.user_email, o.user_phone,
-                o.total_amount, o.status, o.cargo_company, o.cargo_tracking_number,
-                o.created_at, o.updated_at,
-                COUNT(oi.id) as item_count
+                o.id, 
+                o.order_number, 
+                o.user_name, 
+                o.user_email, 
+                o.user_phone,
+                o.total_amount, 
+                o.status, 
+                o.cargo_company, 
+                o.cargo_tracking_number,
+                o.created_at, 
+                o.updated_at,
+                o.shipping_address
             FROM orders o
-            LEFT JOIN order_items oi ON o.id = oi.order_id
             ${whereClause}
-            GROUP BY o.id
             ORDER BY o.created_at DESC
-            LIMIT ? OFFSET ?
-        `, [...queryParams, limit, offset]);
+            LIMIT ${limit} OFFSET ${offset}
+        `, queryParams);
+        
+        // Get item counts separately
+        for (let order of orders) {
+            const itemCount = await db.query(`
+                SELECT COUNT(*) as count 
+                FROM order_items 
+                WHERE order_id = ?
+            `, [order.id]);
+            order.item_count = itemCount[0].count || 0;
+        }
         
         const totalResult = await db.query(`
             SELECT COUNT(DISTINCT o.id) as total 
@@ -185,7 +226,11 @@ router.get('/orders', adminAuth, async (req, res) => {
         
     } catch (error) {
         console.error('Admin orders fetch error:', error);
-        res.status(500).json({ success: false, message: 'Siparişler yüklenemedi' });
+        res.status(500).json({ 
+            success: false, 
+            message: 'Siparişler yüklenemedi',
+            error: error.message 
+        });
     }
 });
 
@@ -195,39 +240,30 @@ router.get('/orders/:orderId', adminAuth, async (req, res) => {
         const db = new Database();
         const { orderId } = req.params;
         
+        // Get order info
         const order = await db.query(`
-            SELECT o.*, 
-                   GROUP_CONCAT(
-                       JSON_OBJECT(
-                           'id', oi.id,
-                           'product_id', oi.product_id,
-                           'product_name', oi.product_name,
-                           'quantity', oi.quantity,
-                           'price', oi.price,
-                           'total', oi.total
-                       )
-                   ) as items
-            FROM orders o
-            LEFT JOIN order_items oi ON o.id = oi.order_id
-            WHERE o.id = ?
-            GROUP BY o.id
+            SELECT * FROM orders WHERE id = ?
         `, [orderId]);
         
         if (!order || order.length === 0) {
             return res.status(404).json({ success: false, message: 'Sipariş bulunamadı' });
         }
         
+        // Get order items separately
+        const items = await db.query(`
+            SELECT 
+                id,
+                product_id,
+                product_name,
+                quantity,
+                price,
+                total
+            FROM order_items 
+            WHERE order_id = ?
+        `, [orderId]);
+        
         const orderData = order[0];
-        if (orderData.items) {
-            try {
-                const itemsArray = orderData.items.split(',').map(item => JSON.parse(item));
-                orderData.items = itemsArray;
-            } catch (e) {
-                orderData.items = [];
-            }
-        } else {
-            orderData.items = [];
-        }
+        orderData.items = items;
         
         res.json({
             success: true,
@@ -236,7 +272,11 @@ router.get('/orders/:orderId', adminAuth, async (req, res) => {
         
     } catch (error) {
         console.error('Admin order details error:', error);
-        res.status(500).json({ success: false, message: 'Sipariş detayları yüklenemedi' });
+        res.status(500).json({ 
+            success: false, 
+            message: 'Sipariş detayları yüklenemedi',
+            error: error.message 
+        });
     }
 });
 

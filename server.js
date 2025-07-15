@@ -93,46 +93,67 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // ===========================================
-// DATABASE CONNECTION
+// DATABASE SETUP & MIGRATION
 // ===========================================
 
-console.log('🔍 Using Railway MySQL variables for connection');
-
-let dbConfig;
-if (process.env.MYSQLHOST) {
-    // Railway production environment
-    dbConfig = {
-        host: process.env.MYSQLHOST,
-        port: process.env.MYSQLPORT || 3306,
-        user: process.env.MYSQLUSER,
-        password: process.env.MYSQLPASSWORD,
-        database: process.env.MYSQLDATABASE,
-        ssl: true
-    };
-} else {
-    // Local development fallback
-    dbConfig = {
-        host: process.env.DB_HOST || 'localhost',
-        port: process.env.DB_PORT || 3306,
-        user: process.env.DB_USER || 'root',
-        password: process.env.DB_PASSWORD || '',
-        database: process.env.DB_NAME || 'madeus_ecommerce'
-    };
+// Initialize database and run migrations
+async function initializeDatabase() {
+    const db = new Database();
+    
+    try {
+        // Check and add cargo fields if they don't exist
+        console.log('🔧 Checking cargo fields...');
+        
+        // Check if cargo_company field exists
+        try {
+            const checkCompany = await db.query(`
+                SELECT COLUMN_NAME 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_NAME = 'orders' 
+                AND COLUMN_NAME = 'cargo_company'
+            `);
+            
+            if (checkCompany.length === 0) {
+                await db.query(`
+                    ALTER TABLE orders 
+                    ADD COLUMN cargo_company VARCHAR(100) DEFAULT NULL
+                `);
+                console.log('✅ cargo_company field added');
+            } else {
+                console.log('✅ cargo_company field exists');
+            }
+        } catch (error) {
+            console.log('⚠️ cargo_company field check failed:', error.message);
+        }
+        
+        // Check if cargo_tracking_number field exists
+        try {
+            const checkTracking = await db.query(`
+                SELECT COLUMN_NAME 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_NAME = 'orders' 
+                AND COLUMN_NAME = 'cargo_tracking_number'
+            `);
+            
+            if (checkTracking.length === 0) {
+                await db.query(`
+                    ALTER TABLE orders 
+                    ADD COLUMN cargo_tracking_number VARCHAR(100) DEFAULT NULL
+                `);
+                console.log('✅ cargo_tracking_number field added');
+            } else {
+                console.log('✅ cargo_tracking_number field exists');
+            }
+        } catch (error) {
+            console.log('⚠️ cargo_tracking_number field check failed:', error.message);
+        }
+        
+        console.log('✅ Database initialization complete');
+        
+    } catch (error) {
+        console.error('❌ Database initialization error:', error);
+    }
 }
-
-console.log('🔍 Database connection config:', dbConfig);
-console.log('🔌 Attempting database connection...');
-
-const db = new Database();
-
-// Test database connection
-db.testConnection()
-    .then(() => {
-        console.log('✅ Database connection successful');
-    })
-    .catch((error) => {
-        console.error('❌ Database connection failed:', error);
-    });
 
 // ===========================================
 // BASIC ROUTES
@@ -461,7 +482,10 @@ const server = app.listen(PORT, async () => {
     console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
     console.log('==========================================');
     
-    // Run migration for cargo fields
+    // Initialize database and run migrations
+    await initializeDatabase();
+    
+    // Run migration for cargo fields (legacy)
     if (process.env.RAILWAY_ENVIRONMENT) {
         try {
             console.log('🔧 Running cargo fields migration...');
