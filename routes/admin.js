@@ -8,7 +8,7 @@ const router = express.Router();
 // Admin credentials (in production, this should be in database)
 const ADMIN_CREDENTIALS = {
     username: 'admin',
-    password: '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi' // "password" hashed
+    password: '$2b$10$aiR7Lt6ejm0s/ra./bDXiOQsWwOXfy2g5TOFlWoubt7jt/Mp.dX0e' // "497D3212e" hashed
 };
 
 // Admin login
