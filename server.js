@@ -210,6 +210,94 @@ async function initializeDatabase() {
                 } catch (error) {
                     console.log('⚠️ original_price column check failed:', error.message);
                 }
+
+                // Check if category column exists
+                try {
+                    const checkCategory = await db.query(`
+                        SELECT COLUMN_NAME 
+                        FROM INFORMATION_SCHEMA.COLUMNS 
+                        WHERE TABLE_NAME = 'products' 
+                        AND COLUMN_NAME = 'category'
+                    `);
+                    
+                    if (checkCategory.length === 0) {
+                        await db.query(`
+                            ALTER TABLE products 
+                            ADD COLUMN category VARCHAR(50) DEFAULT 'serum'
+                        `);
+                        console.log('✅ category column added to products table');
+                    } else {
+                        console.log('✅ category column exists');
+                    }
+                } catch (error) {
+                    console.log('⚠️ category column check failed:', error.message);
+                }
+
+                // Check if stock column exists
+                try {
+                    const checkStock = await db.query(`
+                        SELECT COLUMN_NAME 
+                        FROM INFORMATION_SCHEMA.COLUMNS 
+                        WHERE TABLE_NAME = 'products' 
+                        AND COLUMN_NAME = 'stock'
+                    `);
+                    
+                    if (checkStock.length === 0) {
+                        await db.query(`
+                            ALTER TABLE products 
+                            ADD COLUMN stock INT DEFAULT 0
+                        `);
+                        console.log('✅ stock column added to products table');
+                    } else {
+                        console.log('✅ stock column exists');
+                    }
+                } catch (error) {
+                    console.log('⚠️ stock column check failed:', error.message);
+                }
+
+                // Check if image_url column exists
+                try {
+                    const checkImageUrl = await db.query(`
+                        SELECT COLUMN_NAME 
+                        FROM INFORMATION_SCHEMA.COLUMNS 
+                        WHERE TABLE_NAME = 'products' 
+                        AND COLUMN_NAME = 'image_url'
+                    `);
+                    
+                    if (checkImageUrl.length === 0) {
+                        await db.query(`
+                            ALTER TABLE products 
+                            ADD COLUMN image_url TEXT DEFAULT NULL
+                        `);
+                        console.log('✅ image_url column added to products table');
+                    } else {
+                        console.log('✅ image_url column exists');
+                    }
+                } catch (error) {
+                    console.log('⚠️ image_url column check failed:', error.message);
+                }
+
+                // Check if is_active column exists
+                try {
+                    const checkIsActive = await db.query(`
+                        SELECT COLUMN_NAME 
+                        FROM INFORMATION_SCHEMA.COLUMNS 
+                        WHERE TABLE_NAME = 'products' 
+                        AND COLUMN_NAME = 'is_active'
+                    `);
+                    
+                    if (checkIsActive.length === 0) {
+                        await db.query(`
+                            ALTER TABLE products 
+                            ADD COLUMN is_active BOOLEAN DEFAULT TRUE
+                        `);
+                        console.log('✅ is_active column added to products table');
+                    } else {
+                        console.log('✅ is_active column exists');
+                    }
+                } catch (error) {
+                    console.log('⚠️ is_active column check failed:', error.message);
+                }
             }
         } catch (error) {
             console.log('⚠️ Products table check failed:', error.message);
