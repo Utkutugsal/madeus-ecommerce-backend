@@ -46,7 +46,7 @@ router.get('/orders', authenticateToken, async (req, res) => {
             offset: parseInt(offset)
         });
         
-        // Get user orders
+        // Get user orders - Fix SQL parameter issue
         const orders = await db.query(`
             SELECT 
                 o.id,
@@ -60,8 +60,8 @@ router.get('/orders', authenticateToken, async (req, res) => {
             FROM orders o
             WHERE o.user_id = ?
             ORDER BY o.created_at DESC
-            LIMIT ? OFFSET ?
-        `, [req.user.userId, parseInt(limit), parseInt(offset)]);
+            LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+        `, [req.user.userId]);
 
         console.log('📦 Found orders:', orders.length);
 
