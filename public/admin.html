@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Madeus Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .sidebar-transition { transition: transform 0.3s ease-in-out; }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body class="bg-gray-100" x-data="adminApp()">
+    <!-- Loading Screen -->
+    <div x-show="loading" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-emerald-600 mx-auto"></div>
+            <p class="mt-4 text-gray-600">Yükleniyor...</p>
+        </div>
+    </div>
+
+    <!-- Login Form -->
+    <div x-show="!isLoggedIn && !loading" class="min-h-screen flex items-center justify-center bg-gray-50">
+        <div class="max-w-md w-full space-y-8">
+            <div class="text-center">
+                <h2 class="mt-6 text-3xl font-extrabold text-gray-900">Admin Giriş</h2>
+                <p class="mt-2 text-sm text-gray-600">Madeus Admin Paneli</p>
+            </div>
+            <form class="mt-8 space-y-6" @submit.prevent="login">
+                <div class="rounded-md shadow-sm -space-y-px">
+                    <div>
+                        <input x-model="loginForm.username" type="text" required 
+                               class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 focus:z-10 sm:text-sm" 
+                               placeholder="Kullanıcı Adı">
+                    </div>
+                    <div>
+                        <input x-model="loginForm.password" type="password" required 
+                               class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 focus:z-10 sm:text-sm" 
+                               placeholder="Şifre">
+                    </div>
+                </div>
+                <div>
+                    <button type="submit" :disabled="loginLoading"
+                            class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50">
+                        <span x-show="!loginLoading">Giriş Yap</span>
+                        <span x-show="loginLoading">Giriş Yapılıyor...</span>
+                    </button>
+                </div>
+                <div x-show="loginError" class="text-red-600 text-sm text-center" x-text="loginError"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div x-show="isLoggedIn && !loading" class="min-h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg sidebar-transition" 
+             :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
+            <div class="flex items-center justify-center h-16 bg-emerald-600">
+                <h1 class="text-white text-xl font-bold">Madeus Admin</h1>
+            </div>
+            <nav class="mt-8">
+                <div class="px-4 space-y-2">
+                    <a @click="currentView = 'dashboard'" 
+                       :class="currentView === 'dashboard' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-600 hover:bg-gray-50'"
+                       class="flex items-center px-4 py-2 text-sm font-medium rounded-md cursor-pointer">
+                        <i class="fas fa-tachometer-alt mr-3"></i>
+                        Dashboard
+                    </a>
+                    <a @click="currentView = 'orders'" 
+                       :class="currentView === 'orders' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-600 hover:bg-gray-50'"
+                       class="flex items-center px-4 py-2 text-sm font-medium rounded-md cursor-pointer">
+                        <i class="fas fa-shopping-cart mr-3"></i>
+                        Siparişler
+                        <span x-show="stats.pending_orders > 0" 
+                              class="ml-auto bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full"
+                              x-text="stats.pending_orders"></span>
+                    </a>
+                    <a @click="logout" class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 cursor-pointer">
+                        <i class="fas fa-sign-out-alt mr-3"></i>
+                        Çıkış Yap
+                    </a>
+                </div>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="lg:ml-64 flex flex-col flex-1">
+            <!-- Top Navigation -->
+            <div class="bg-white shadow-sm border-b border-gray-200">
+                <div class="flex items-center justify-between px-4 py-3">
+                    <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden text-gray-600">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="flex items-center space-x-4">
+                        <div class="text-sm text-gray-600">
+                            Son Güncelleme: <span x-text="lastUpdate"></span>
+                        </div>
+                        <button @click="refreshData" class="text-emerald-600 hover:text-emerald-700">
+                            <i class="fas fa-sync-alt" :class="refreshing ? 'animate-spin' : ''"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard View -->
+            <div x-show="currentView === 'dashboard'" class="flex-1 p-6">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Dashboard</h2>
+                    <p class="text-gray-600">Genel bakış ve istatistikler</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-lg shadow p-6 card-hover">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                                <i class="fas fa-shopping-cart text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Toplam Sipariş</p>
+                                <p class="text-2xl font-bold text-gray-900" x-text="stats.total_orders || 0"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow p-6 card-hover">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                                <i class="fas fa-clock text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Bekleyen</p>
+                                <p class="text-2xl font-bold text-gray-900" x-text="stats.pending_orders || 0"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow p-6 card-hover">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-green-100 text-green-600">
+                                <i class="fas fa-check-circle text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Teslim Edilen</p>
+                                <p class="text-2xl font-bold text-gray-900" x-text="stats.delivered_orders || 0"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow p-6 card-hover">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-emerald-100 text-emerald-600">
+                                <i class="fas fa-lira-sign text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Toplam Gelir</p>
+                                <p class="text-2xl font-bold text-gray-900" x-text="formatPrice(stats.total_revenue || 0)"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Orders -->
+                <div class="bg-white rounded-lg shadow">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900">Son Siparişler</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sipariş</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Müşteri</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tutar</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durum</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tarih</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <template x-for="order in recentOrders" :key="order.id">
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900" x-text="'#' + order.order_number"></div>
+                                            <div class="text-sm text-gray-500" x-text="order.item_count + ' ürün'"></div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900" x-text="order.user_name"></div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="formatPrice(order.total_amount)"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" 
+                                                  :class="getStatusColor(order.status)" x-text="getStatusText(order.status)"></span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(order.created_at)"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders View -->
+            <div x-show="currentView === 'orders'" class="flex-1 p-6">
+                <div class="mb-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">Siparişler</h2>
+                            <p class="text-gray-600">Tüm siparişleri yönetin</p>
+                        </div>
+                        <div class="mt-4 sm:mt-0 flex space-x-3">
+                            <select x-model="orderFilter" @change="loadOrders" class="border border-gray-300 rounded-md px-3 py-2 text-sm">
+                                <option value="all">Tüm Siparişler</option>
+                                <option value="pending">Bekleyen</option>
+                                <option value="confirmed">Onaylanan</option>
+                                <option value="shipped">Kargoda</option>
+                                <option value="delivered">Teslim Edilen</option>
+                                <option value="cancelled">İptal Edilen</option>
+                            </select>
+                            <input x-model="searchTerm" @input="debounceSearch" type="text" placeholder="Ara..." 
+                                   class="border border-gray-300 rounded-md px-3 py-2 text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Orders Table -->
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sipariş</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Müşteri</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tutar</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durum</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kargo</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <template x-for="order in orders" :key="order.id">
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900" x-text="'#' + order.order_number"></div>
+                                            <div class="text-sm text-gray-500" x-text="formatDate(order.created_at)"></div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900" x-text="order.user_name"></div>
+                                            <div class="text-sm text-gray-500" x-text="order.user_email"></div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900" x-text="formatPrice(order.total_amount)"></div>
+                                            <div class="text-sm text-gray-500" x-text="order.item_count + ' ürün'"></div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" 
+                                                  :class="getStatusColor(order.status)" x-text="getStatusText(order.status)"></span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <div x-text="order.cargo_company || '-'"></div>
+                                            <div class="text-gray-500" x-text="order.cargo_tracking_number || '-'"></div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button @click="openOrderModal(order)" class="text-emerald-600 hover:text-emerald-900 mr-3">
+                                                <i class="fas fa-edit"></i> Düzenle
+                                            </button>
+                                            <button @click="viewOrderDetails(order.id)" class="text-blue-600 hover:text-blue-900">
+                                                <i class="fas fa-eye"></i> Detay
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                        <div class="flex-1 flex justify-between sm:hidden">
+                            <button @click="prevPage" :disabled="currentPage <= 1" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                Önceki
+                            </button>
+                            <button @click="nextPage" :disabled="currentPage >= totalPages" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                Sonraki
+                            </button>
+                        </div>
+                        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-sm text-gray-700">
+                                    Toplam <span class="font-medium" x-text="totalOrders"></span> siparişten 
+                                    <span class="font-medium" x-text="((currentPage - 1) * ordersPerPage) + 1"></span> - 
+                                    <span class="font-medium" x-text="Math.min(currentPage * ordersPerPage, totalOrders)"></span> arası gösteriliyor
+                                </p>
+                            </div>
+                            <div>
+                                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                    <button @click="prevPage" :disabled="currentPage <= 1" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                    <template x-for="page in getPageNumbers()" :key="page">
+                                        <button @click="goToPage(page)" 
+                                                :class="page === currentPage ? 'bg-emerald-50 border-emerald-500 text-emerald-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'"
+                                                class="relative inline-flex items-center px-4 py-2 border text-sm font-medium" x-text="page"></button>
+                                    </template>
+                                    <button @click="nextPage" :disabled="currentPage >= totalPages" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Update Modal -->
+    <div x-show="showOrderModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" x-transition>
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Sipariş Güncelle</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Sipariş Durumu</label>
+                        <select x-model="editingOrder.status" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="pending">Beklemede</option>
+                            <option value="confirmed">Onaylandı</option>
+                            <option value="shipped">Kargoya Verildi</option>
+                            <option value="delivered">Teslim Edildi</option>
+                            <option value="cancelled">İptal Edildi</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kargo Firması</label>
+                        <input x-model="editingOrder.cargo_company" type="text" placeholder="Örn: Aras Kargo" 
+                               class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kargo Takip Numarası</label>
+                        <input x-model="editingOrder.cargo_tracking_number" type="text" placeholder="Örn: 123456789" 
+                               class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button @click="showOrderModal = false" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+                        İptal
+                    </button>
+                    <button @click="updateOrder" :disabled="updating" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-md hover:bg-emerald-700 disabled:opacity-50">
+                        <span x-show="!updating">Güncelle</span>
+                        <span x-show="updating">Güncelleniyor...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div x-show="toast.show" x-transition class="fixed top-4 right-4 z-50">
+        <div class="bg-white rounded-lg shadow-lg p-4 border-l-4" :class="toast.type === 'success' ? 'border-green-500' : 'border-red-500'">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i :class="toast.type === 'success' ? 'fas fa-check-circle text-green-500' : 'fas fa-exclamation-circle text-red-500'"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-900" x-text="toast.message"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function adminApp() {
+            return {
+                // Auth state
+                isLoggedIn: false,
+                loading: true,
+                loginLoading: false,
+                loginError: '',
+                loginForm: { username: '', password: '' },
+                token: localStorage.getItem('adminToken') || '',
+                
+                // UI state
+                sidebarOpen: false,
+                currentView: 'dashboard',
+                lastUpdate: '',
+                refreshing: false,
+                
+                // Data
+                stats: {},
+                recentOrders: [],
+                orders: [],
+                
+                // Pagination
+                currentPage: 1,
+                ordersPerPage: 20,
+                totalOrders: 0,
+                totalPages: 0,
+                
+                // Filters
+                orderFilter: 'all',
+                searchTerm: '',
+                searchTimeout: null,
+                
+                // Modal
+                showOrderModal: false,
+                editingOrder: {},
+                updating: false,
+                
+                // Toast
+                toast: { show: false, message: '', type: 'success' },
+                
+                async init() {
+                    if (this.token) {
+                        this.isLoggedIn = true;
+                        await this.loadDashboard();
+                    }
+                    this.loading = false;
+                    this.updateTime();
+                    setInterval(() => this.updateTime(), 60000);
+                    
+                    // Auto refresh every 30 seconds
+                    setInterval(() => this.refreshData(), 30000);
+                },
+                
+                async login() {
+                    this.loginLoading = true;
+                    this.loginError = '';
+                    
+                    try {
+                        const response = await fetch('/api/admin/login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.loginForm)
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            this.token = data.token;
+                            localStorage.setItem('adminToken', this.token);
+                            this.isLoggedIn = true;
+                            await this.loadDashboard();
+                        } else {
+                            this.loginError = data.message;
+                        }
+                    } catch (error) {
+                        this.loginError = 'Giriş yapılırken hata oluştu';
+                    }
+                    
+                    this.loginLoading = false;
+                },
+                
+                logout() {
+                    this.token = '';
+                    localStorage.removeItem('adminToken');
+                    this.isLoggedIn = false;
+                    this.currentView = 'dashboard';
+                },
+                
+                async loadDashboard() {
+                    try {
+                        const response = await fetch('/api/admin/dashboard/stats', {
+                            headers: { 'Authorization': `Bearer ${this.token}` }
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            this.stats = data.data.stats;
+                            this.recentOrders = data.data.recentOrders;
+                        }
+                    } catch (error) {
+                        console.error('Dashboard yüklenemedi:', error);
+                    }
+                },
+                
+                async loadOrders() {
+                    try {
+                        const params = new URLSearchParams({
+                            page: this.currentPage,
+                            limit: this.ordersPerPage,
+                            status: this.orderFilter
+                        });
+                        
+                        if (this.searchTerm) {
+                            params.append('search', this.searchTerm);
+                        }
+                        
+                        const response = await fetch(`/api/admin/orders?${params}`, {
+                            headers: { 'Authorization': `Bearer ${this.token}` }
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            this.orders = data.data.orders;
+                            this.totalOrders = data.data.pagination.total;
+                            this.totalPages = data.data.pagination.pages;
+                        }
+                    } catch (error) {
+                        console.error('Siparişler yüklenemedi:', error);
+                    }
+                },
+                
+                async refreshData() {
+                    this.refreshing = true;
+                    
+                    if (this.currentView === 'dashboard') {
+                        await this.loadDashboard();
+                    } else if (this.currentView === 'orders') {
+                        await this.loadOrders();
+                    }
+                    
+                    this.refreshing = false;
+                },
+                
+                openOrderModal(order) {
+                    this.editingOrder = { ...order };
+                    this.showOrderModal = true;
+                },
+                
+                async updateOrder() {
+                    this.updating = true;
+                    
+                    try {
+                        const response = await fetch(`/api/admin/orders/${this.editingOrder.id}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${this.token}`
+                            },
+                            body: JSON.stringify({
+                                status: this.editingOrder.status,
+                                cargo_company: this.editingOrder.cargo_company,
+                                cargo_tracking_number: this.editingOrder.cargo_tracking_number
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            this.showToast('Sipariş başarıyla güncellendi', 'success');
+                            this.showOrderModal = false;
+                            await this.loadOrders();
+                            await this.loadDashboard(); // Refresh stats
+                        } else {
+                            this.showToast(data.message || 'Güncelleme başarısız', 'error');
+                        }
+                    } catch (error) {
+                        this.showToast('Güncelleme sırasında hata oluştu', 'error');
+                    }
+                    
+                    this.updating = false;
+                },
+                
+                debounceSearch() {
+                    clearTimeout(this.searchTimeout);
+                    this.searchTimeout = setTimeout(() => {
+                        this.currentPage = 1;
+                        this.loadOrders();
+                    }, 500);
+                },
+                
+                // Pagination methods
+                prevPage() {
+                    if (this.currentPage > 1) {
+                        this.currentPage--;
+                        this.loadOrders();
+                    }
+                },
+                
+                nextPage() {
+                    if (this.currentPage < this.totalPages) {
+                        this.currentPage++;
+                        this.loadOrders();
+                    }
+                },
+                
+                goToPage(page) {
+                    this.currentPage = page;
+                    this.loadOrders();
+                },
+                
+                getPageNumbers() {
+                    const pages = [];
+                    const start = Math.max(1, this.currentPage - 2);
+                    const end = Math.min(this.totalPages, this.currentPage + 2);
+                    
+                    for (let i = start; i <= end; i++) {
+                        pages.push(i);
+                    }
+                    
+                    return pages;
+                },
+                
+                // Watchers
+                $watch: {
+                    currentView(newView) {
+                        if (newView === 'orders') {
+                            this.loadOrders();
+                        }
+                    }
+                },
+                
+                // Utility methods
+                updateTime() {
+                    this.lastUpdate = new Date().toLocaleTimeString('tr-TR');
+                },
+                
+                showToast(message, type = 'success') {
+                    this.toast = { show: true, message, type };
+                    setTimeout(() => {
+                        this.toast.show = false;
+                    }, 3000);
+                },
+                
+                formatPrice(price) {
+                    return new Intl.NumberFormat('tr-TR', {
+                        style: 'currency',
+                        currency: 'TRY'
+                    }).format(price);
+                },
+                
+                formatDate(date) {
+                    return new Date(date).toLocaleDateString('tr-TR', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                },
+                
+                getStatusColor(status) {
+                    switch (status) {
+                        case 'pending': return 'bg-yellow-100 text-yellow-800';
+                        case 'confirmed': return 'bg-blue-100 text-blue-800';
+                        case 'shipped': return 'bg-purple-100 text-purple-800';
+                        case 'delivered': return 'bg-green-100 text-green-800';
+                        case 'cancelled': return 'bg-red-100 text-red-800';
+                        default: return 'bg-gray-100 text-gray-800';
+                    }
+                },
+                
+                getStatusText(status) {
+                    switch (status) {
+                        case 'pending': return 'Beklemede';
+                        case 'confirmed': return 'Onaylandı';
+                        case 'shipped': return 'Kargoya Verildi';
+                        case 'delivered': return 'Teslim Edildi';
+                        case 'cancelled': return 'İptal Edildi';
+                        default: return 'Bilinmeyen';
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html> 

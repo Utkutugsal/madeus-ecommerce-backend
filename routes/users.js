@@ -165,9 +165,20 @@ router.get('/orders/:orderId', authenticateToken, async (req, res) => {
             WHERE oi.order_id = ?
         `, [orderId]);
 
-        // Parse shipping address
-        const shippingAddress = order.shipping_address ? 
-            JSON.parse(order.shipping_address) : null;
+        // Parse shipping address safely
+        let shippingAddress = null;
+        if (order.shipping_address) {
+            try {
+                if (typeof order.shipping_address === 'string') {
+                    shippingAddress = JSON.parse(order.shipping_address);
+                } else if (typeof order.shipping_address === 'object') {
+                    shippingAddress = order.shipping_address;
+                }
+            } catch (e) {
+                console.error('Error parsing shipping address:', e);
+                shippingAddress = null;
+            }
+        }
 
         res.json({
             success: true,

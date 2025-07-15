@@ -11,6 +11,183 @@ function generateOrderNumber() {
     return `MD${timestamp.slice(-6)}${random}`;
 }
 
+// Admin: Get all orders
+router.get('/admin/all', async (req, res) => {
+    try {
+        const db = new Database();
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const offset = (page - 1) * limit;
+
+        const orders = await db.query(`
+            SELECT 
+                o.id,
+                o.order_number,
+                o.user_name,
+                o.user_email,
+                o.user_phone,
+                o.total_amount,
+                o.status,
+                o.cargo_company,
+                o.cargo_tracking_number,
+                o.created_at,
+                o.updated_at,
+                COUNT(oi.id) as item_count
+            FROM orders o
+            LEFT JOIN order_items oi ON o.id = oi.order_id
+            GROUP BY o.id
+            ORDER BY o.created_at DESC
+            LIMIT ? OFFSET ?
+        `, [limit, offset]);
+
+        const totalCount = await db.query(`SELECT COUNT(*) as total FROM orders`);
+        
+        res.json({
+            success: true,
+            data: {
+                orders,
+                pagination: {
+                    page,
+                    limit,
+                    total: totalCount[0].total,
+                    pages: Math.ceil(totalCount[0].total / limit)
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Admin orders fetch error:', error);
+        res.status(500).json({ success: false, message: 'Siparişler yüklenemedi' });
+    }
+});
+
+// Admin: Update order status and cargo info
+router.put('/admin/:orderId/update', async (req, res) => {
+    try {
+        const db = new Database();
+        const { orderId } = req.params;
+        const { status, cargo_company, cargo_tracking_number } = req.body;
+
+        // Validate status
+        const validStatuses = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
+        if (status && !validStatuses.includes(status)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Geçersiz sipariş durumu' 
+            });
+        }
+
+        // Build update query dynamically
+        const updateFields = [];
+        const updateValues = [];
+
+        if (status) {
+            updateFields.push('status = ?');
+            updateValues.push(status);
+        }
+
+        if (cargo_company !== undefined) {
+            updateFields.push('cargo_company = ?');
+            updateValues.push(cargo_company);
+        }
+
+        if (cargo_tracking_number !== undefined) {
+            updateFields.push('cargo_tracking_number = ?');
+            updateValues.push(cargo_tracking_number);
+        }
+
+        if (updateFields.length === 0) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Güncellenecek alan bulunamadı' 
+            });
+        }
+
+        updateFields.push('updated_at = NOW()');
+        updateValues.push(orderId);
+
+        const updateQuery = `
+            UPDATE orders 
+            SET ${updateFields.join(', ')} 
+            WHERE id = ?
+        `;
+
+        await db.query(updateQuery, updateValues);
+
+        // Get updated order
+        const updatedOrder = await db.query(`
+            SELECT * FROM orders WHERE id = ?
+        `, [orderId]);
+
+        res.json({
+            success: true,
+            message: 'Sipariş başarıyla güncellendi',
+            data: updatedOrder[0]
+        });
+
+    } catch (error) {
+        console.error('Admin order update error:', error);
+        res.status(500).json({ success: false, message: 'Sipariş güncellenemedi' });
+    }
+});
+
+// Admin: Get order details
+router.get('/admin/:orderId', async (req, res) => {
+    try {
+        const db = new Database();
+        const { orderId } = req.params;
+
+        // Get order details
+        const order = await db.query(`
+            SELECT 
+                o.*,
+                GROUP_CONCAT(
+                    JSON_OBJECT(
+                        'id', oi.id,
+                        'product_id', oi.product_id,
+                        'product_name', oi.product_name,
+                        'quantity', oi.quantity,
+                        'price', oi.price,
+                        'total', oi.total
+                    )
+                ) as items
+            FROM orders o
+            LEFT JOIN order_items oi ON o.id = oi.order_id
+            WHERE o.id = ?
+            GROUP BY o.id
+        `, [orderId]);
+
+        if (!order || order.length === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Sipariş bulunamadı' 
+            });
+        }
+
+        // Parse items
+        const orderData = order[0];
+        if (orderData.items) {
+            try {
+                const itemsArray = orderData.items.split(',').map(item => JSON.parse(item));
+                orderData.items = itemsArray;
+            } catch (e) {
+                console.error('Error parsing order items:', e);
+                orderData.items = [];
+            }
+        } else {
+            orderData.items = [];
+        }
+
+        res.json({
+            success: true,
+            data: orderData
+        });
+
+    } catch (error) {
+        console.error('Admin order details error:', error);
+        res.status(500).json({ success: false, message: 'Sipariş detayları yüklenemedi' });
+    }
+});
+
 // Create order endpoint
 router.post('/create', async (req, res) => {
     try {
