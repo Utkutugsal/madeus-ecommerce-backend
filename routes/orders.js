@@ -29,16 +29,16 @@ router.post('/create', async (req, res) => {
         // Debug logging
         console.log('=== ORDER CREATION DEBUG ===');
         console.log('Items received:', JSON.stringify(items, null, 2));
-        console.log('Items length:', items ? items.length : 'undefined');
+        console.log('Items length:', items.length);
         
-        if (items && items.length > 0) {
+        if (items.length > 0) {
             items.forEach((item, index) => {
                 console.log(`Item ${index}:`, {
-                    id: item.id,
-                    name: item.name,
+                    product: item.product,
                     quantity: item.quantity,
-                    price: item.price,
-                    total: item.quantity * item.price
+                    productId: item.product?.id,
+                    productName: item.product?.name,
+                    productPrice: item.product?.price
                 });
             });
         }
@@ -50,6 +50,11 @@ router.post('/create', async (req, res) => {
                 message: 'Eksik bilgiler: email, isim, ürünler ve toplam tutar gerekli'
             });
         }
+
+        // Debug user_id
+        console.log('🔍 User ID from request:', user_id);
+        console.log('🔍 User email from request:', user_email);
+        console.log('🔍 User name from request:', user_name);
 
         // Generate order number
         const orderNumber = generateOrderNumber();
@@ -63,7 +68,7 @@ router.post('/create', async (req, res) => {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())`,
             [
                 orderNumber,
-                user_id || null,
+                user_id,
                 user_email,
                 user_name,
                 user_phone || '',
@@ -75,7 +80,7 @@ router.post('/create', async (req, res) => {
 
         const orderId = orderResult.insertId;
 
-        console.log('✅ Order created with ID:', orderId, 'Number:', orderNumber);
+        console.log('✅ Order created with ID:', orderId, 'Number:', orderNumber, 'User ID:', user_id);
 
         // Add order items
         for (const item of items) {
