@@ -629,6 +629,87 @@
             }
         }
 
+        /* Product Management Styles */
+        .product-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .product-name {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .product-desc {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        .category-badge {
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .price-info {
+            text-align: right;
+        }
+
+        .original-price {
+            text-decoration: line-through;
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .stock-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .stock-badge.in-stock {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .stock-badge.out-of-stock {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-delete:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #374151;
+        }
+
         .hidden {
             display: none;
         }
@@ -675,6 +756,10 @@
                     <i class="fas fa-shopping-cart"></i>
                     Siparişler
                     <span class="nav-badge" id="pendingCount">0</span>
+                </a>
+                <a href="#" class="nav-item" data-page="products">
+                    <i class="fas fa-box"></i>
+                    Ürünler
                 </a>
                 <a href="#" class="nav-item" id="logoutBtn">
                     <i class="fas fa-sign-out-alt"></i>
@@ -775,6 +860,29 @@
                         <div id="ordersTableContainer"></div>
                     </div>
                 </div>
+
+                <!-- Products Page -->
+                <div id="productsPage" class="page hidden">
+                    <div class="products-section">
+                        <div class="section-header">
+                            <h3 class="section-title">Ürün Yönetimi</h3>
+                            <div class="filters">
+                                <select class="filter-select" id="categoryFilter">
+                                    <option value="all">Tüm Kategoriler</option>
+                                    <option value="serum">Serum</option>
+                                    <option value="cream">Krem</option>
+                                    <option value="cleanser">Temizlik</option>
+                                    <option value="mask">Maske</option>
+                                </select>
+                                <input type="text" class="search-input" id="productSearchInput" placeholder="Ürün ara...">
+                                <button class="btn-primary" id="addProductBtn">
+                                    <i class="fas fa-plus"></i> Yeni Ürün
+                                </button>
+                            </div>
+                        </div>
+                        <div id="productsTableContainer"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -812,6 +920,61 @@
         </div>
     </div>
 
+    <!-- Product Modal -->
+    <div id="productModal" class="modal-overlay">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="productModalTitle">Yeni Ürün Ekle</h3>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="productName">Ürün Adı</label>
+                    <input type="text" id="productName" placeholder="Ürün adını girin" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                </div>
+                <div class="form-group">
+                    <label for="productDescription">Açıklama</label>
+                    <textarea id="productDescription" placeholder="Ürün açıklaması" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; height: 80px;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="productPrice">Fiyat (₺)</label>
+                    <input type="number" id="productPrice" placeholder="0.00" step="0.01" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                </div>
+                <div class="form-group">
+                    <label for="productOriginalPrice">Orijinal Fiyat (₺)</label>
+                    <input type="number" id="productOriginalPrice" placeholder="0.00" step="0.01" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                </div>
+                <div class="form-group">
+                    <label for="productCategory">Kategori</label>
+                    <select id="productCategory" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <option value="serum">Serum</option>
+                        <option value="cream">Krem</option>
+                        <option value="cleanser">Temizlik</option>
+                        <option value="mask">Maske</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="productStock">Stok Miktarı</label>
+                    <input type="number" id="productStock" placeholder="0" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                </div>
+                <div class="form-group">
+                    <label for="productImageUrl">Resim URL</label>
+                    <input type="text" id="productImageUrl" placeholder="https://example.com/image.jpg" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                </div>
+                <div class="form-group">
+                    <label for="productActive">Durum</label>
+                    <select id="productActive" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <option value="1">Aktif</option>
+                        <option value="0">Pasif</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelProductBtn">İptal</button>
+                <button class="btn-primary" id="saveProductBtn">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast -->
     <div id="toast" class="toast">
         <div id="toastMessage"></div>
@@ -823,7 +986,9 @@
                 this.token = localStorage.getItem('adminToken');
                 this.currentPage = 'dashboard';
                 this.currentOrder = null;
+                this.currentProduct = null;
                 this.orders = [];
+                this.products = [];
                 this.stats = {};
                 
                 this.init();
@@ -900,6 +1065,36 @@
                 document.getElementById('editModal').addEventListener('click', (e) => {
                     if (e.target === e.currentTarget) {
                         this.closeModal();
+                    }
+                });
+
+                // Product Management
+                document.getElementById('addProductBtn').addEventListener('click', () => {
+                    this.addProduct();
+                });
+
+                document.getElementById('categoryFilter').addEventListener('change', () => {
+                    this.loadProducts();
+                });
+
+                document.getElementById('productSearchInput').addEventListener('input', () => {
+                    clearTimeout(this.productSearchTimeout);
+                    this.productSearchTimeout = setTimeout(() => this.loadProducts(), 500);
+                });
+
+                // Product Modal
+                document.getElementById('cancelProductBtn').addEventListener('click', () => {
+                    this.closeProductModal();
+                });
+
+                document.getElementById('saveProductBtn').addEventListener('click', () => {
+                    this.saveProduct();
+                });
+
+                // Close product modal on overlay click
+                document.getElementById('productModal').addEventListener('click', (e) => {
+                    if (e.target === e.currentTarget) {
+                        this.closeProductModal();
                     }
                 });
             }
@@ -979,7 +1174,8 @@
                 // Update page title
                 const titles = {
                     dashboard: 'Dashboard',
-                    orders: 'Siparişler'
+                    orders: 'Siparişler',
+                    products: 'Ürünler'
                 };
                 document.getElementById('pageTitle').textContent = titles[page];
 
@@ -994,6 +1190,8 @@
                 // Load data for the page
                 if (page === 'orders') {
                     this.loadOrders();
+                } else if (page === 'products') {
+                    this.loadProducts();
                 }
             }
 
@@ -1260,6 +1458,230 @@
                     cancelled: 'İptal Edildi'
                 };
                 return statusMap[status] || status;
+            }
+
+            // ===========================================
+            // PRODUCTS MANAGEMENT
+            // ===========================================
+
+            async loadProducts() {
+                if (!this.token) return;
+
+                const container = document.getElementById('productsTableContainer');
+                container.innerHTML = '<div class="loading">Yükleniyor...</div>';
+
+                try {
+                    const category = document.getElementById('categoryFilter').value;
+                    const search = document.getElementById('productSearchInput').value;
+                    
+                    const response = await fetch(`/api/admin/products?category=${category}&search=${search}`, {
+                        headers: { 'Authorization': `Bearer ${this.token}` }
+                    });
+
+                    if (response.status === 401) {
+                        this.logout();
+                        return;
+                    }
+
+                    const data = await response.json();
+                    if (data.success) {
+                        this.products = data.data.products;
+                        this.renderProductsTable();
+                    }
+                } catch (err) {
+                    container.innerHTML = '<div class="loading">Yükleme hatası</div>';
+                }
+            }
+
+            renderProductsTable() {
+                const container = document.getElementById('productsTableContainer');
+                
+                if (!this.products || this.products.length === 0) {
+                    container.innerHTML = '<div class="loading">Ürün bulunamadı</div>';
+                    return;
+                }
+
+                container.innerHTML = `
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>Ürün</th>
+                                <th>Kategori</th>
+                                <th>Fiyat</th>
+                                <th>Stok</th>
+                                <th>Durum</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${this.products.map(product => `
+                                <tr>
+                                    <td>
+                                        <div class="product-info">
+                                            <img src="${product.image_url || '/placeholder.svg'}" alt="${product.name}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover;">
+                                            <div>
+                                                <div class="product-name">${product.name}</div>
+                                                <div class="product-desc">${product.description ? product.description.substring(0, 50) + '...' : ''}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="category-badge">${this.getCategoryText(product.category)}</span>
+                                    </td>
+                                    <td>
+                                        <div class="price-info">
+                                            <strong>${this.formatPrice(product.price)}</strong>
+                                            ${product.original_price && product.original_price > product.price ? 
+                                                `<div class="original-price">${this.formatPrice(product.original_price)}</div>` : ''}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="stock-badge ${product.stock > 0 ? 'in-stock' : 'out-of-stock'}">
+                                            ${product.stock} adet
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge ${product.is_active ? 'status-confirmed' : 'status-cancelled'}">
+                                            ${product.is_active ? 'Aktif' : 'Pasif'}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn-edit" onclick="adminPanel.editProduct(${product.id})" style="margin-right: 5px;">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-delete" onclick="adminPanel.deleteProduct(${product.id})">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+
+            addProduct() {
+                this.currentProduct = null;
+                document.getElementById('productModalTitle').textContent = 'Yeni Ürün Ekle';
+                
+                // Clear form
+                document.getElementById('productName').value = '';
+                document.getElementById('productDescription').value = '';
+                document.getElementById('productPrice').value = '';
+                document.getElementById('productOriginalPrice').value = '';
+                document.getElementById('productCategory').value = 'serum';
+                document.getElementById('productStock').value = '';
+                document.getElementById('productImageUrl').value = '';
+                document.getElementById('productActive').value = '1';
+                
+                document.getElementById('productModal').classList.add('active');
+            }
+
+            editProduct(productId) {
+                this.currentProduct = this.products.find(p => p.id === productId);
+                if (!this.currentProduct) return;
+
+                document.getElementById('productModalTitle').textContent = 'Ürün Düzenle';
+                
+                // Fill form
+                document.getElementById('productName').value = this.currentProduct.name;
+                document.getElementById('productDescription').value = this.currentProduct.description || '';
+                document.getElementById('productPrice').value = this.currentProduct.price;
+                document.getElementById('productOriginalPrice').value = this.currentProduct.original_price || '';
+                document.getElementById('productCategory').value = this.currentProduct.category;
+                document.getElementById('productStock').value = this.currentProduct.stock;
+                document.getElementById('productImageUrl').value = this.currentProduct.image_url || '';
+                document.getElementById('productActive').value = this.currentProduct.is_active;
+
+                document.getElementById('productModal').classList.add('active');
+            }
+
+            closeProductModal() {
+                document.getElementById('productModal').classList.remove('active');
+                this.currentProduct = null;
+            }
+
+            async saveProduct() {
+                const btn = document.getElementById('saveProductBtn');
+                btn.textContent = 'Kaydediliyor...';
+                btn.disabled = true;
+
+                try {
+                    const productData = {
+                        name: document.getElementById('productName').value,
+                        description: document.getElementById('productDescription').value,
+                        price: parseFloat(document.getElementById('productPrice').value),
+                        original_price: parseFloat(document.getElementById('productOriginalPrice').value) || null,
+                        category: document.getElementById('productCategory').value,
+                        stock: parseInt(document.getElementById('productStock').value) || 0,
+                        image_url: document.getElementById('productImageUrl').value,
+                        is_active: parseInt(document.getElementById('productActive').value)
+                    };
+
+                    const url = this.currentProduct ? 
+                        `/api/admin/products/${this.currentProduct.id}` : 
+                        '/api/admin/products';
+                    
+                    const method = this.currentProduct ? 'PUT' : 'POST';
+
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${this.token}`
+                        },
+                        body: JSON.stringify(productData)
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.showToast(data.message, 'success');
+                        this.closeProductModal();
+                        this.loadProducts();
+                    } else {
+                        this.showToast(data.message || 'Kaydetme başarısız', 'error');
+                    }
+                } catch (err) {
+                    this.showToast('Bağlantı hatası', 'error');
+                }
+
+                btn.textContent = 'Kaydet';
+                btn.disabled = false;
+            }
+
+            async deleteProduct(productId) {
+                if (!confirm('Bu ürünü silmek istediğinizden emin misiniz?')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/admin/products/${productId}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${this.token}` }
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.showToast(data.message, 'success');
+                        this.loadProducts();
+                    } else {
+                        this.showToast(data.message || 'Silme başarısız', 'error');
+                    }
+                } catch (err) {
+                    this.showToast('Bağlantı hatası', 'error');
+                }
+            }
+
+            getCategoryText(category) {
+                const categoryMap = {
+                    serum: 'Serum',
+                    cream: 'Krem',
+                    cleanser: 'Temizlik',
+                    mask: 'Maske'
+                };
+                return categoryMap[category] || category;
             }
         }
 

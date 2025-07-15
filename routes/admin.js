@@ -337,4 +337,261 @@ router.put('/orders/:orderId', adminAuth, async (req, res) => {
     }
 });
 
+// ===========================================
+// PRODUCTS MANAGEMENT
+// ===========================================
+
+// Get all products
+router.get('/products', adminAuth, async (req, res) => {
+    try {
+        const db = new Database();
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const offset = (page - 1) * limit;
+        const category = req.query.category;
+        const search = req.query.search;
+        
+        let whereClause = '';
+        let queryParams = [];
+        
+        if (category && category !== 'all' && category !== '') {
+            whereClause = 'WHERE category = ?';
+            queryParams.push(category);
+        }
+        
+        if (search && search.trim() !== '') {
+            whereClause = whereClause ? 
+                `${whereClause} AND (name LIKE ? OR description LIKE ?)` :
+                'WHERE (name LIKE ? OR description LIKE ?)';
+            queryParams.push(`%${search}%`, `%${search}%`);
+        }
+        
+        const products = await db.query(`
+            SELECT 
+                id, name, description, price, original_price, 
+                category, stock, image_url, is_active, 
+                created_at, updated_at
+            FROM products
+            ${whereClause}
+            ORDER BY created_at DESC
+            LIMIT ${limit} OFFSET ${offset}
+        `, queryParams);
+        
+        const totalResult = await db.query(`
+            SELECT COUNT(*) as total 
+            FROM products
+            ${whereClause}
+        `, queryParams);
+        
+        res.json({
+            success: true,
+            data: {
+                products,
+                pagination: {
+                    page,
+                    limit,
+                    total: totalResult[0].total,
+                    pages: Math.ceil(totalResult[0].total / limit)
+                }
+            }
+        });
+        
+    } catch (error) {
+        console.error('Admin products fetch error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Ürünler yüklenemedi',
+            error: error.message 
+        });
+    }
+});
+
+// Get product by ID
+router.get('/products/:productId', adminAuth, async (req, res) => {
+    try {
+        const db = new Database();
+        const { productId } = req.params;
+        
+        const product = await db.query(`
+            SELECT * FROM products WHERE id = ?
+        `, [productId]);
+        
+        if (!product || product.length === 0) {
+            return res.status(404).json({ success: false, message: 'Ürün bulunamadı' });
+        }
+        
+        res.json({
+            success: true,
+            data: product[0]
+        });
+        
+    } catch (error) {
+        console.error('Admin product details error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Ürün detayları yüklenemedi',
+            error: error.message 
+        });
+    }
+});
+
+// Create new product
+router.post('/products', adminAuth, async (req, res) => {
+    try {
+        const db = new Database();
+        const { 
+            name, description, price, original_price, 
+            category, stock, image_url, is_active 
+        } = req.body;
+        
+        if (!name || !price || !category) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Ürün adı, fiyat ve kategori gereklidir' 
+            });
+        }
+        
+        const result = await db.query(`
+            INSERT INTO products (
+                name, description, price, original_price, 
+                category, stock, image_url, is_active, 
+                created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+        `, [
+            name, description, price, original_price || price, 
+            category, stock || 0, image_url || '', is_active || 1
+        ]);
+        
+        const newProduct = await db.query('SELECT * FROM products WHERE id = ?', [result.insertId]);
+        
+        res.json({
+            success: true,
+            message: 'Ürün başarıyla eklendi',
+            data: newProduct[0]
+        });
+        
+    } catch (error) {
+        console.error('Admin product create error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Ürün eklenemedi',
+            error: error.message 
+        });
+    }
+});
+
+// Update product
+router.put('/products/:productId', adminAuth, async (req, res) => {
+    try {
+        const db = new Database();
+        const { productId } = req.params;
+        const { 
+            name, description, price, original_price, 
+            category, stock, image_url, is_active 
+        } = req.body;
+        
+        const updateFields = [];
+        const updateValues = [];
+        
+        if (name !== undefined) {
+            updateFields.push('name = ?');
+            updateValues.push(name);
+        }
+        
+        if (description !== undefined) {
+            updateFields.push('description = ?');
+            updateValues.push(description);
+        }
+        
+        if (price !== undefined) {
+            updateFields.push('price = ?');
+            updateValues.push(price);
+        }
+        
+        if (original_price !== undefined) {
+            updateFields.push('original_price = ?');
+            updateValues.push(original_price);
+        }
+        
+        if (category !== undefined) {
+            updateFields.push('category = ?');
+            updateValues.push(category);
+        }
+        
+        if (stock !== undefined) {
+            updateFields.push('stock = ?');
+            updateValues.push(stock);
+        }
+        
+        if (image_url !== undefined) {
+            updateFields.push('image_url = ?');
+            updateValues.push(image_url);
+        }
+        
+        if (is_active !== undefined) {
+            updateFields.push('is_active = ?');
+            updateValues.push(is_active);
+        }
+        
+        if (updateFields.length === 0) {
+            return res.status(400).json({ success: false, message: 'Güncellenecek alan bulunamadı' });
+        }
+        
+        updateFields.push('updated_at = NOW()');
+        updateValues.push(productId);
+        
+        await db.query(`
+            UPDATE products 
+            SET ${updateFields.join(', ')} 
+            WHERE id = ?
+        `, updateValues);
+        
+        const updatedProduct = await db.query('SELECT * FROM products WHERE id = ?', [productId]);
+        
+        res.json({
+            success: true,
+            message: 'Ürün başarıyla güncellendi',
+            data: updatedProduct[0]
+        });
+        
+    } catch (error) {
+        console.error('Admin product update error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Ürün güncellenemedi',
+            error: error.message 
+        });
+    }
+});
+
+// Delete product
+router.delete('/products/:productId', adminAuth, async (req, res) => {
+    try {
+        const db = new Database();
+        const { productId } = req.params;
+        
+        // Check if product exists
+        const product = await db.query('SELECT * FROM products WHERE id = ?', [productId]);
+        if (!product || product.length === 0) {
+            return res.status(404).json({ success: false, message: 'Ürün bulunamadı' });
+        }
+        
+        // Delete product
+        await db.query('DELETE FROM products WHERE id = ?', [productId]);
+        
+        res.json({
+            success: true,
+            message: 'Ürün başarıyla silindi'
+        });
+        
+    } catch (error) {
+        console.error('Admin product delete error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Ürün silinemedi',
+            error: error.message 
+        });
+    }
+});
+
 module.exports = router; 
