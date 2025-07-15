@@ -351,6 +351,54 @@ router.get('/products', adminAuth, async (req, res) => {
         const category = req.query.category;
         const search = req.query.search;
         
+        console.log('Admin products request:', { page, limit, category, search });
+        
+        // First check if products table exists
+        try {
+            const tableCheck = await db.query(`
+                SELECT TABLE_NAME 
+                FROM INFORMATION_SCHEMA.TABLES 
+                WHERE TABLE_NAME = 'products'
+            `);
+            
+            if (tableCheck.length === 0) {
+                console.log('Products table does not exist, creating...');
+                await db.query(`
+                    CREATE TABLE products (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        name VARCHAR(255) NOT NULL,
+                        description TEXT,
+                        price DECIMAL(10,2) NOT NULL,
+                        original_price DECIMAL(10,2),
+                        category VARCHAR(50) NOT NULL,
+                        stock INT DEFAULT 0,
+                        image_url TEXT,
+                        is_active BOOLEAN DEFAULT TRUE,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                    )
+                `);
+                
+                // Add sample products
+                await db.query(`
+                    INSERT INTO products (name, description, price, original_price, category, stock, image_url, is_active) VALUES
+                    ('Vitamin C Serum', 'Güçlü antioksidan serum', 299.99, 399.99, 'serum', 50, '/placeholder.svg', 1),
+                    ('Hyaluronic Acid Serum', 'Yoğun nemlendirici serum', 249.99, 299.99, 'serum', 30, '/placeholder.svg', 1),
+                    ('Anti-Aging Cream', 'Yaşlanma karşıtı gece kremi', 399.99, 499.99, 'cream', 25, '/placeholder.svg', 1),
+                    ('Gentle Cleanser', 'Nazik temizlik jeli', 199.99, 249.99, 'cleanser', 40, '/placeholder.svg', 1),
+                    ('Hydrating Mask', 'Nemlendirici yüz maskesi', 159.99, 199.99, 'mask', 35, '/placeholder.svg', 1)
+                `);
+                console.log('Products table created and sample data inserted');
+            }
+        } catch (tableError) {
+            console.error('Table check/creation error:', tableError);
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Veritabanı tablosu hatası',
+                error: tableError.message 
+            });
+        }
+        
         let whereClause = '';
         let queryParams = [];
         
@@ -382,6 +430,8 @@ router.get('/products', adminAuth, async (req, res) => {
             FROM products
             ${whereClause}
         `, queryParams);
+        
+        console.log('Products found:', products.length);
         
         res.json({
             success: true,

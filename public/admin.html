@@ -1119,6 +1119,28 @@
                 } catch (error) {
                     console.error('Product event binding error:', error);
                 }
+
+                // Event delegation for dynamic buttons
+                document.addEventListener('click', (e) => {
+                    const target = e.target.closest('[data-action]');
+                    if (!target) return;
+
+                    const action = target.dataset.action;
+                    const productId = target.dataset.productId;
+                    const orderId = target.dataset.orderId;
+
+                    switch (action) {
+                        case 'edit':
+                            if (productId) this.editProduct(parseInt(productId));
+                            break;
+                        case 'delete':
+                            if (productId) this.deleteProduct(parseInt(productId));
+                            break;
+                        case 'edit-order':
+                            if (orderId) this.editOrder(parseInt(orderId));
+                            break;
+                    }
+                });
             }
 
             async login() {
@@ -1372,7 +1394,7 @@
                                         <div class="order-date">${order.cargo_tracking_number || 'Takip No Yok'}</div>
                                     </td>
                                     <td>
-                                        <button class="btn-edit" onclick="adminPanel.editOrder(${order.id})">
+                                        <button class="btn-edit" data-action="edit-order" data-order-id="${order.id}">
                                             <i class="fas fa-edit"></i> Düzenle
                                         </button>
                                     </td>
@@ -1585,10 +1607,10 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <button class="btn-edit" onclick="adminPanel.editProduct(${product.id})" style="margin-right: 5px;">
+                                        <button class="btn-edit" data-action="edit" data-product-id="${product.id}" style="margin-right: 5px;">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button class="btn-delete" onclick="adminPanel.deleteProduct(${product.id})">
+                                        <button class="btn-delete" data-action="delete" data-product-id="${product.id}">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </td>
