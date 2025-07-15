@@ -689,53 +689,10 @@ router.delete('/addresses/:id', authenticateToken, async (req, res) => {
     }
 });
 
-// Refresh token
-router.post('/refresh', authenticateToken, async (req, res) => {
-    try {
-        // Generate new token
-        const tokenPayload = {
-            userId: req.user.userId,
-            email: req.user.email,
-            role: req.user.role
-        };
-
-        const newToken = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
-            expiresIn: process.env.JWT_EXPIRE || '24h'
-        });
-
-        // Update session with new token
-        const oldTokenHash = crypto.createHash('sha256').update(req.token).digest('hex');
-        const newTokenHash = crypto.createHash('sha256').update(newToken).digest('hex');
-        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-        await db.update(
-            'user_sessions',
-            {
-                token_hash: newTokenHash,
-                expires_at: expiresAt
-            },
-            'user_id = ? AND token_hash = ?',
-            [req.user.userId, oldTokenHash]
-        );
-
-        res.json({
-            message: 'Token refreshed successfully',
-            token: newToken
-        });
-
-    } catch (error) {
-        console.error('Token refresh error:', error);
-        res.status(500).json({ error: 'Token refresh failed' });
-    }
-});
-
-// ====================================
-// TEMPORARY COMPATIBILITY ROUTES
-// ====================================
-
-// Get user addresses (compatibility route)
+// Compatibility endpoints for /api/users/addresses
 router.get('/users/addresses', authenticateToken, async (req, res) => {
     try {
+        const db = new Database();
         const addresses = await db.query(
             'SELECT * FROM user_addresses WHERE user_id = ? ORDER BY is_default DESC, created_at DESC',
             [req.user.userId]
@@ -749,65 +706,51 @@ router.get('/users/addresses', authenticateToken, async (req, res) => {
     }
 });
 
-// Add address (compatibility route)
 router.post('/users/addresses', authenticateToken, async (req, res) => {
     try {
-        console.log('📍 Add address request received (compatibility route)');
+        console.log('📍 Add address request received (auth/users route)');
         console.log('📍 User ID:', req.user.userId);
         console.log('📍 Request body:', req.body);
         
+        const db = new Database();
         const { title, first_name, last_name, address_line_1, address_line_2, city, district, postal_code, phone, is_default } = req.body;
-        
-        console.log('📍 Extracted data:', {
-            title, first_name, last_name, address_line_1, address_line_2, 
-            city, district, postal_code, phone, is_default
-        });
         
         // If this is default address, make others non-default
         if (is_default) {
-            console.log('📍 Making other addresses non-default');
             await db.query(
                 'UPDATE user_addresses SET is_default = FALSE WHERE user_id = ?',
                 [req.user.userId]
             );
         }
 
-        // Insert new address with direct SQL
-        const sql = `
-            INSERT INTO user_addresses 
+        // Insert new address
+        const result = await db.query(
+            `INSERT INTO user_addresses 
             (user_id, title, first_name, last_name, address_line_1, address_line_2, city, district, postal_code, phone, is_default) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `;
-        
-        const params = [
-            req.user.userId,
-            title,
-            first_name,
-            last_name,
-            address_line_1,
-            address_line_2 || null,
-            city,
-            district,
-            postal_code,
-            phone,
-            is_default ? 1 : 0
-        ];
-        
-        console.log('📍 SQL:', sql);
-        console.log('📍 Params:', params);
-
-        const result = await db.query(sql, params);
-        
-        console.log('📍 Insert result:', result);
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                req.user.userId,
+                title,
+                first_name,
+                last_name,
+                address_line_1,
+                address_line_2 || null,
+                city,
+                district,
+                postal_code,
+                phone,
+                is_default ? 1 : 0
+            ]
+        );
 
         res.json({ 
+            success: true, 
             message: 'Address added successfully',
-            addressId: result.insertId 
+            addressId: result.insertId
         });
 
     } catch (error) {
-        console.error('❌ Add address error:', error);
-        console.error('❌ Error stack:', error.stack);
+        console.error('Add address error:', error);
         res.status(500).json({ error: 'Failed to add address' });
     }
 });
@@ -864,6 +807,46 @@ router.delete('/users/addresses/:id', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Delete address error:', error);
         res.status(500).json({ error: 'Failed to delete address' });
+    }
+});
+
+// Refresh token
+router.post('/refresh', authenticateToken, async (req, res) => {
+    try {
+        // Generate new token
+        const tokenPayload = {
+            userId: req.user.userId,
+            email: req.user.email,
+            role: req.user.role
+        };
+
+        const newToken = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
+            expiresIn: process.env.JWT_EXPIRE || '24h'
+        });
+
+        // Update session with new token
+        const oldTokenHash = crypto.createHash('sha256').update(req.token).digest('hex');
+        const newTokenHash = crypto.createHash('sha256').update(newToken).digest('hex');
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+        await db.update(
+            'user_sessions',
+            {
+                token_hash: newTokenHash,
+                expires_at: expiresAt
+            },
+            'user_id = ? AND token_hash = ?',
+            [req.user.userId, oldTokenHash]
+        );
+
+        res.json({
+            message: 'Token refreshed successfully',
+            token: newToken
+        });
+
+    } catch (error) {
+        console.error('Token refresh error:', error);
+        res.status(500).json({ error: 'Token refresh failed' });
     }
 });
 
