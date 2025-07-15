@@ -54,6 +54,8 @@ router.get('/orders', authenticateToken, async (req, res) => {
                 o.total_amount,
                 o.shipping_cost,
                 o.status,
+                o.cargo_company,
+                o.cargo_tracking_number,
                 o.created_at,
                 o.updated_at,
                 o.shipping_address

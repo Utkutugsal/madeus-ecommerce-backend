@@ -188,6 +188,28 @@ async function initializeDatabase() {
                 console.log('✅ Sample products added');
             } else {
                 console.log('✅ Products table exists');
+                
+                // Check if original_price column exists
+                try {
+                    const checkOriginalPrice = await db.query(`
+                        SELECT COLUMN_NAME 
+                        FROM INFORMATION_SCHEMA.COLUMNS 
+                        WHERE TABLE_NAME = 'products' 
+                        AND COLUMN_NAME = 'original_price'
+                    `);
+                    
+                    if (checkOriginalPrice.length === 0) {
+                        await db.query(`
+                            ALTER TABLE products 
+                            ADD COLUMN original_price DECIMAL(10,2) DEFAULT NULL
+                        `);
+                        console.log('✅ original_price column added to products table');
+                    } else {
+                        console.log('✅ original_price column exists');
+                    }
+                } catch (error) {
+                    console.log('⚠️ original_price column check failed:', error.message);
+                }
             }
         } catch (error) {
             console.log('⚠️ Products table check failed:', error.message);
