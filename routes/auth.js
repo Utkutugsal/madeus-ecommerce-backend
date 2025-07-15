@@ -810,6 +810,23 @@ router.delete('/users/addresses/:id', authenticateToken, async (req, res) => {
     }
 });
 
+// Direct /users/addresses endpoint for compatibility
+router.get('/users/addresses', authenticateToken, async (req, res) => {
+    try {
+        const db = new Database();
+        const addresses = await db.query(
+            'SELECT * FROM user_addresses WHERE user_id = ? ORDER BY is_default DESC, created_at DESC',
+            [req.user.userId]
+        );
+
+        res.json(addresses || []);
+
+    } catch (error) {
+        console.error('Get addresses error:', error);
+        res.status(500).json({ error: 'Failed to get addresses' });
+    }
+});
+
 // Refresh token
 router.post('/refresh', authenticateToken, async (req, res) => {
     try {
