@@ -16,37 +16,51 @@ async function addCargoFields() {
     try {
         console.log('🔧 Adding cargo fields to orders table...');
         
-        // Add cargo_company field
+        // Check if cargo_company field exists
         try {
-            await db.query(`
-                ALTER TABLE orders 
-                ADD COLUMN cargo_company VARCHAR(100) DEFAULT NULL
+            const checkCompany = await db.query(`
+                SELECT COLUMN_NAME 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_NAME = 'orders' 
+                AND COLUMN_NAME = 'cargo_company'
             `);
-            console.log('✅ cargo_company field added');
-        } catch (error) {
-            if (error.message.includes('Duplicate column name')) {
+            
+            if (checkCompany.length === 0) {
+                await db.query(`
+                    ALTER TABLE orders 
+                    ADD COLUMN cargo_company VARCHAR(100) DEFAULT NULL
+                `);
+                console.log('✅ cargo_company field added');
+            } else {
                 console.log('⚠️ cargo_company field already exists');
-            } else {
-                console.error('❌ Error adding cargo_company:', error.message);
             }
-        }
-        
-        // Add cargo_tracking_number field
-        try {
-            await db.query(`
-                ALTER TABLE orders 
-                ADD COLUMN cargo_tracking_number VARCHAR(100) DEFAULT NULL
-            `);
-            console.log('✅ cargo_tracking_number field added');
         } catch (error) {
-            if (error.message.includes('Duplicate column name')) {
-                console.log('⚠️ cargo_tracking_number field already exists');
-            } else {
-                console.error('❌ Error adding cargo_tracking_number:', error.message);
-            }
+            console.error('❌ Error with cargo_company:', error.message);
         }
         
-        // Test the new fields
+        // Check if cargo_tracking_number field exists
+        try {
+            const checkTracking = await db.query(`
+                SELECT COLUMN_NAME 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_NAME = 'orders' 
+                AND COLUMN_NAME = 'cargo_tracking_number'
+            `);
+            
+            if (checkTracking.length === 0) {
+                await db.query(`
+                    ALTER TABLE orders 
+                    ADD COLUMN cargo_tracking_number VARCHAR(100) DEFAULT NULL
+                `);
+                console.log('✅ cargo_tracking_number field added');
+            } else {
+                console.log('⚠️ cargo_tracking_number field already exists');
+            }
+        } catch (error) {
+            console.error('❌ Error with cargo_tracking_number:', error.message);
+        }
+        
+        // Test the fields
         console.log('🧪 Testing new fields...');
         const testResult = await db.query(`
             SELECT cargo_company, cargo_tracking_number 
