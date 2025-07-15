@@ -19,15 +19,22 @@ router.post('/create', async (req, res) => {
             shipping_cost 
         } = req.body;
 
-        // DEBUG: Log received data
-        console.log('=== ORDER DEBUG ===');
-        console.log('Full request body:', JSON.stringify(req.body, null, 2));
+        // Debug logging
+        console.log('=== ORDER CREATION DEBUG ===');
         console.log('Items received:', JSON.stringify(items, null, 2));
         console.log('Items length:', items ? items.length : 'undefined');
+        
         if (items && items.length > 0) {
-            console.log('First item structure:', JSON.stringify(items[0], null, 2));
+            items.forEach((item, index) => {
+                console.log(`Item ${index}:`, {
+                    id: item.id,
+                    name: item.name,
+                    quantity: item.quantity,
+                    price: item.price,
+                    total: item.quantity * item.price
+                });
+            });
         }
-        console.log('=== END DEBUG ===');
 
         // Validate required fields
         if (!user_email || !user_name || !items || !total_amount) {
@@ -59,7 +66,6 @@ router.post('/create', async (req, res) => {
 
         // Add order items
         for (const item of items) {
-            console.log('Processing item:', JSON.stringify(item, null, 2));
             await db.query(
                 `INSERT INTO order_items (order_id, product_id, product_name, quantity, price, total) 
                  VALUES (?, ?, ?, ?, ?, ?)`,

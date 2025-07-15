@@ -97,13 +97,11 @@ async function getProductsFromDatabase(filters = {}) {
     // JSON alanlarını parse et
     const products = results.map(product => ({
       ...product,
-      originalPrice: product.originalPrice ? parseFloat(product.originalPrice) : null,
-      price: parseFloat(product.price),
       images: JSON.parse(product.images || '[]'),
       ingredients: JSON.parse(product.ingredients || '[]'),
       skinType: JSON.parse(product.skinType || '[]'),
       discount: product.originalPrice ? 
-        Math.round(((parseFloat(product.originalPrice) - parseFloat(product.price)) / parseFloat(product.originalPrice)) * 100) : 0,
+        Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0,
       tags: [], // Tags veritabanında ayrı bir tabloda olabilir, şimdilik boş
       benefits: [],
       features: [],
