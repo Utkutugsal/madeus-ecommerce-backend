@@ -39,7 +39,9 @@ router.get('/orders', authenticateToken, async (req, res) => {
         const { page = 1, limit = 10 } = req.query;
         const offset = (page - 1) * limit;
         
-        // Get user orders with items
+        console.log('🔍 Getting orders for user:', req.user.userId);
+        
+        // Get user orders
         const orders = await db.query(`
             SELECT 
                 o.id,
@@ -49,30 +51,35 @@ router.get('/orders', authenticateToken, async (req, res) => {
                 o.status,
                 o.created_at,
                 o.updated_at,
-                o.shipping_address,
-                GROUP_CONCAT(
-                    JSON_OBJECT(
-                        'product_id', oi.product_id,
-                        'product_name', oi.product_name,
-                        'quantity', oi.quantity,
-                        'price', oi.price,
-                        'total', oi.total
-                    )
-                ) as items
+                o.shipping_address
             FROM orders o
-            LEFT JOIN order_items oi ON o.id = oi.order_id
             WHERE o.user_id = ?
-            GROUP BY o.id
             ORDER BY o.created_at DESC
             LIMIT ? OFFSET ?
         `, [req.user.userId, parseInt(limit), parseInt(offset)]);
 
-        // Parse items JSON
-        const processedOrders = orders.map(order => ({
-            ...order,
-            items: order.items ? JSON.parse(`[${order.items}]`) : [],
-            shipping_address: order.shipping_address ? JSON.parse(order.shipping_address) : null
-        }));
+        console.log('📦 Found orders:', orders.length);
+
+        // Get items for each order
+        const processedOrders = [];
+        for (const order of orders) {
+            const items = await db.query(`
+                SELECT 
+                    oi.product_id,
+                    oi.product_name,
+                    oi.quantity,
+                    oi.price,
+                    oi.total
+                FROM order_items oi
+                WHERE oi.order_id = ?
+            `, [order.id]);
+
+            processedOrders.push({
+                ...order,
+                items: items || [],
+                shipping_address: order.shipping_address ? JSON.parse(order.shipping_address) : null
+            });
+        }
 
         // Get total count
         const totalResult = await db.query(
@@ -80,6 +87,8 @@ router.get('/orders', authenticateToken, async (req, res) => {
             [req.user.userId]
         );
         const total = totalResult[0].total;
+
+        console.log('📦 Processed orders:', processedOrders.length);
 
         res.json({
             success: true,
@@ -96,7 +105,7 @@ router.get('/orders', authenticateToken, async (req, res) => {
 
     } catch (error) {
         console.error('Get user orders error:', error);
-        res.status(500).json({ error: 'Failed to get orders' });
+        res.status(500).json({ error: 'Failed to get orders', details: error.message });
     }
 });
 
