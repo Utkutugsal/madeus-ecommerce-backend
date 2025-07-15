@@ -4,6 +4,13 @@ const emailService = require('../utils/email');
 
 const router = express.Router();
 
+// Generate order number
+function generateOrderNumber() {
+    const timestamp = Date.now().toString();
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `MD${timestamp.slice(-6)}${random}`;
+}
+
 // Create order endpoint
 router.post('/create', async (req, res) => {
     try {
@@ -44,14 +51,18 @@ router.post('/create', async (req, res) => {
             });
         }
 
+        // Generate order number
+        const orderNumber = generateOrderNumber();
+
         // Create order
         const orderResult = await db.query(
             `INSERT INTO orders (
-                user_id, user_email, user_name, user_phone,
+                order_number, user_id, user_email, user_name, user_phone,
                 shipping_address, total_amount, shipping_cost,
                 status, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', NOW())`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())`,
             [
+                orderNumber,
                 user_id || null,
                 user_email,
                 user_name,
@@ -64,42 +75,59 @@ router.post('/create', async (req, res) => {
 
         const orderId = orderResult.insertId;
 
+        console.log('✅ Order created with ID:', orderId, 'Number:', orderNumber);
+
         // Add order items
         for (const item of items) {
-            await db.query(
-                `INSERT INTO order_items (order_id, product_id, product_name, quantity, price, total) 
-                 VALUES (?, ?, ?, ?, ?, ?)`,
-                [orderId, item.id, item.name, item.quantity, item.price, item.quantity * item.price]
-            );
+            try {
+                await db.query(
+                    `INSERT INTO order_items (order_id, product_id, product_name, quantity, price, total) 
+                     VALUES (?, ?, ?, ?, ?, ?)`,
+                    [orderId, item.id, item.name, item.quantity, item.price, item.quantity * item.price]
+                );
+                console.log('✅ Order item added:', item.name);
+            } catch (itemError) {
+                console.error('❌ Order item error:', itemError);
+                throw itemError;
+            }
         }
 
         // Send email notification to admin
-        const orderDetails = {
-            orderId,
-            customerName: user_name,
-            customerEmail: user_email,
-            customerPhone: user_phone,
-            items,
-            totalAmount: total_amount,
-            shippingCost: shipping_cost,
-            shippingAddress: shipping_address
-        };
+        try {
+            const orderDetails = {
+                orderId,
+                orderNumber,
+                customerName: user_name,
+                customerEmail: user_email,
+                customerPhone: user_phone,
+                items,
+                totalAmount: total_amount,
+                shippingCost: shipping_cost,
+                shippingAddress: shipping_address
+            };
 
-        await emailService.sendOrderNotification(orderDetails);
+            await emailService.sendOrderNotification(orderDetails);
+            console.log('✅ Order notification email sent');
+        } catch (emailError) {
+            console.error('❌ Email notification error:', emailError);
+            // Don't fail the order if email fails
+        }
 
         res.json({
             success: true,
             message: 'Sipariş başarıyla oluşturuldu',
             orderId,
+            orderNumber,
             data: {
                 orderId,
+                orderNumber,
                 status: 'pending',
                 total: total_amount
             }
         });
 
     } catch (error) {
-        console.error('Order creation error:', error);
+        console.error('❌ Order creation error:', error);
         res.status(500).json({
             success: false,
             message: 'Sipariş oluşturulurken hata oluştu',

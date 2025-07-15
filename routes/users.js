@@ -5,6 +5,101 @@ const authenticateToken = require('../middleware/auth');
 
 const db = new Database();
 
+// Get user profile
+router.get('/profile', authenticateToken, async (req, res) => {
+    try {
+        const user = await db.findOne(
+            'SELECT id, name, email, phone, skin_type, role, created_at FROM users WHERE id = ?',
+            [req.user.userId]
+        );
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.json({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            skin_type: user.skin_type,
+            role: user.role,
+            created_at: user.created_at
+        });
+
+    } catch (error) {
+        console.error('Get profile error:', error);
+        res.status(500).json({ error: 'Failed to get profile' });
+    }
+});
+
+// Get user orders
+router.get('/orders', authenticateToken, async (req, res) => {
+    try {
+        const { page = 1, limit = 10 } = req.query;
+        const offset = (page - 1) * limit;
+        
+        // Get user orders with items
+        const orders = await db.query(`
+            SELECT 
+                o.id,
+                o.order_number,
+                o.total_amount,
+                o.shipping_cost,
+                o.status,
+                o.created_at,
+                o.updated_at,
+                o.shipping_address,
+                GROUP_CONCAT(
+                    JSON_OBJECT(
+                        'product_id', oi.product_id,
+                        'product_name', oi.product_name,
+                        'quantity', oi.quantity,
+                        'price', oi.price,
+                        'total', oi.total
+                    )
+                ) as items
+            FROM orders o
+            LEFT JOIN order_items oi ON o.id = oi.order_id
+            WHERE o.user_id = ?
+            GROUP BY o.id
+            ORDER BY o.created_at DESC
+            LIMIT ? OFFSET ?
+        `, [req.user.userId, parseInt(limit), parseInt(offset)]);
+
+        // Parse items JSON
+        const processedOrders = orders.map(order => ({
+            ...order,
+            items: order.items ? JSON.parse(`[${order.items}]`) : [],
+            shipping_address: order.shipping_address ? JSON.parse(order.shipping_address) : null
+        }));
+
+        // Get total count
+        const totalResult = await db.query(
+            'SELECT COUNT(*) as total FROM orders WHERE user_id = ?',
+            [req.user.userId]
+        );
+        const total = totalResult[0].total;
+
+        res.json({
+            success: true,
+            data: {
+                orders: processedOrders,
+                pagination: {
+                    page: parseInt(page),
+                    limit: parseInt(limit),
+                    total,
+                    pages: Math.ceil(total / limit)
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Get user orders error:', error);
+        res.status(500).json({ error: 'Failed to get orders' });
+    }
+});
+
 // Get user addresses
 router.get('/addresses', authenticateToken, async (req, res) => {
     try {
