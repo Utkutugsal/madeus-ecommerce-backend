@@ -370,7 +370,7 @@ loadRoute('./routes/seo.js', '/api/seo');
 loadRoute('./routes/setup.js', '/api/setup');
 loadRoute('./routes/admin.js', '/api/admin');
 
-// Temporary fix for /api/users/addresses 404 error
+// Simple compatibility endpoint for /api/users/addresses
 app.get('/api/users/addresses', authenticateToken, async (req, res) => {
     try {
         const db = new Database();
@@ -378,61 +378,26 @@ app.get('/api/users/addresses', authenticateToken, async (req, res) => {
             'SELECT * FROM user_addresses WHERE user_id = ? ORDER BY is_default DESC, created_at DESC',
             [req.user.userId]
         );
-
         res.json(addresses || []);
-
     } catch (error) {
         console.error('Get addresses error:', error);
         res.status(500).json({ error: 'Failed to get addresses' });
     }
 });
 
-app.post('/api/users/addresses', authenticateToken, async (req, res) => {
-    try {
-        const db = new Database();
-        const { title, first_name, last_name, address_line_1, address_line_2, city, district, postal_code, phone, is_default } = req.body;
-        
-        // If this is default address, make others non-default
-        if (is_default) {
-            await db.query(
-                'UPDATE user_addresses SET is_default = FALSE WHERE user_id = ?',
-                [req.user.userId]
-            );
-        }
-
-        // Insert new address
-        const result = await db.query(
-            `INSERT INTO user_addresses 
-            (user_id, title, first_name, last_name, address_line_1, address_line_2, city, district, postal_code, phone, is_default) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-                req.user.userId,
-                title,
-                first_name,
-                last_name,
-                address_line_1,
-                address_line_2 || null,
-                city,
-                district,
-                postal_code,
-                phone,
-                is_default ? 1 : 0
-            ]
-        );
-
-        res.json({ 
-            success: true, 
-            message: 'Address added successfully',
-            addressId: result.insertId
-        });
-
-    } catch (error) {
-        console.error('Add address error:', error);
-        res.status(500).json({ error: 'Failed to add address' });
-    }
+// Middleware to redirect /api/users/* to /api/auth/users/*
+app.use('/api/users/*', (req, res, next) => {
+    const originalPath = req.path;
+    const newPath = originalPath.replace('/api/users/', '/api/auth/users/');
+    req.url = newPath;
+    req.originalUrl = req.originalUrl.replace('/api/users/', '/api/auth/users/');
+    
+    // Forward to auth route
+    const authRouter = require('./routes/auth.js');
+    authRouter(req, res, next);
 });
 
-console.log('🚀 Routes loaded: auth, users, products, orders, seo, setup, admin');
+const PORT = process.env.PORT || 3000;
 
 // ===========================================
 // 404 HANDLER
@@ -487,8 +452,6 @@ app.use((err, req, res, next) => {
 // ===========================================
 // SERVER STARTUP
 // ===========================================
-
-const PORT = process.env.PORT || 3000;
 
 const server = app.listen(PORT, () => {
     console.log('🚀 Madeus E-commerce Backend Server Started');
