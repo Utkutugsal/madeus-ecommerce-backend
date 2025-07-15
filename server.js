@@ -353,7 +353,16 @@ const path = require('path');
 function loadRoute(routePath, mountPath) {
     try {
         if (fs.existsSync(routePath)) {
+            // Clear require cache for this route
+            delete require.cache[require.resolve(routePath)];
+            
             const route = require(routePath);
+            
+            // Validate that route is actually a router
+            if (typeof route !== 'function' && typeof route.use !== 'function') {
+                throw new Error(`Route ${routePath} does not export a valid router`);
+            }
+            
             app.use(mountPath, route);
             console.log(`✅ Loaded route: ${mountPath}`);
         } else {
@@ -361,6 +370,7 @@ function loadRoute(routePath, mountPath) {
         }
     } catch (error) {
         console.error(`❌ Error loading route ${mountPath}:`, error.message);
+        console.error(`❌ Stack trace:`, error.stack);
     }
 }
 
