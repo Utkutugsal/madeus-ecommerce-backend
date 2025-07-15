@@ -923,9 +923,11 @@
 
                     const data = await response.json();
 
+                    console.log('Login response:', data);
                     if (data.success) {
                         this.token = data.token;
                         localStorage.setItem('adminToken', this.token);
+                        console.log('Showing dashboard...');
                         this.showDashboard();
                         this.loadData();
                     } else {
@@ -953,8 +955,16 @@
             }
 
             showDashboard() {
+                console.log('showDashboard called');
+                const loginScreen = document.getElementById('loginScreen');
+                const dashboard = document.getElementById('dashboard');
+                console.log('Login screen:', loginScreen);
+                console.log('Dashboard:', dashboard);
+                
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('dashboard').classList.remove('hidden');
+                
+                console.log('Dashboard classes after:', document.getElementById('dashboard').classList.toString());
             }
 
             showPage(page) {
