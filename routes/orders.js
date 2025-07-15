@@ -97,47 +97,54 @@ router.post('/create', async (req, res) => {
             }
         }
 
-        // Send email notification to admin
-        try {
-            const orderDetails = {
-                orderId,
-                orderNumber,
-                customerName: user_name,
-                customerEmail: user_email,
-                customerPhone: user_phone,
-                items,
-                totalAmount: total_amount,
-                shippingCost: shipping_cost,
-                shippingAddress: shipping_address
-            };
+        // Send email notification to admin (asynchronously - don't wait)
+        const adminEmailPromise = (async () => {
+            try {
+                const orderDetails = {
+                    orderId,
+                    orderNumber,
+                    customerName: user_name,
+                    customerEmail: user_email,
+                    customerPhone: user_phone,
+                    items,
+                    totalAmount: total_amount,
+                    shippingCost: shipping_cost,
+                    shippingAddress: shipping_address
+                };
 
-            await emailService.sendOrderNotification(orderDetails);
-            console.log('✅ Order notification email sent to admin');
-        } catch (emailError) {
-            console.error('❌ Admin email notification error:', emailError);
-            // Don't fail the order if email fails
-        }
+                await emailService.sendOrderNotification(orderDetails);
+                console.log('✅ Order notification email sent to admin');
+            } catch (emailError) {
+                console.error('❌ Admin email notification error:', emailError);
+                // Don't fail the order if email fails
+            }
+        })();
 
-        // Send confirmation email to customer
-        try {
-            const orderDetails = {
-                orderNumber,
-                orderId,
-                customerName: user_name,
-                customerEmail: user_email,
-                customerPhone: user_phone,
-                items,
-                total: `${total_amount.toFixed(2)} TL`,
-                shippingCost: shipping_cost,
-                shippingAddress: shipping_address
-            };
+        // Send confirmation email to customer (asynchronously - don't wait)
+        const customerEmailPromise = (async () => {
+            try {
+                const orderDetails = {
+                    orderNumber,
+                    orderId,
+                    customerName: user_name,
+                    customerEmail: user_email,
+                    customerPhone: user_phone,
+                    items,
+                    total: `${total_amount.toFixed(2)} TL`,
+                    shippingCost: shipping_cost,
+                    shippingAddress: shipping_address
+                };
 
-            await emailService.sendOrderConfirmationEmail(user_email, orderDetails);
-            console.log('✅ Order confirmation email sent to customer');
-        } catch (emailError) {
-            console.error('❌ Customer email confirmation error:', emailError);
-            // Don't fail the order if email fails
-        }
+                await emailService.sendOrderConfirmationEmail(user_email, orderDetails);
+                console.log('✅ Order confirmation email sent to customer');
+            } catch (emailError) {
+                console.error('❌ Customer email confirmation error:', emailError);
+                // Don't fail the order if email fails
+            }
+        })();
+
+        // Don't wait for emails - return response immediately
+        console.log('📧 Email sending started in background...');
 
         res.json({
             success: true,
