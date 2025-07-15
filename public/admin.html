@@ -4,907 +4,1257 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Madeus Admin Panel</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-        
-        .gradient-bg {
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        /* Login Screen */
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
         }
-        
-        .card-shadow {
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
         }
-        
-        .card-shadow-lg {
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
         }
-        
-        .hover-scale {
-            transition: all 0.3s ease;
+
+        .login-header h1 {
+            color: #1e293b;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
         }
-        
-        .hover-scale:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+        .login-header p {
+            color: #64748b;
+            font-size: 14px;
         }
-        
-        .sidebar-gradient {
-            background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%);
+
+        .form-group {
+            margin-bottom: 20px;
         }
-        
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
             font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            color: #374151;
         }
-        
-        .table-row {
-            transition: all 0.2s ease;
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: #f8fafc;
         }
-        
-        .table-row:hover {
-            background-color: #f8fafc;
-            transform: scale(1.01);
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
-        
+
         .btn-primary {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            border: none;
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: 500;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.4);
         }
-        
+
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px 0 rgba(16, 185, 129, 0.5);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
         }
-        
-        .btn-secondary {
-            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-            border: none;
+
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        /* Dashboard Layout */
+        .dashboard {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: #1e293b;
             color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
-            font-weight: 500;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.hidden {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .sidebar-header h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .sidebar-nav {
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            color: #cbd5e1;
+            text-decoration: none;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.4);
+            cursor: pointer;
+            border-left: 3px solid transparent;
         }
-        
-        .btn-secondary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px 0 rgba(99, 102, 241, 0.5);
+
+        .nav-item:hover {
+            background: #334155;
+            color: white;
+            border-left-color: #667eea;
         }
-        
-        .modal-backdrop {
-            backdrop-filter: blur(10px);
-            background: rgba(0, 0, 0, 0.5);
+
+        .nav-item.active {
+            background: #334155;
+            color: white;
+            border-left-color: #667eea;
         }
-        
-        .loading-spinner {
-            border: 3px solid #f3f4f6;
-            border-top: 3px solid #10b981;
+
+        .nav-item i {
+            width: 20px;
+            margin-right: 15px;
+            font-size: 16px;
+        }
+
+        .nav-badge {
+            background: #dc2626;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.full-width {
+            margin-left: 0;
+        }
+
+        .top-bar {
+            background: white;
+            padding: 20px 30px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .top-bar-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-left: auto;
+        }
+
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: #f1f5f9;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #64748b;
+        }
+
+        .btn-icon:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+
+        .content-area {
+            padding: 30px;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .stat-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+
+        .stat-change {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .stat-change.positive {
+            color: #059669;
+        }
+
+        .stat-change.negative {
+            color: #dc2626;
+        }
+
+        /* Orders Table */
+        .orders-section {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 25px 30px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .filters {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .search-input {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            width: 200px;
+            font-size: 14px;
+        }
+
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .orders-table th {
+            background: #f8fafc;
+            padding: 15px 20px;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .orders-table td {
+            padding: 20px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        .orders-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .order-id {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .order-date {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .customer-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .customer-avatar {
+            width: 35px;
+            height: 35px;
             border-radius: 50%;
-            width: 2rem;
-            height: 2rem;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .customer-name {
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        .customer-email {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .status-confirmed {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .status-shipped {
+            background: #e0e7ff;
+            color: #7c3aed;
+        }
+
+        .status-delivered {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .status-cancelled {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .btn-edit {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-edit:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 25px 30px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .modal-footer {
+            padding: 20px 30px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+
+        .btn-secondary {
+            padding: 10px 20px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            color: #64748b;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-        
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            z-index: 3000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
         }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+
+        .toast.show {
+            transform: translateX(0);
         }
-        
-        .slide-in {
-            animation: slideIn 0.3s ease-out;
+
+        .toast.success {
+            border-left: 4px solid #059669;
         }
-        
-        @keyframes slideIn {
-            from { transform: translateX(-100%); }
-            to { transform: translateX(0); }
+
+        .toast.error {
+            border-left: 4px solid #dc2626;
         }
-        
-        .pulse-success {
-            animation: pulseSuccess 2s infinite;
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .content-area {
+                padding: 20px;
+            }
+            
+            .filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-input {
+                width: 100%;
+            }
         }
-        
-        @keyframes pulseSuccess {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-            50% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-        }
-        
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+
+        .hidden {
+            display: none;
         }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen" x-data="adminApp()" x-init="init()">
-    <!-- Loading Screen -->
-    <div x-show="loading" class="fixed inset-0 z-50 flex items-center justify-center gradient-bg">
-        <div class="text-center text-white">
-            <div class="loading-spinner mx-auto mb-4"></div>
-            <h3 class="text-xl font-semibold mb-2">Madeus Admin Panel</h3>
-            <p class="text-blue-100">Yükleniyor...</p>
-        </div>
-    </div>
-
-    <!-- Login Page -->
-    <div x-show="!isLoggedIn && !loading" class="min-h-screen flex items-center justify-center gradient-bg">
-        <div class="max-w-md w-full mx-4">
-            <div class="glass-effect rounded-2xl p-8 card-shadow-lg">
-                <div class="text-center mb-8">
-                    <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-crown text-2xl text-blue-600"></i>
-                    </div>
-                    <h2 class="text-2xl font-bold text-white mb-2">Madeus Admin</h2>
-                    <p class="text-blue-100">Yönetim Paneli</p>
-                </div>
-                
-                <form @submit.prevent="login" class="space-y-6">
-                    <div>
-                        <label class="block text-sm font-medium text-blue-100 mb-2">Kullanıcı Adı</label>
-                        <div class="relative">
-                            <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                            <input x-model="loginForm.username" type="text" required
-                                   class="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent"
-                                   placeholder="Kullanıcı adınızı girin">
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-blue-100 mb-2">Şifre</label>
-                        <div class="relative">
-                            <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                            <input x-model="loginForm.password" type="password" required
-                                   class="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent"
-                                   placeholder="Şifrenizi girin">
-                        </div>
-                    </div>
-                    
-                    <button type="submit" :disabled="loginLoading" 
-                            class="w-full bg-white text-blue-600 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-all duration-300 disabled:opacity-50">
-                        <span x-show="!loginLoading">Giriş Yap</span>
-                        <span x-show="loginLoading" class="flex items-center justify-center">
-                            <div class="loading-spinner mr-2" style="width: 1rem; height: 1rem; border-width: 2px;"></div>
-                            Giriş Yapılıyor...
-                        </span>
-                    </button>
-                    
-                    <div x-show="loginError" class="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-red-100 text-sm text-center" x-text="loginError"></div>
-                </form>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>Madeus Admin</h1>
+                <p>Yönetim Paneli</p>
             </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Kullanıcı Adı</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Şifre</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn-primary" id="loginBtn">
+                    Giriş Yap
+                </button>
+                <div id="loginError" class="error-message hidden"></div>
+            </form>
         </div>
     </div>
 
-    <!-- Admin Dashboard -->
-    <div x-show="isLoggedIn && !loading" class="min-h-screen bg-gray-50">
+    <!-- Dashboard -->
+    <div id="dashboard" class="dashboard hidden">
         <!-- Sidebar -->
-        <div class="fixed inset-y-0 left-0 z-40 w-64 sidebar-gradient transform transition-transform duration-300 ease-in-out slide-in"
-             :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
-            
-            <!-- Logo -->
-            <div class="flex items-center justify-center h-16 bg-black/20">
-                <div class="flex items-center space-x-2">
-                    <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-                        <i class="fas fa-crown text-blue-600"></i>
-                    </div>
-                    <span class="text-xl font-bold text-white">Madeus</span>
-                </div>
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>Madeus Admin</h2>
             </div>
-            
-            <!-- Navigation -->
-            <nav class="mt-8 px-4">
-                <div class="space-y-2">
-                    <a @click="currentView = 'dashboard'" 
-                       :class="currentView === 'dashboard' ? 'bg-white/20 text-white' : 'text-blue-100 hover:bg-white/10'"
-                       class="flex items-center px-4 py-3 rounded-lg cursor-pointer transition-all duration-200 group">
-                        <i class="fas fa-chart-line mr-3 text-lg"></i>
-                        <span class="font-medium">Dashboard</span>
-                    </a>
-                    
-                    <a @click="currentView = 'orders'" 
-                       :class="currentView === 'orders' ? 'bg-white/20 text-white' : 'text-blue-100 hover:bg-white/10'"
-                       class="flex items-center px-4 py-3 rounded-lg cursor-pointer transition-all duration-200 group">
-                        <i class="fas fa-shopping-cart mr-3 text-lg"></i>
-                        <span class="font-medium">Siparişler</span>
-                        <span x-show="stats.pending_orders > 0" 
-                              class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full pulse-success"
-                              x-text="stats.pending_orders"></span>
-                    </a>
-                    
-                    <a @click="logout" 
-                       class="flex items-center px-4 py-3 rounded-lg cursor-pointer text-blue-100 hover:bg-red-500/20 hover:text-red-200 transition-all duration-200 group">
-                        <i class="fas fa-sign-out-alt mr-3 text-lg"></i>
-                        <span class="font-medium">Çıkış Yap</span>
-                    </a>
-                </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-page="dashboard">
+                    <i class="fas fa-chart-line"></i>
+                    Dashboard
+                </a>
+                <a href="#" class="nav-item" data-page="orders">
+                    <i class="fas fa-shopping-cart"></i>
+                    Siparişler
+                    <span class="nav-badge" id="pendingCount">0</span>
+                </a>
+                <a href="#" class="nav-item" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Çıkış Yap
+                </a>
             </nav>
-            
-            <!-- User Info -->
-            <div class="absolute bottom-0 left-0 right-0 p-4 bg-black/20">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                        <i class="fas fa-user text-white"></i>
-                    </div>
-                    <div>
-                        <p class="text-white font-medium">Admin</p>
-                        <p class="text-blue-200 text-sm">Yönetici</p>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Main Content -->
-        <div class="lg:ml-64 transition-all duration-300">
-            <!-- Top Bar -->
-            <div class="bg-white border-b border-gray-200 px-6 py-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-4">
-                        <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden text-gray-600 hover:text-gray-900">
-                            <i class="fas fa-bars text-xl"></i>
-                        </button>
-                        <h1 class="text-2xl font-bold text-gray-900" x-text="currentView === 'dashboard' ? 'Dashboard' : 'Siparişler'"></h1>
-                    </div>
-                    
-                    <div class="flex items-center space-x-4">
-                        <div class="text-sm text-gray-500">
-                            <i class="fas fa-clock mr-1"></i>
-                            Son Güncelleme: <span x-text="lastUpdate"></span>
-                        </div>
-                        <button @click="refreshData" 
-                                class="p-2 text-gray-500 hover:text-blue-600 transition-colors duration-200">
-                            <i class="fas fa-sync-alt" :class="refreshing ? 'animate-spin' : ''"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Dashboard Content -->
-            <div x-show="currentView === 'dashboard'" class="p-6 fade-in">
-                <!-- Stats Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <div class="bg-white rounded-xl p-6 card-shadow hover-scale">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-medium text-gray-600 mb-1">Toplam Sipariş</p>
-                                <p class="text-3xl font-bold text-gray-900" x-text="stats.total_orders || 0"></p>
-                                <p class="text-xs text-green-600 mt-1">
-                                    <i class="fas fa-arrow-up mr-1"></i>
-                                    +12% bu ay
-                                </p>
-                            </div>
-                            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                                <i class="fas fa-shopping-cart text-blue-600 text-xl"></i>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white rounded-xl p-6 card-shadow hover-scale">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-medium text-gray-600 mb-1">Bekleyen</p>
-                                <p class="text-3xl font-bold text-yellow-600" x-text="stats.pending_orders || 0"></p>
-                                <p class="text-xs text-yellow-600 mt-1">
-                                    <i class="fas fa-clock mr-1"></i>
-                                    İşlem bekliyor
-                                </p>
-                            </div>
-                            <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
-                                <i class="fas fa-hourglass-half text-yellow-600 text-xl"></i>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white rounded-xl p-6 card-shadow hover-scale">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-medium text-gray-600 mb-1">Teslim Edilen</p>
-                                <p class="text-3xl font-bold text-green-600" x-text="stats.delivered_orders || 0"></p>
-                                <p class="text-xs text-green-600 mt-1">
-                                    <i class="fas fa-check-circle mr-1"></i>
-                                    Tamamlandı
-                                </p>
-                            </div>
-                            <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                                <i class="fas fa-check-circle text-green-600 text-xl"></i>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white rounded-xl p-6 card-shadow hover-scale">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-medium text-gray-600 mb-1">Toplam Gelir</p>
-                                <p class="text-3xl font-bold text-emerald-600" x-text="formatPrice(stats.total_revenue || 0)"></p>
-                                <p class="text-xs text-emerald-600 mt-1">
-                                    <i class="fas fa-arrow-up mr-1"></i>
-                                    +8% bu ay
-                                </p>
-                            </div>
-                            <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                                <i class="fas fa-lira-sign text-emerald-600 text-xl"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Orders -->
-                <div class="bg-white rounded-xl card-shadow overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-200">
-                        <h3 class="text-lg font-semibold text-gray-900">Son Siparişler</h3>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sipariş</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Müşteri</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tutar</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durum</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tarih</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                <template x-for="order in recentOrders" :key="order.id">
-                                    <tr class="table-row">
-                                        <td class="px-6 py-4">
-                                            <div class="flex items-center">
-                                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                                                    <i class="fas fa-receipt text-blue-600 text-sm"></i>
-                                                </div>
-                                                <div>
-                                                    <div class="text-sm font-medium text-gray-900" x-text="'#' + order.order_number"></div>
-                                                    <div class="text-sm text-gray-500" x-text="order.item_count + ' ürün'"></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <div class="text-sm font-medium text-gray-900" x-text="order.user_name"></div>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <div class="text-sm font-bold text-gray-900" x-text="formatPrice(order.total_amount)"></div>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <span class="status-badge" :class="getStatusColor(order.status)" x-text="getStatusText(order.status)"></span>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <div class="text-sm text-gray-500" x-text="formatDate(order.created_at)"></div>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Orders Content -->
-            <div x-show="currentView === 'orders'" class="p-6 fade-in">
-                <!-- Filters -->
-                <div class="bg-white rounded-xl p-6 card-shadow mb-6">
-                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-                            <select x-model="orderFilter" @change="loadOrders" 
-                                    class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                <option value="all">Tüm Siparişler</option>
-                                <option value="pending">Bekleyen</option>
-                                <option value="confirmed">Onaylanan</option>
-                                <option value="shipped">Kargoda</option>
-                                <option value="delivered">Teslim Edilen</option>
-                                <option value="cancelled">İptal Edilen</option>
-                            </select>
-                            
-                            <div class="relative">
-                                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                                <input x-model="searchTerm" @input="debounceSearch" type="text" 
-                                       placeholder="Sipariş ara..." 
-                                       class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            </div>
-                        </div>
-                        
-                        <div class="text-sm text-gray-500">
-                            Toplam <span class="font-semibold" x-text="totalOrders"></span> sipariş
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Orders Table -->
-                <div class="bg-white rounded-xl card-shadow overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sipariş</th>
-                                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Müşteri</th>
-                                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tutar</th>
-                                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durum</th>
-                                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kargo</th>
-                                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">İşlemler</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                <template x-for="order in orders" :key="order.id">
-                                    <tr class="table-row">
-                                        <td class="px-6 py-4">
-                                            <div class="flex items-center">
-                                                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                                                    <i class="fas fa-receipt text-blue-600"></i>
-                                                </div>
-                                                <div>
-                                                    <div class="text-sm font-medium text-gray-900" x-text="'#' + order.order_number"></div>
-                                                    <div class="text-xs text-gray-500" x-text="formatDate(order.created_at)"></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <div class="flex items-center">
-                                                <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
-                                                    <i class="fas fa-user text-gray-600 text-sm"></i>
-                                                </div>
-                                                <div>
-                                                    <div class="text-sm font-medium text-gray-900" x-text="order.user_name"></div>
-                                                    <div class="text-xs text-gray-500" x-text="order.user_email"></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <div class="text-sm font-bold text-gray-900" x-text="formatPrice(order.total_amount)"></div>
-                                            <div class="text-xs text-gray-500" x-text="order.item_count + ' ürün'"></div>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <span class="status-badge" :class="getStatusColor(order.status)" x-text="getStatusText(order.status)"></span>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <div class="text-sm text-gray-900" x-text="order.cargo_company || 'Belirtilmemiş'"></div>
-                                            <div class="text-xs text-gray-500" x-text="order.cargo_tracking_number || 'Takip No Yok'"></div>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <button @click="openOrderModal(order)" class="btn-secondary">
-                                                <i class="fas fa-edit mr-2"></i>
-                                                Düzenle
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Order Update Modal -->
-    <div x-show="showOrderModal" class="fixed inset-0 z-50 modal-backdrop" x-transition>
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all" 
-                 x-transition:enter="ease-out duration-300"
-                 x-transition:enter-start="opacity-0 scale-95"
-                 x-transition:enter-end="opacity-100 scale-100">
-                
-                <div class="p-6 border-b border-gray-200">
-                    <h3 class="text-xl font-semibold text-gray-900">Sipariş Güncelle</h3>
-                    <p class="text-sm text-gray-500 mt-1">Sipariş durumunu ve kargo bilgilerini güncelleyin</p>
-                </div>
-                
-                <div class="p-6 space-y-6">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            <i class="fas fa-truck mr-2"></i>
-                            Sipariş Durumu
-                        </label>
-                        <select x-model="editingOrder.status" 
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            <option value="pending">🕐 Beklemede</option>
-                            <option value="confirmed">✅ Onaylandı</option>
-                            <option value="shipped">🚚 Kargoya Verildi</option>
-                            <option value="delivered">📦 Teslim Edildi</option>
-                            <option value="cancelled">❌ İptal Edildi</option>
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            <i class="fas fa-building mr-2"></i>
-                            Kargo Firması
-                        </label>
-                        <input x-model="editingOrder.cargo_company" type="text" 
-                               placeholder="Örn: Aras Kargo, Yurtiçi Kargo"
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            <i class="fas fa-barcode mr-2"></i>
-                            Kargo Takip Numarası
-                        </label>
-                        <input x-model="editingOrder.cargo_tracking_number" type="text" 
-                               placeholder="Örn: 123456789"
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    </div>
-                </div>
-                
-                <div class="p-6 bg-gray-50 rounded-b-2xl flex justify-end space-x-3">
-                    <button @click="showOrderModal = false" 
-                            class="px-6 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">
-                        İptal
+        <div class="main-content" id="mainContent">
+            <div class="top-bar">
+                <h1 class="page-title" id="pageTitle">Dashboard</h1>
+                <div class="top-bar-actions">
+                    <span id="lastUpdate" style="font-size: 14px; color: #64748b;"></span>
+                    <button class="btn-icon" id="refreshBtn">
+                        <i class="fas fa-sync-alt"></i>
                     </button>
-                    <button @click="updateOrder" :disabled="updating" class="btn-primary">
-                        <span x-show="!updating" class="flex items-center">
-                            <i class="fas fa-save mr-2"></i>
-                            Güncelle
-                        </span>
-                        <span x-show="updating" class="flex items-center">
-                            <div class="loading-spinner mr-2" style="width: 1rem; height: 1rem; border-width: 2px;"></div>
-                            Güncelleniyor...
-                        </span>
+                    <button class="btn-icon" id="menuToggle">
+                        <i class="fas fa-bars"></i>
                     </button>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Toast Notifications -->
-    <div x-show="toast.show" 
-         class="fixed top-4 right-4 z-50 max-w-sm w-full"
-         x-transition:enter="transform ease-out duration-300 transition"
-         x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
-         x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0">
-        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-            <div class="p-4">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <i :class="toast.type === 'success' ? 'fas fa-check-circle text-green-500' : 'fas fa-exclamation-circle text-red-500'" class="text-xl"></i>
+            <div class="content-area">
+                <!-- Dashboard Page -->
+                <div id="dashboardPage" class="page">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-title">Toplam Sipariş</div>
+                                <div class="stat-icon" style="background: #dbeafe; color: #2563eb;">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="totalOrders">0</div>
+                            <div class="stat-change positive">+12% bu ay</div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-title">Bekleyen</div>
+                                <div class="stat-icon" style="background: #fef3c7; color: #d97706;">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="pendingOrders">0</div>
+                            <div class="stat-change">İşlem bekliyor</div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-title">Teslim Edilen</div>
+                                <div class="stat-icon" style="background: #d1fae5; color: #059669;">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="deliveredOrders">0</div>
+                            <div class="stat-change positive">Tamamlandı</div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-title">Toplam Ciro</div>
+                                <div class="stat-icon" style="background: #dcfce7; color: #16a34a;">
+                                    <i class="fas fa-lira-sign"></i>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="totalRevenue">₺0</div>
+                            <div class="stat-change positive">+8% bu ay</div>
+                        </div>
                     </div>
-                    <div class="ml-3">
-                        <p class="text-sm font-medium text-gray-900" x-text="toast.message"></p>
+
+                    <div class="orders-section">
+                        <div class="section-header">
+                            <h3 class="section-title">Son Siparişler</h3>
+                        </div>
+                        <div id="recentOrdersTable"></div>
+                    </div>
+                </div>
+
+                <!-- Orders Page -->
+                <div id="ordersPage" class="page hidden">
+                    <div class="orders-section">
+                        <div class="section-header">
+                            <h3 class="section-title">Tüm Siparişler</h3>
+                            <div class="filters">
+                                <select class="filter-select" id="statusFilter">
+                                    <option value="all">Tüm Durumlar</option>
+                                    <option value="pending">Bekleyen</option>
+                                    <option value="confirmed">Onaylanan</option>
+                                    <option value="shipped">Kargoda</option>
+                                    <option value="delivered">Teslim Edilen</option>
+                                    <option value="cancelled">İptal Edilen</option>
+                                </select>
+                                <input type="text" class="search-input" id="searchInput" placeholder="Sipariş ara...">
+                            </div>
+                        </div>
+                        <div id="ordersTableContainer"></div>
                     </div>
                 </div>
             </div>
-            <div class="h-1 bg-gray-200">
-                <div :class="toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'" 
-                     class="h-full transition-all duration-3000 ease-linear" 
-                     style="width: 100%; animation: shrink 3s linear;"></div>
+        </div>
+    </div>
+
+    <!-- Edit Order Modal -->
+    <div id="editModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Sipariş Düzenle</h3>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="orderStatus">Sipariş Durumu</label>
+                    <select id="orderStatus" class="filter-select" style="width: 100%;">
+                        <option value="pending">Beklemede</option>
+                        <option value="confirmed">Onaylandı</option>
+                        <option value="shipped">Kargoya Verildi</option>
+                        <option value="delivered">Teslim Edildi</option>
+                        <option value="cancelled">İptal Edildi</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="cargoCompany">Kargo Firması</label>
+                    <input type="text" id="cargoCompany" placeholder="Örn: Aras Kargo" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                </div>
+                <div class="form-group">
+                    <label for="trackingNumber">Takip Numarası</label>
+                    <input type="text" id="trackingNumber" placeholder="Örn: 123456789" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelBtn">İptal</button>
+                <button class="btn-primary" id="saveBtn">Kaydet</button>
             </div>
         </div>
     </div>
 
-    <style>
-        @keyframes shrink {
-            from { width: 100%; }
-            to { width: 0%; }
-        }
-    </style>
+    <!-- Toast -->
+    <div id="toast" class="toast">
+        <div id="toastMessage"></div>
+    </div>
 
     <script>
-        function adminApp() {
-            return {
-                // Auth state
-                isLoggedIn: false,
-                loading: true,
-                loginLoading: false,
-                loginError: '',
-                loginForm: { username: '', password: '' },
-                token: localStorage.getItem('adminToken') || '',
+        class AdminPanel {
+            constructor() {
+                this.token = localStorage.getItem('adminToken');
+                this.currentPage = 'dashboard';
+                this.currentOrder = null;
+                this.orders = [];
+                this.stats = {};
                 
-                // UI state
-                sidebarOpen: false,
-                currentView: 'dashboard',
-                lastUpdate: '',
-                refreshing: false,
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
                 
-                // Data
-                stats: {},
-                recentOrders: [],
-                orders: [],
+                if (this.token) {
+                    this.showDashboard();
+                    this.loadData();
+                } else {
+                    this.showLogin();
+                }
                 
-                // Pagination
-                currentPage: 1,
-                ordersPerPage: 20,
-                totalOrders: 0,
-                totalPages: 0,
-                
-                // Filters
-                orderFilter: 'all',
-                searchTerm: '',
-                searchTimeout: null,
-                
-                // Modal
-                showOrderModal: false,
-                editingOrder: {},
-                updating: false,
-                
-                // Toast
-                toast: { show: false, message: '', type: 'success' },
-                
-                async init() {
-                    console.log('Admin app initializing...');
-                    
-                    if (this.token) {
-                        console.log('Token found, attempting auto-login...');
-                        this.isLoggedIn = true;
-                        await this.loadDashboard();
-                    } else {
-                        console.log('No token found, showing login form');
-                    }
-                    
-                    this.loading = false;
-                    this.updateTime();
-                    setInterval(() => this.updateTime(), 60000);
-                    
-                    // Auto refresh every 30 seconds
-                    setInterval(() => {
-                        if (this.isLoggedIn) {
-                            this.refreshData();
+                this.updateTime();
+                setInterval(() => this.updateTime(), 60000);
+                setInterval(() => this.loadData(), 30000);
+            }
+
+            bindEvents() {
+                // Login
+                document.getElementById('loginForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.login();
+                });
+
+                // Navigation
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const page = item.dataset.page;
+                        if (page) {
+                            this.showPage(page);
                         }
-                    }, 30000);
-                },
-                
-                async login() {
-                    console.log('Attempting login...');
-                    this.loginLoading = true;
-                    this.loginError = '';
-                    
-                    try {
-                        const response = await fetch('/api/admin/login', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(this.loginForm)
-                        });
-                        
-                        console.log('Login response status:', response.status);
-                        const data = await response.json();
-                        console.log('Login response data:', data);
-                        
-                        if (data.success) {
-                            this.token = data.token;
-                            localStorage.setItem('adminToken', this.token);
-                            this.isLoggedIn = true;
-                            await this.loadDashboard();
-                            console.log('Login successful');
-                        } else {
-                            this.loginError = data.message || 'Giriş başarısız';
-                            console.error('Login failed:', data.message);
-                        }
-                    } catch (error) {
-                        console.error('Login error:', error);
-                        this.loginError = 'Giriş yapılırken hata oluştu';
-                    }
-                    
-                    this.loginLoading = false;
-                },
-                
-                logout() {
-                    this.token = '';
-                    localStorage.removeItem('adminToken');
-                    this.isLoggedIn = false;
-                    this.currentView = 'dashboard';
-                    console.log('Logged out');
-                },
-                
-                async loadDashboard() {
-                    console.log('Loading dashboard...');
-                    try {
-                        const response = await fetch('/api/admin/dashboard/stats', {
-                            headers: { 'Authorization': `Bearer ${this.token}` }
-                        });
-                        
-                        console.log('Dashboard response status:', response.status);
-                        
-                        if (response.status === 401) {
-                            this.logout();
-                            return;
-                        }
-                        
-                        const data = await response.json();
-                        console.log('Dashboard data:', data);
-                        
-                        if (data.success) {
-                            this.stats = data.data.stats || {};
-                            this.recentOrders = data.data.recentOrders || [];
-                            console.log('Dashboard loaded successfully');
-                        } else {
-                            console.error('Dashboard load failed:', data.message);
-                        }
-                    } catch (error) {
-                        console.error('Dashboard load error:', error);
-                    }
-                },
-                
-                async loadOrders() {
-                    console.log('Loading orders...');
-                    try {
-                        const params = new URLSearchParams({
-                            page: this.currentPage,
-                            limit: this.ordersPerPage,
-                            status: this.orderFilter
-                        });
-                        
-                        if (this.searchTerm) {
-                            params.append('search', this.searchTerm);
-                        }
-                        
-                        const response = await fetch(`/api/admin/orders?${params}`, {
-                            headers: { 'Authorization': `Bearer ${this.token}` }
-                        });
-                        
-                        console.log('Orders response status:', response.status);
-                        
-                        if (response.status === 401) {
-                            this.logout();
-                            return;
-                        }
-                        
-                        const data = await response.json();
-                        console.log('Orders data:', data);
-                        
-                        if (data.success) {
-                            this.orders = data.data.orders || [];
-                            this.totalOrders = data.data.pagination?.total || 0;
-                            this.totalPages = data.data.pagination?.pages || 0;
-                            console.log('Orders loaded successfully');
-                        } else {
-                            console.error('Orders load failed:', data.message);
-                        }
-                    } catch (error) {
-                        console.error('Orders load error:', error);
-                    }
-                },
-                
-                async refreshData() {
-                    this.refreshing = true;
-                    
-                    try {
-                        if (this.currentView === 'dashboard') {
-                            await this.loadDashboard();
-                        } else if (this.currentView === 'orders') {
-                            await this.loadOrders();
-                        }
-                    } catch (error) {
-                        console.error('Refresh error:', error);
-                    }
-                    
-                    this.refreshing = false;
-                },
-                
-                openOrderModal(order) {
-                    console.log('Opening order modal for:', order);
-                    this.editingOrder = { ...order };
-                    this.showOrderModal = true;
-                },
-                
-                async updateOrder() {
-                    console.log('Updating order:', this.editingOrder);
-                    this.updating = true;
-                    
-                    try {
-                        const response = await fetch(`/api/admin/orders/${this.editingOrder.id}`, {
-                            method: 'PUT',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${this.token}`
-                            },
-                            body: JSON.stringify({
-                                status: this.editingOrder.status,
-                                cargo_company: this.editingOrder.cargo_company,
-                                cargo_tracking_number: this.editingOrder.cargo_tracking_number
-                            })
-                        });
-                        
-                        console.log('Update response status:', response.status);
-                        const data = await response.json();
-                        console.log('Update response data:', data);
-                        
-                        if (data.success) {
-                            this.showToast('✅ Sipariş başarıyla güncellendi!', 'success');
-                            this.showOrderModal = false;
-                            await this.loadOrders();
-                            await this.loadDashboard(); // Refresh stats
-                        } else {
-                            this.showToast('❌ ' + (data.message || 'Güncelleme başarısız'), 'error');
-                        }
-                    } catch (error) {
-                        console.error('Update error:', error);
-                        this.showToast('❌ Güncelleme sırasında hata oluştu', 'error');
-                    }
-                    
-                    this.updating = false;
-                },
-                
-                debounceSearch() {
-                    clearTimeout(this.searchTimeout);
-                    this.searchTimeout = setTimeout(() => {
-                        this.currentPage = 1;
-                        this.loadOrders();
-                    }, 500);
-                },
-                
-                // Watch for view changes
-                $watch: {
-                    currentView: {
-                        handler(newView) {
-                            console.log('View changed to:', newView);
-                            if (newView === 'orders') {
-                                this.loadOrders();
-                            }
-                        },
-                        immediate: false
-                    }
-                },
-                
-                // Utility methods
-                updateTime() {
-                    this.lastUpdate = new Date().toLocaleTimeString('tr-TR');
-                },
-                
-                showToast(message, type = 'success') {
-                    this.toast = { show: true, message, type };
-                    setTimeout(() => {
-                        this.toast.show = false;
-                    }, 3000);
-                },
-                
-                formatPrice(price) {
-                    return new Intl.NumberFormat('tr-TR', {
-                        style: 'currency',
-                        currency: 'TRY'
-                    }).format(price || 0);
-                },
-                
-                formatDate(date) {
-                    return new Date(date).toLocaleDateString('tr-TR', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
                     });
-                },
-                
-                getStatusColor(status) {
-                    switch (status) {
-                        case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-                        case 'confirmed': return 'bg-blue-100 text-blue-800 border-blue-200';
-                        case 'shipped': return 'bg-purple-100 text-purple-800 border-purple-200';
-                        case 'delivered': return 'bg-green-100 text-green-800 border-green-200';
-                        case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
-                        default: return 'bg-gray-100 text-gray-800 border-gray-200';
+                });
+
+                // Logout
+                document.getElementById('logoutBtn').addEventListener('click', () => {
+                    this.logout();
+                });
+
+                // Refresh
+                document.getElementById('refreshBtn').addEventListener('click', () => {
+                    this.loadData();
+                });
+
+                // Menu toggle
+                document.getElementById('menuToggle').addEventListener('click', () => {
+                    document.getElementById('sidebar').classList.toggle('hidden');
+                });
+
+                // Filters
+                document.getElementById('statusFilter').addEventListener('change', () => {
+                    this.loadOrders();
+                });
+
+                document.getElementById('searchInput').addEventListener('input', () => {
+                    clearTimeout(this.searchTimeout);
+                    this.searchTimeout = setTimeout(() => this.loadOrders(), 500);
+                });
+
+                // Modal
+                document.getElementById('cancelBtn').addEventListener('click', () => {
+                    this.closeModal();
+                });
+
+                document.getElementById('saveBtn').addEventListener('click', () => {
+                    this.saveOrder();
+                });
+
+                // Close modal on overlay click
+                document.getElementById('editModal').addEventListener('click', (e) => {
+                    if (e.target === e.currentTarget) {
+                        this.closeModal();
                     }
-                },
-                
-                getStatusText(status) {
-                    switch (status) {
-                        case 'pending': return 'Beklemede';
-                        case 'confirmed': return 'Onaylandı';
-                        case 'shipped': return 'Kargoya Verildi';
-                        case 'delivered': return 'Teslim Edildi';
-                        case 'cancelled': return 'İptal Edildi';
-                        default: return 'Bilinmeyen';
+                });
+            }
+
+            async login() {
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const btn = document.getElementById('loginBtn');
+                const error = document.getElementById('loginError');
+
+                btn.textContent = 'Giriş Yapılıyor...';
+                btn.disabled = true;
+                error.classList.add('hidden');
+
+                try {
+                    const response = await fetch('/api/admin/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.token = data.token;
+                        localStorage.setItem('adminToken', this.token);
+                        this.showDashboard();
+                        this.loadData();
+                    } else {
+                        error.textContent = data.message || 'Giriş başarısız';
+                        error.classList.remove('hidden');
                     }
+                } catch (err) {
+                    error.textContent = 'Bağlantı hatası';
+                    error.classList.remove('hidden');
+                }
+
+                btn.textContent = 'Giriş Yap';
+                btn.disabled = false;
+            }
+
+            logout() {
+                this.token = null;
+                localStorage.removeItem('adminToken');
+                this.showLogin();
+            }
+
+            showLogin() {
+                document.getElementById('loginScreen').classList.remove('hidden');
+                document.getElementById('dashboard').classList.add('hidden');
+            }
+
+            showDashboard() {
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+            }
+
+            showPage(page) {
+                // Update navigation
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active');
+                    if (item.dataset.page === page) {
+                        item.classList.add('active');
+                    }
+                });
+
+                // Update page title
+                const titles = {
+                    dashboard: 'Dashboard',
+                    orders: 'Siparişler'
+                };
+                document.getElementById('pageTitle').textContent = titles[page];
+
+                // Show/hide pages
+                document.querySelectorAll('.page').forEach(p => {
+                    p.classList.add('hidden');
+                });
+                document.getElementById(page + 'Page').classList.remove('hidden');
+
+                this.currentPage = page;
+
+                // Load data for the page
+                if (page === 'orders') {
+                    this.loadOrders();
                 }
             }
+
+            async loadData() {
+                if (!this.token) return;
+
+                try {
+                    const response = await fetch('/api/admin/dashboard/stats', {
+                        headers: { 'Authorization': `Bearer ${this.token}` }
+                    });
+
+                    if (response.status === 401) {
+                        this.logout();
+                        return;
+                    }
+
+                    const data = await response.json();
+                    if (data.success) {
+                        this.stats = data.data.stats;
+                        this.updateStats();
+                        this.updateRecentOrders(data.data.recentOrders);
+                    }
+                } catch (err) {
+                    console.error('Failed to load data:', err);
+                }
+            }
+
+            updateStats() {
+                document.getElementById('totalOrders').textContent = this.stats.total_orders || 0;
+                document.getElementById('pendingOrders').textContent = this.stats.pending_orders || 0;
+                document.getElementById('deliveredOrders').textContent = this.stats.delivered_orders || 0;
+                document.getElementById('totalRevenue').textContent = this.formatPrice(this.stats.total_revenue || 0);
+                document.getElementById('pendingCount').textContent = this.stats.pending_orders || 0;
+            }
+
+            updateRecentOrders(orders) {
+                const container = document.getElementById('recentOrdersTable');
+                if (!orders || orders.length === 0) {
+                    container.innerHTML = '<div class="loading">Sipariş bulunamadı</div>';
+                    return;
+                }
+
+                container.innerHTML = `
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>Sipariş</th>
+                                <th>Müşteri</th>
+                                <th>Tutar</th>
+                                <th>Durum</th>
+                                <th>Tarih</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${orders.map(order => `
+                                <tr>
+                                    <td>
+                                        <div class="order-id">#${order.order_number}</div>
+                                        <div class="order-date">${order.item_count} ürün</div>
+                                    </td>
+                                    <td>
+                                        <div class="customer-info">
+                                            <div class="customer-avatar">${order.user_name.charAt(0)}</div>
+                                            <div>
+                                                <div class="customer-name">${order.user_name}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><strong>${this.formatPrice(order.total_amount)}</strong></td>
+                                    <td><span class="status-badge status-${order.status}">${this.getStatusText(order.status)}</span></td>
+                                    <td class="order-date">${this.formatDate(order.created_at)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+
+            async loadOrders() {
+                if (!this.token) return;
+
+                const status = document.getElementById('statusFilter').value;
+                const search = document.getElementById('searchInput').value;
+                const container = document.getElementById('ordersTableContainer');
+
+                container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+                try {
+                    const params = new URLSearchParams({
+                        status: status === 'all' ? '' : status,
+                        search: search
+                    });
+
+                    const response = await fetch(`/api/admin/orders?${params}`, {
+                        headers: { 'Authorization': `Bearer ${this.token}` }
+                    });
+
+                    if (response.status === 401) {
+                        this.logout();
+                        return;
+                    }
+
+                    const data = await response.json();
+                    if (data.success) {
+                        this.orders = data.data.orders;
+                        this.renderOrdersTable();
+                    }
+                } catch (err) {
+                    container.innerHTML = '<div class="loading">Yükleme hatası</div>';
+                }
+            }
+
+            renderOrdersTable() {
+                const container = document.getElementById('ordersTableContainer');
+                
+                if (!this.orders || this.orders.length === 0) {
+                    container.innerHTML = '<div class="loading">Sipariş bulunamadı</div>';
+                    return;
+                }
+
+                container.innerHTML = `
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>Sipariş</th>
+                                <th>Müşteri</th>
+                                <th>Tutar</th>
+                                <th>Durum</th>
+                                <th>Kargo</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${this.orders.map(order => `
+                                <tr>
+                                    <td>
+                                        <div class="order-id">#${order.order_number}</div>
+                                        <div class="order-date">${this.formatDate(order.created_at)}</div>
+                                    </td>
+                                    <td>
+                                        <div class="customer-info">
+                                            <div class="customer-avatar">${order.user_name.charAt(0)}</div>
+                                            <div>
+                                                <div class="customer-name">${order.user_name}</div>
+                                                <div class="customer-email">${order.user_email}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <strong>${this.formatPrice(order.total_amount)}</strong>
+                                        <div class="order-date">${order.item_count} ürün</div>
+                                    </td>
+                                    <td><span class="status-badge status-${order.status}">${this.getStatusText(order.status)}</span></td>
+                                    <td>
+                                        <div>${order.cargo_company || 'Belirtilmemiş'}</div>
+                                        <div class="order-date">${order.cargo_tracking_number || 'Takip No Yok'}</div>
+                                    </td>
+                                    <td>
+                                        <button class="btn-edit" onclick="adminPanel.editOrder(${order.id})">
+                                            <i class="fas fa-edit"></i> Düzenle
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+
+            editOrder(orderId) {
+                this.currentOrder = this.orders.find(o => o.id === orderId);
+                if (!this.currentOrder) return;
+
+                document.getElementById('orderStatus').value = this.currentOrder.status;
+                document.getElementById('cargoCompany').value = this.currentOrder.cargo_company || '';
+                document.getElementById('trackingNumber').value = this.currentOrder.cargo_tracking_number || '';
+
+                document.getElementById('editModal').classList.add('active');
+            }
+
+            closeModal() {
+                document.getElementById('editModal').classList.remove('active');
+                this.currentOrder = null;
+            }
+
+            async saveOrder() {
+                if (!this.currentOrder) return;
+
+                const btn = document.getElementById('saveBtn');
+                btn.textContent = 'Kaydediliyor...';
+                btn.disabled = true;
+
+                try {
+                    const response = await fetch(`/api/admin/orders/${this.currentOrder.id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${this.token}`
+                        },
+                        body: JSON.stringify({
+                            status: document.getElementById('orderStatus').value,
+                            cargo_company: document.getElementById('cargoCompany').value,
+                            cargo_tracking_number: document.getElementById('trackingNumber').value
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        this.showToast('Sipariş başarıyla güncellendi!', 'success');
+                        this.closeModal();
+                        this.loadOrders();
+                        this.loadData();
+                    } else {
+                        this.showToast(data.message || 'Güncelleme başarısız', 'error');
+                    }
+                } catch (err) {
+                    this.showToast('Bağlantı hatası', 'error');
+                }
+
+                btn.textContent = 'Kaydet';
+                btn.disabled = false;
+            }
+
+            showToast(message, type = 'success') {
+                const toast = document.getElementById('toast');
+                const messageEl = document.getElementById('toastMessage');
+                
+                messageEl.textContent = message;
+                toast.className = `toast ${type} show`;
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+
+            updateTime() {
+                const now = new Date();
+                document.getElementById('lastUpdate').textContent = `Son güncelleme: ${now.toLocaleTimeString('tr-TR')}`;
+            }
+
+            formatPrice(amount) {
+                return new Intl.NumberFormat('tr-TR', {
+                    style: 'currency',
+                    currency: 'TRY'
+                }).format(amount);
+            }
+
+            formatDate(date) {
+                return new Date(date).toLocaleDateString('tr-TR', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            getStatusText(status) {
+                const statusMap = {
+                    pending: 'Beklemede',
+                    confirmed: 'Onaylandı',
+                    shipped: 'Kargoya Verildi',
+                    delivered: 'Teslim Edildi',
+                    cancelled: 'İptal Edildi'
+                };
+                return statusMap[status] || status;
+            }
         }
+
+        // Initialize
+        const adminPanel = new AdminPanel();
     </script>
 </body>
 </html> 
