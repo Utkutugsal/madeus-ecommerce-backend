@@ -17,13 +17,13 @@ async function getProductsFromDatabase(filters = {}) {
   try {
     let query = `
       SELECT 
-        p.id, p.name, p.slug, p.description, p.short_description as shortDescription,
-        p.price, p.compare_price as originalPrice, p.featured_image as mainImage,
-        p.gallery_images as images, p.sku, p.brand, p.ingredients, p.skin_type as skinType,
-        p.stock, p.rating, p.reviews_count as reviewCount, p.is_featured as isFeatured,
-        p.created_at, p.updated_at, c.name as categoryName
+        p.id, p.name, p.name as slug, p.description, p.description as shortDescription,
+        p.price, p.original_price as originalPrice, p.image_url as mainImage,
+        p.image_url as images, p.id as sku, 'Madeus' as brand, p.description as ingredients, 
+        'all' as skinType, p.stock, 5.0 as rating, 0 as reviewCount, 
+        (p.price < p.original_price) as isFeatured, p.created_at, p.updated_at, 
+        p.category as categoryName
       FROM products p
-      LEFT JOIN categories c ON p.category_id = c.id
       WHERE p.is_active = TRUE
     `;
     
@@ -31,22 +31,22 @@ async function getProductsFromDatabase(filters = {}) {
 
     // Filtreleme
     if (filters.category) {
-      query += ` AND c.slug = ?`;
+      query += ` AND p.category = ?`;
       values.push(filters.category);
     }
     
     if (filters.search) {
         const searchTerm = `%${filters.search}%`;
-        query += ` AND (p.name LIKE ? OR p.description LIKE ? OR p.brand LIKE ?)`;
-        values.push(searchTerm, searchTerm, searchTerm);
+        query += ` AND (p.name LIKE ? OR p.description LIKE ?)`;
+        values.push(searchTerm, searchTerm);
     }
 
     if (filters.featured) {
-      query += ` AND p.is_featured = TRUE`;
+      query += ` AND p.price < p.original_price`;
     }
 
     if (filters.isNew) {
-      // is_new kolonu yok, bunun yerine son 30 gün içinde eklenen ürünleri getir
+      // Son 30 gün içinde eklenen ürünleri getir
       query += ` AND p.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)`;
     }
 

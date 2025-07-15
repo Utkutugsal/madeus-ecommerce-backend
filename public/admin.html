@@ -1068,35 +1068,57 @@
                     }
                 });
 
-                // Product Management
-                document.getElementById('addProductBtn').addEventListener('click', () => {
-                    this.addProduct();
-                });
-
-                document.getElementById('categoryFilter').addEventListener('change', () => {
-                    this.loadProducts();
-                });
-
-                document.getElementById('productSearchInput').addEventListener('input', () => {
-                    clearTimeout(this.productSearchTimeout);
-                    this.productSearchTimeout = setTimeout(() => this.loadProducts(), 500);
-                });
-
-                // Product Modal
-                document.getElementById('cancelProductBtn').addEventListener('click', () => {
-                    this.closeProductModal();
-                });
-
-                document.getElementById('saveProductBtn').addEventListener('click', () => {
-                    this.saveProduct();
-                });
-
-                // Close product modal on overlay click
-                document.getElementById('productModal').addEventListener('click', (e) => {
-                    if (e.target === e.currentTarget) {
-                        this.closeProductModal();
+                // Product Management - with error handling
+                try {
+                    const addProductBtn = document.getElementById('addProductBtn');
+                    if (addProductBtn) {
+                        addProductBtn.addEventListener('click', () => {
+                            this.addProduct();
+                        });
                     }
-                });
+
+                    const categoryFilter = document.getElementById('categoryFilter');
+                    if (categoryFilter) {
+                        categoryFilter.addEventListener('change', () => {
+                            this.loadProducts();
+                        });
+                    }
+
+                    const productSearchInput = document.getElementById('productSearchInput');
+                    if (productSearchInput) {
+                        productSearchInput.addEventListener('input', () => {
+                            clearTimeout(this.productSearchTimeout);
+                            this.productSearchTimeout = setTimeout(() => this.loadProducts(), 500);
+                        });
+                    }
+
+                    // Product Modal
+                    const cancelProductBtn = document.getElementById('cancelProductBtn');
+                    if (cancelProductBtn) {
+                        cancelProductBtn.addEventListener('click', () => {
+                            this.closeProductModal();
+                        });
+                    }
+
+                    const saveProductBtn = document.getElementById('saveProductBtn');
+                    if (saveProductBtn) {
+                        saveProductBtn.addEventListener('click', () => {
+                            this.saveProduct();
+                        });
+                    }
+
+                    // Close product modal on overlay click
+                    const productModal = document.getElementById('productModal');
+                    if (productModal) {
+                        productModal.addEventListener('click', (e) => {
+                            if (e.target === e.currentTarget) {
+                                this.closeProductModal();
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error('Product event binding error:', error);
+                }
             }
 
             async login() {
@@ -1468,15 +1490,27 @@
                 if (!this.token) return;
 
                 const container = document.getElementById('productsTableContainer');
+                if (!container) {
+                    console.error('Products container not found');
+                    return;
+                }
+                
                 container.innerHTML = '<div class="loading">Yükleniyor...</div>';
 
                 try {
-                    const category = document.getElementById('categoryFilter').value;
-                    const search = document.getElementById('productSearchInput').value;
+                    const categoryFilter = document.getElementById('categoryFilter');
+                    const productSearchInput = document.getElementById('productSearchInput');
+                    
+                    const category = categoryFilter ? categoryFilter.value : 'all';
+                    const search = productSearchInput ? productSearchInput.value : '';
+                    
+                    console.log('Loading products with:', { category, search });
                     
                     const response = await fetch(`/api/admin/products?category=${category}&search=${search}`, {
                         headers: { 'Authorization': `Bearer ${this.token}` }
                     });
+
+                    console.log('Products response status:', response.status);
 
                     if (response.status === 401) {
                         this.logout();
@@ -1484,12 +1518,17 @@
                     }
 
                     const data = await response.json();
+                    console.log('Products data:', data);
+                    
                     if (data.success) {
                         this.products = data.data.products;
                         this.renderProductsTable();
+                    } else {
+                        container.innerHTML = `<div class="loading">Hata: ${data.message}</div>`;
                     }
                 } catch (err) {
-                    container.innerHTML = '<div class="loading">Yükleme hatası</div>';
+                    console.error('Products loading error:', err);
+                    container.innerHTML = `<div class="loading">Yükleme hatası: ${err.message}</div>`;
                 }
             }
 

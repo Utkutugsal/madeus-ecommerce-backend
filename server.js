@@ -148,6 +148,50 @@ async function initializeDatabase() {
             console.log('⚠️ cargo_tracking_number field check failed:', error.message);
         }
         
+        // Check if products table exists, if not create it
+        console.log('🔧 Checking products table...');
+        try {
+            const checkProductsTable = await db.query(`
+                SELECT TABLE_NAME 
+                FROM INFORMATION_SCHEMA.TABLES 
+                WHERE TABLE_NAME = 'products'
+            `);
+            
+            if (checkProductsTable.length === 0) {
+                await db.query(`
+                    CREATE TABLE products (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        name VARCHAR(255) NOT NULL,
+                        description TEXT,
+                        price DECIMAL(10,2) NOT NULL,
+                        original_price DECIMAL(10,2),
+                        category VARCHAR(50) NOT NULL,
+                        stock INT DEFAULT 0,
+                        image_url TEXT,
+                        is_active BOOLEAN DEFAULT TRUE,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                    )
+                `);
+                console.log('✅ Products table created');
+                
+                // Add some sample products
+                await db.query(`
+                    INSERT INTO products (name, description, price, original_price, category, stock, image_url, is_active) VALUES
+                    ('Vitamin C Serum', 'Güçlü antioksidan serum', 299.99, 399.99, 'serum', 50, '/placeholder.svg', 1),
+                    ('Hyaluronic Acid Serum', 'Yoğun nemlendirici serum', 249.99, 299.99, 'serum', 30, '/placeholder.svg', 1),
+                    ('Anti-Aging Cream', 'Yaşlanma karşıtı gece kremi', 399.99, 499.99, 'cream', 25, '/placeholder.svg', 1),
+                    ('Gentle Cleanser', 'Nazik temizlik jeli', 199.99, 249.99, 'cleanser', 40, '/placeholder.svg', 1),
+                    ('Hydrating Mask', 'Nemlendirici yüz maskesi', 159.99, 199.99, 'mask', 35, '/placeholder.svg', 1)
+                `);
+                console.log('✅ Sample products added');
+            } else {
+                console.log('✅ Products table exists');
+            }
+        } catch (error) {
+            console.log('⚠️ Products table check failed:', error.message);
+        }
+        
         console.log('✅ Database initialization complete');
         
     } catch (error) {
