@@ -95,19 +95,34 @@ async function getProductsFromDatabase(filters = {}) {
     const results = await db.query(query, values);
     
     // JSON alanlarını parse et
-    const products = results.map(product => ({
-      ...product,
-      images: JSON.parse(product.images || '[]'),
-      ingredients: JSON.parse(product.ingredients || '[]'),
-      skinType: JSON.parse(product.skinType || '[]'),
-      discount: product.originalPrice ? 
-        Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0,
-      tags: [], // Tags veritabanında ayrı bir tabloda olabilir, şimdilik boş
-      benefits: [],
-      features: [],
-      isBestSeller: product.rating >= 4.5,
-      isNew: new Date(product.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Son 30 gün
-    }));
+    const products = results.map(product => {
+      // Güvenli JSON parsing fonksiyonu
+      const safeJsonParse = (jsonString, defaultValue = []) => {
+        try {
+          if (!jsonString || jsonString === 'null' || jsonString === '') {
+            return defaultValue;
+          }
+          return JSON.parse(jsonString);
+        } catch (error) {
+          console.log(`⚠️ JSON parse hatası: ${error.message}, değer: ${jsonString}`);
+          return defaultValue;
+        }
+      };
+
+      return {
+        ...product,
+        images: safeJsonParse(product.images),
+        ingredients: safeJsonParse(product.ingredients),
+        skinType: safeJsonParse(product.skinType),
+        discount: product.originalPrice ? 
+          Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0,
+        tags: [], // Tags veritabanında ayrı bir tabloda olabilir, şimdilik boş
+        benefits: [],
+        features: [],
+        isBestSeller: product.rating >= 4.5,
+        isNew: new Date(product.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Son 30 gün
+      };
+    });
 
     return {
         products,
@@ -139,14 +154,32 @@ async function getProductById(id) {
 
         if (!product) return null;
 
+        // Güvenli JSON parsing fonksiyonu
+        const safeJsonParse = (jsonString, defaultValue = []) => {
+            try {
+                if (!jsonString || jsonString === 'null' || jsonString === '') {
+                    return defaultValue;
+                }
+                return JSON.parse(jsonString);
+            } catch (error) {
+                console.log(`⚠️ JSON parse hatası: ${error.message}, değer: ${jsonString}`);
+                return defaultValue;
+            }
+        };
+
         // Parse JSON fields
         return {
             ...product,
-            images: JSON.parse(product.images || '[]'),
-            ingredients: JSON.parse(product.ingredients || '[]'),
-            skinType: JSON.parse(product.skinType || '[]'),
+            images: safeJsonParse(product.images),
+            ingredients: safeJsonParse(product.ingredients),
+            skinType: safeJsonParse(product.skinType),
             discount: product.originalPrice ? 
-                Math.round(((product.originalPrice - product.price) / product.price) * 100) : 0,
+                Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0,
+            tags: [],
+            benefits: [],
+            features: [],
+            isBestSeller: product.rating >= 4.5,
+            isNew: new Date(product.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
         };
     } catch (error) {
         console.error(`Error fetching product ${id}:`, error);
