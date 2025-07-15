@@ -301,14 +301,15 @@ async function initializeDatabase() {
 
                 // Check if gallery_images column exists
                 try {
-                    const checkGallery = await db.query(`
+                    const galleryImagesCheck = await db.query(`
                         SELECT COLUMN_NAME 
                         FROM INFORMATION_SCHEMA.COLUMNS 
-                        WHERE TABLE_NAME = 'products' 
+                        WHERE TABLE_SCHEMA = DATABASE() 
+                        AND TABLE_NAME = 'products' 
                         AND COLUMN_NAME = 'gallery_images'
                     `);
                     
-                    if (checkGallery.length === 0) {
+                    if (galleryImagesCheck.length === 0) {
                         await db.query(`
                             ALTER TABLE products 
                             ADD COLUMN gallery_images TEXT DEFAULT NULL
@@ -323,14 +324,15 @@ async function initializeDatabase() {
 
                 // Check if brand column exists
                 try {
-                    const checkBrand = await db.query(`
+                    const brandCheck = await db.query(`
                         SELECT COLUMN_NAME 
                         FROM INFORMATION_SCHEMA.COLUMNS 
-                        WHERE TABLE_NAME = 'products' 
+                        WHERE TABLE_SCHEMA = DATABASE() 
+                        AND TABLE_NAME = 'products' 
                         AND COLUMN_NAME = 'brand'
                     `);
                     
-                    if (checkBrand.length === 0) {
+                    if (brandCheck.length === 0) {
                         await db.query(`
                             ALTER TABLE products 
                             ADD COLUMN brand VARCHAR(100) DEFAULT 'MADEUS'
@@ -341,6 +343,55 @@ async function initializeDatabase() {
                     }
                 } catch (error) {
                     console.log('⚠️ brand column check failed:', error.message);
+                }
+
+                // Check if page control columns exist
+                try {
+                    const pageControlCheck = await db.query(`
+                        SELECT COLUMN_NAME 
+                        FROM INFORMATION_SCHEMA.COLUMNS 
+                        WHERE TABLE_SCHEMA = DATABASE() 
+                        AND TABLE_NAME = 'products' 
+                        AND COLUMN_NAME IN ('show_in_homepage', 'show_in_popular', 'show_in_bestsellers', 'show_in_featured')
+                    `);
+                    
+                    const existingColumns = pageControlCheck.map(row => row.COLUMN_NAME);
+                    
+                    if (!existingColumns.includes('show_in_homepage')) {
+                        await db.query(`
+                            ALTER TABLE products 
+                            ADD COLUMN show_in_homepage BOOLEAN DEFAULT TRUE
+                        `);
+                        console.log('✅ show_in_homepage column added to products table');
+                    }
+                    
+                    if (!existingColumns.includes('show_in_popular')) {
+                        await db.query(`
+                            ALTER TABLE products 
+                            ADD COLUMN show_in_popular BOOLEAN DEFAULT FALSE
+                        `);
+                        console.log('✅ show_in_popular column added to products table');
+                    }
+                    
+                    if (!existingColumns.includes('show_in_bestsellers')) {
+                        await db.query(`
+                            ALTER TABLE products 
+                            ADD COLUMN show_in_bestsellers BOOLEAN DEFAULT FALSE
+                        `);
+                        console.log('✅ show_in_bestsellers column added to products table');
+                    }
+                    
+                    if (!existingColumns.includes('show_in_featured')) {
+                        await db.query(`
+                            ALTER TABLE products 
+                            ADD COLUMN show_in_featured BOOLEAN DEFAULT FALSE
+                        `);
+                        console.log('✅ show_in_featured column added to products table');
+                    }
+                    
+                    console.log('✅ Page control columns exist');
+                } catch (error) {
+                    console.log('⚠️ Page control columns check failed:', error.message);
                 }
             }
         } catch (error) {

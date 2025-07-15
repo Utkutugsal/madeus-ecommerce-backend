@@ -485,142 +485,133 @@ router.get('/products/:productId', adminAuth, async (req, res) => {
     }
 });
 
-// Create new product
+// Add new product
 router.post('/products', adminAuth, async (req, res) => {
     try {
         const db = new Database();
         const { 
             name, description, price, original_price, 
-            category, stock, image_url, gallery_images, brand, is_active 
+            category, stock, image_url, gallery_images, brand, is_active,
+            show_in_homepage, show_in_popular, show_in_bestsellers, show_in_featured
         } = req.body;
-        
-        if (!name || !price || !category) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Ürün adı, fiyat ve kategori gereklidir' 
-            });
-        }
-        
-        const result = await db.query(`
+
+        const sql = `
             INSERT INTO products (
                 name, description, price, original_price, 
-                category, stock, image_url, gallery_images, brand, is_active, 
+                category, stock, image_url, gallery_images, brand, is_active,
+                show_in_homepage, show_in_popular, show_in_bestsellers, show_in_featured,
                 created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-        `, [
-            name, description, price, original_price || price, 
-            category, stock || 0, image_url || '', gallery_images || '[]', 
-            brand || 'MADEUS', is_active || 1
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+        `;
+
+        const result = await db.query(sql, [
+            name, description, price, original_price || null,
+            category, stock || 0, image_url || '', gallery_images || '[]',
+            brand || 'MADEUS', is_active ? 1 : 0,
+            show_in_homepage ? 1 : 0, show_in_popular ? 1 : 0, 
+            show_in_bestsellers ? 1 : 0, show_in_featured ? 1 : 0
         ]);
-        
-        const newProduct = await db.query('SELECT * FROM products WHERE id = ?', [result.insertId]);
-        
+
         res.json({
             success: true,
             message: 'Ürün başarıyla eklendi',
-            data: newProduct[0]
+            product_id: result.insertId
         });
-        
     } catch (error) {
-        console.error('Admin product create error:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Ürün eklenemedi',
-            error: error.message 
+        console.error('❌ Add product error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Ürün eklenirken hata oluştu'
         });
     }
 });
 
 // Update product
-router.put('/products/:productId', adminAuth, async (req, res) => {
+router.put('/products/:id', adminAuth, async (req, res) => {
     try {
         const db = new Database();
-        const { productId } = req.params;
+        const { id } = req.params;
         const { 
             name, description, price, original_price, 
-            category, stock, image_url, gallery_images, brand, is_active 
+            category, stock, image_url, gallery_images, brand, is_active,
+            show_in_homepage, show_in_popular, show_in_bestsellers, show_in_featured
         } = req.body;
-        
+
         const updateFields = [];
         const updateValues = [];
-        
+
         if (name !== undefined) {
             updateFields.push('name = ?');
             updateValues.push(name);
         }
-        
         if (description !== undefined) {
             updateFields.push('description = ?');
             updateValues.push(description);
         }
-        
         if (price !== undefined) {
             updateFields.push('price = ?');
             updateValues.push(price);
         }
-        
         if (original_price !== undefined) {
             updateFields.push('original_price = ?');
             updateValues.push(original_price);
         }
-        
         if (category !== undefined) {
             updateFields.push('category = ?');
             updateValues.push(category);
         }
-        
         if (stock !== undefined) {
             updateFields.push('stock = ?');
             updateValues.push(stock);
         }
-        
         if (image_url !== undefined) {
             updateFields.push('image_url = ?');
             updateValues.push(image_url);
         }
-        
         if (gallery_images !== undefined) {
             updateFields.push('gallery_images = ?');
             updateValues.push(gallery_images);
         }
-        
         if (brand !== undefined) {
             updateFields.push('brand = ?');
             updateValues.push(brand);
         }
-        
         if (is_active !== undefined) {
             updateFields.push('is_active = ?');
-            updateValues.push(is_active);
+            updateValues.push(is_active ? 1 : 0);
         }
-        
-        if (updateFields.length === 0) {
-            return res.status(400).json({ success: false, message: 'Güncellenecek alan bulunamadı' });
+        if (show_in_homepage !== undefined) {
+            updateFields.push('show_in_homepage = ?');
+            updateValues.push(show_in_homepage ? 1 : 0);
         }
-        
+        if (show_in_popular !== undefined) {
+            updateFields.push('show_in_popular = ?');
+            updateValues.push(show_in_popular ? 1 : 0);
+        }
+        if (show_in_bestsellers !== undefined) {
+            updateFields.push('show_in_bestsellers = ?');
+            updateValues.push(show_in_bestsellers ? 1 : 0);
+        }
+        if (show_in_featured !== undefined) {
+            updateFields.push('show_in_featured = ?');
+            updateValues.push(show_in_featured ? 1 : 0);
+        }
+
         updateFields.push('updated_at = NOW()');
-        updateValues.push(productId);
-        
-        await db.query(`
-            UPDATE products 
-            SET ${updateFields.join(', ')} 
-            WHERE id = ?
-        `, updateValues);
-        
-        const updatedProduct = await db.query('SELECT * FROM products WHERE id = ?', [productId]);
-        
+        updateValues.push(id);
+
+        const sql = `UPDATE products SET ${updateFields.join(', ')} WHERE id = ?`;
+        await db.query(sql, updateValues);
+
         res.json({
             success: true,
-            message: 'Ürün başarıyla güncellendi',
-            data: updatedProduct[0]
+            message: 'Ürün başarıyla güncellendi'
         });
-        
     } catch (error) {
-        console.error('Admin product update error:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Ürün güncellenemedi',
-            error: error.message 
+        console.error('❌ Update product error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Ürün güncellenirken hata oluştu'
         });
     }
 });

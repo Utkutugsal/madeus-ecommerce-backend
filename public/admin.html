@@ -1321,6 +1321,35 @@
                         </select>
                     </div>
                 </div>
+
+                <!-- Page Control -->
+                <div class="form-section">
+                    <h4 class="section-title">Sayfa Görünürlüğü</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="showInHomepage" checked> Ana Sayfada Göster
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="showInPopular"> Popüler Ürünlerde Göster
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="showInBestsellers"> En Çok Satanlarda Göster
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="showInFeatured"> Öne Çıkanlarda Göster
+                            </label>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn-secondary" id="cancelProductBtn">İptal</button>
@@ -1918,35 +1947,35 @@
                 }
 
                 container.innerHTML = `
-                    <div class="products-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; padding: 20px;">
+                    <div class="products-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px; padding: 20px; justify-items: center;">
                         ${this.products.map(product => `
                             <div class="product-card" style="
-                                width: 200px; 
-                                height: 320px; 
+                                width: 260px; 
+                                height: 380px; 
                                 background: white; 
                                 border-radius: 8px; 
-                                box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+                                box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
                                 overflow: hidden; 
                                 border: 1px solid #e5e7eb;
                                 transition: all 0.3s ease;
                                 cursor: pointer;
                                 position: relative;
-                            " onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'" onmouseout="this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'">
+                            " onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.15)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'">
                                 
                                 <!-- Product Image -->
-                                <div style="height: 200px; position: relative; overflow: hidden;">
+                                <div style="height: 260px; position: relative; overflow: hidden;">
                                     <img src="${product.image_url || '/placeholder.svg'}" alt="${product.name}" 
                                          style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;"
                                          onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                                     
                                     <!-- Status Badge -->
-                                    <div style="position: absolute; top: 4px; left: 4px;">
+                                    <div style="position: absolute; top: 8px; left: 8px;">
                                         <span style="
                                             background: ${product.is_active ? '#10b981' : '#ef4444'}; 
                                             color: white; 
-                                            padding: 2px 6px; 
+                                            padding: 4px 8px; 
                                             border-radius: 4px; 
-                                            font-size: 10px; 
+                                            font-size: 12px; 
                                             font-weight: 600;
                                         ">
                                             ${product.is_active ? 'AKTİF' : 'PASİF'}
@@ -1955,13 +1984,13 @@
                                     
                                     <!-- Stock Badge -->
                                     ${product.stock < 10 && product.stock > 0 ? `
-                                        <div style="position: absolute; bottom: 4px; left: 4px;">
+                                        <div style="position: absolute; bottom: 8px; left: 8px;">
                                             <span style="
                                                 background: #f59e0b; 
                                                 color: white; 
-                                                padding: 2px 6px; 
+                                                padding: 4px 8px; 
                                                 border-radius: 4px; 
-                                                font-size: 10px; 
+                                                font-size: 12px; 
                                                 font-weight: 600;
                                             ">
                                                 Son ${product.stock} Adet!
@@ -1970,33 +1999,33 @@
                                     ` : ''}
                                     
                                     <!-- Action Buttons -->
-                                    <div style="position: absolute; top: 4px; right: 4px; opacity: 0; transition: opacity 0.3s ease;" 
+                                    <div style="position: absolute; top: 8px; right: 8px; opacity: 0; transition: opacity 0.3s ease;" 
                                          onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0'">
                                         <button class="btn-edit" data-action="edit" data-product-id="${product.id}" 
-                                                style="background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; margin-right: 4px; cursor: pointer;">
-                                            <i class="fas fa-edit" style="font-size: 12px;"></i>
+                                                style="background: #3b82f6; color: white; border: none; padding: 6px 10px; border-radius: 4px; margin-right: 6px; cursor: pointer;">
+                                            <i class="fas fa-edit" style="font-size: 14px;"></i>
                                         </button>
                                         <button class="btn-delete" data-action="delete" data-product-id="${product.id}"
-                                                style="background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
-                                            <i class="fas fa-trash" style="font-size: 12px;"></i>
+                                                style="background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer;">
+                                            <i class="fas fa-trash" style="font-size: 14px;"></i>
                                         </button>
                                     </div>
                                 </div>
                                 
                                 <!-- Product Info -->
-                                <div style="padding: 8px; height: 120px; display: flex; flex-direction: column;">
+                                <div style="padding: 12px; height: 120px; display: flex; flex-direction: column;">
                                     <!-- Brand -->
-                                    <div style="font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                                    <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
                                         ${product.brand || 'MADEUS'}
                                     </div>
                                     
                                     <!-- Product Name -->
                                     <h3 style="
-                                        font-size: 12px; 
+                                        font-size: 14px; 
                                         font-weight: 600; 
                                         color: #111827; 
-                                        margin: 0 0 4px 0; 
-                                        line-height: 1.2;
+                                        margin: 0 0 8px 0; 
+                                        line-height: 1.3;
                                         display: -webkit-box;
                                         -webkit-line-clamp: 2;
                                         -webkit-box-orient: vertical;
@@ -2006,25 +2035,20 @@
                                         ${product.name}
                                     </h3>
                                     
-                                    <!-- Category -->
-                                    <div style="font-size: 10px; color: #6b7280; margin-bottom: 4px;">
-                                        ${this.getCategoryText(product.category)}
-                                    </div>
-                                    
-                                    <!-- Price -->
-                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                                    <!-- Price and Stock -->
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                                         <div style="display: flex; flex-direction: column;">
                                             ${product.original_price && product.original_price > product.price ? 
-                                                `<span style="font-size: 10px; color: #9ca3af; text-decoration: line-through;">
+                                                `<span style="font-size: 12px; color: #9ca3af; text-decoration: line-through;">
                                                     ${this.formatPrice(product.original_price)}
                                                 </span>` : ''}
-                                            <div style="font-size: 14px; font-weight: 700; color: #10b981;">
+                                            <div style="font-size: 18px; font-weight: 700; color: #10b981;">
                                                 ${this.formatPrice(product.price)}
                                             </div>
                                         </div>
                                         
                                         <!-- Stock Status -->
-                                        <div style="font-size: 10px; color: #6b7280;">
+                                        <div style="font-size: 12px; color: #6b7280;">
                                             ${product.stock > 0 ? 
                                                 `<span style="color: #10b981;">${product.stock} Stokta</span>` : 
                                                 `<span style="color: #ef4444;">Tükendi</span>`
@@ -2033,7 +2057,7 @@
                                     </div>
                                     
                                     <!-- Free Shipping -->
-                                    <div style="font-size: 10px; color: #10b981; font-weight: 600;">
+                                    <div style="font-size: 12px; color: #10b981; font-weight: 600;">
                                         🚚 Ücretsiz Kargo
                                     </div>
                                 </div>
@@ -2049,13 +2073,19 @@
                 
                 // Clear form
                 document.getElementById('productName').value = '';
-                document.getElementById('productBrand').value = ''; // Added
+                document.getElementById('productBrand').value = '';
                 document.getElementById('productDescription').value = '';
                 document.getElementById('productPrice').value = '';
                 document.getElementById('productOriginalPrice').value = '';
                 document.getElementById('productCategory').value = 'serum';
                 document.getElementById('productStock').value = '';
                 document.getElementById('productActive').value = '1';
+                
+                // Clear page control checkboxes
+                document.getElementById('showInHomepage').checked = true;
+                document.getElementById('showInPopular').checked = false;
+                document.getElementById('showInBestsellers').checked = false;
+                document.getElementById('showInFeatured').checked = false;
                 
                 // Clear image slots
                 document.querySelectorAll('.image-slot').forEach(slot => {
@@ -2088,6 +2118,12 @@
                 document.getElementById('productCategory').value = this.currentProduct.category;
                 document.getElementById('productStock').value = this.currentProduct.stock;
                 document.getElementById('productActive').value = this.currentProduct.is_active;
+
+                // Fill page control checkboxes
+                document.getElementById('showInHomepage').checked = this.currentProduct.show_in_homepage !== false;
+                document.getElementById('showInPopular').checked = this.currentProduct.show_in_popular === true;
+                document.getElementById('showInBestsellers').checked = this.currentProduct.show_in_bestsellers === true;
+                document.getElementById('showInFeatured').checked = this.currentProduct.show_in_featured === true;
 
                 // Fill image slots
                 const images = this.currentProduct.gallery_images 
@@ -2140,7 +2176,11 @@
                         stock: parseInt(document.getElementById('productStock').value) || 0,
                         is_active: parseInt(document.getElementById('productActive').value),
                         image_url: imageUrls[0] || '', // Main image
-                        gallery_images: JSON.stringify(imageUrls) // All images as JSON
+                        gallery_images: JSON.stringify(imageUrls), // All images as JSON
+                        show_in_homepage: document.getElementById('showInHomepage').checked,
+                        show_in_popular: document.getElementById('showInPopular').checked,
+                        show_in_bestsellers: document.getElementById('showInBestsellers').checked,
+                        show_in_featured: document.getElementById('showInFeatured').checked
                     };
 
                     const url = this.currentProduct ? 
