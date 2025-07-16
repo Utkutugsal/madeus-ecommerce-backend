@@ -2135,8 +2135,18 @@
                 btn.disabled = true;
 
                 try {
-                    const imageUrls = this.collectImageUrls();
-                    
+                    // 6 görsel URL'sini topla
+                    const imageUrls = [];
+                    for (let i = 1; i <= 6; i++) {
+                      const val = document.getElementById('imageUrl' + i).value.trim();
+                      if (val) imageUrls.push(val);
+                    }
+                    if (imageUrls.length > 6) {
+                      this.showToast('En fazla 6 görsel URL girebilirsiniz!', 'error');
+                      btn.textContent = 'Kaydet';
+                      btn.disabled = false;
+                      return;
+                    }
                     const productData = {
                         name: document.getElementById('productName').value,
                         brand: document.getElementById('productBrand').value || 'MADEUS',

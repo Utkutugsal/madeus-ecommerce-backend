@@ -43,7 +43,14 @@ async function getProductsFromDatabase(filters = {}) {
     // Her ürünün gallery_images alanını array olarak döndür
     const products = results.map(p => ({
       ...p,
-      gallery_images: p.gallery_images ? JSON.parse(p.gallery_images) : []
+      gallery_images: (() => {
+        try {
+          if (!p.gallery_images || p.gallery_images === 'null' || p.gallery_images === '') return [];
+          return JSON.parse(p.gallery_images);
+        } catch (e) {
+          return [];
+        }
+      })()
     }));
     return { products, total };
   } catch (error) {
@@ -162,21 +169,62 @@ router.get('/brands/list', async (req, res, next) => {
   }
 });
 
-// GET /api/products/:id - Get a single product by ID
+// POST /api/products - Ürün ekle
+router.post('/', async (req, res) => {
+  try {
+    const { name, price, gallery_images = [] } = req.body;
+    if (!Array.isArray(gallery_images) || gallery_images.length > 6) {
+      return res.status(400).json({ error: 'En fazla 6 görsel URL girilebilir.' });
+    }
+    const product = await db.query(
+      `INSERT INTO products (name, price, gallery_images, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())`,
+      [name, price, JSON.stringify(gallery_images)]
+    );
+    res.json({ success: true, product });
+  } catch (err) {
+    res.status(500).json({ error: 'Ürün eklenirken hata oluştu.' });
+  }
+});
+
+// PUT /api/products/:id - Ürün güncelle
+router.put('/:id', async (req, res) => {
+  try {
+    const { name, price, gallery_images = [] } = req.body;
+    if (!Array.isArray(gallery_images) || gallery_images.length > 6) {
+      return res.status(400).json({ error: 'En fazla 6 görsel URL girilebilir.' });
+    }
+    await db.query(
+      `UPDATE products SET name = ?, price = ?, gallery_images = ?, updated_at = NOW() WHERE id = ?`,
+      [name, price, JSON.stringify(gallery_images), req.params.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Ürün güncellenirken hata oluştu.' });
+  }
+});
+
+// GET /api/products/:id - Tek ürün çek
 router.get('/:id', async (req, res, next) => {
   try {
     const productId = parseInt(req.params.id);
     if (isNaN(productId)) {
-        return res.status(400).json({ success: false, error: 'Invalid product ID' });
+      return res.status(400).json({ success: false, error: 'Invalid product ID' });
     }
-
-    const product = await getProductById(productId);
-    if (!product) {
+    const sql = `SELECT * FROM products WHERE id = ? AND is_active = TRUE`;
+    const result = await db.query(sql, [productId]);
+    if (!result || result.length === 0) {
       return res.status(404).json({ success: false, error: 'Product not found' });
     }
-
-    const relatedProducts = await getRelatedProducts(product.id, product.category_id);
-    res.json({ success: true, product, relatedProducts });
+    const product = result[0];
+    product.gallery_images = (() => {
+      try {
+        if (!product.gallery_images || product.gallery_images === 'null' || product.gallery_images === '') return [];
+        return JSON.parse(product.gallery_images);
+      } catch (e) {
+        return [];
+      }
+    })();
+    res.json({ success: true, product });
   } catch (error) {
     next(error);
   }
