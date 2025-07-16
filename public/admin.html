@@ -2410,7 +2410,7 @@
             slot.className = 'image-slot';
             slot.setAttribute('data-index', currentCount);
             slot.innerHTML = `
-                <div class="image-placeholder">
+                <div class="image-placeholder" style="cursor:pointer;">
                     <i class="fas fa-plus"></i>
                     <span>${currentCount === 0 ? 'Ana Görsel' : `Görsel ${currentCount + 1}`}</span>
                 </div>
@@ -2422,7 +2422,7 @@
         }
 
         document.addEventListener('click', function(e) {
-            // Görsel kutusuna tıklayınca input açılır
+            // Sadece + işaretine tıklanınca input açılır
             if (e.target.closest('.image-placeholder')) {
                 const slot = e.target.closest('.image-slot');
                 const input = slot.querySelector('.image-input');
