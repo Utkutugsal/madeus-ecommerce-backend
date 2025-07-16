@@ -2,6 +2,8 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { Database } = require('../config/database');
+const multer = require('multer');
+const path = require('path');
 
 const router = express.Router();
 
@@ -10,6 +12,17 @@ const ADMIN_CREDENTIALS = {
     username: 'admin',
     password: '$2b$10$aiR7Lt6ejm0s/ra./bDXiOQsWwOXfy2g5TOFlWoubt7jt/Mp.dX0e' // "497D3212e" hashed
 };
+
+// Multer storage ayarı
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, '../public/lovable-uploads'));
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
+const upload = multer({ storage: storage });
 
 // Admin login
 router.post('/login', async (req, res) => {
@@ -644,6 +657,15 @@ router.delete('/products/:productId', adminAuth, async (req, res) => {
             error: error.message 
         });
     }
+});
+
+// Basit fotoğraf yükleme endpoint'i
+router.post('/upload', adminAuth, upload.single('image'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'Dosya yüklenemedi' });
+  }
+  const filePath = '/lovable-uploads/' + req.file.filename;
+  res.json({ success: true, filePath });
 });
 
 module.exports = router; 
