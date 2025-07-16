@@ -90,7 +90,7 @@ async function getProductsFromDatabase(filters = {}) {
     const countResultQuery = countQuery.replace(/SELECT .*? FROM/, 'SELECT COUNT(*) as total FROM');
     const [totalResult, results] = await Promise.all([
         db.query(countResultQuery, countValues),
-        db.query(query, values)
+        values.length > 0 ? db.query(query, values) : db.query(query)
     ]);
     
     const total = totalResult[0].total;
