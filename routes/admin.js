@@ -506,7 +506,12 @@ router.post('/products', adminAuth, async (req, res) => {
         } = req.body;
 
         // gallery_images her zaman string olarak kaydedilmeli
-        const galleryImagesStr = Array.isArray(gallery_images) ? JSON.stringify(gallery_images) : (gallery_images || '[]');
+        let galleryImagesStr = '[]';
+        if (Array.isArray(gallery_images)) {
+            galleryImagesStr = JSON.stringify(gallery_images);
+        } else if (typeof gallery_images === 'string' && gallery_images.startsWith('[')) {
+            galleryImagesStr = gallery_images;
+        }
 
         const sql = `
             INSERT INTO products (
@@ -582,8 +587,12 @@ router.put('/products/:id', adminAuth, async (req, res) => {
             updateValues.push(image_url);
         }
         if (gallery_images !== undefined) {
-            // gallery_images her zaman string olarak kaydedilmeli
-            const galleryImagesStr = Array.isArray(gallery_images) ? JSON.stringify(gallery_images) : (gallery_images || '[]');
+            let galleryImagesStr = '[]';
+            if (Array.isArray(gallery_images)) {
+                galleryImagesStr = JSON.stringify(gallery_images);
+            } else if (typeof gallery_images === 'string' && gallery_images.startsWith('[')) {
+                galleryImagesStr = gallery_images;
+            }
             updateFields.push('gallery_images = ?');
             updateValues.push(galleryImagesStr);
         }
