@@ -2439,15 +2439,11 @@
         // bindImageEvents fonksiyonundan dosya seçici, base64 ve drag-drop ile ilgili tüm kodları kaldır
 
         function enableSimpleImageUrlInputs() {
-            // Başlangıçta tüm inputları gizle
             document.querySelectorAll('.image-input').forEach(inp => inp.style.display = 'none');
-            // + işaretine tıklanınca input açılır
             document.querySelectorAll('.image-placeholder').forEach(placeholder => {
                 placeholder.onclick = function(e) {
                     e.stopPropagation();
-                    // Tüm inputları kapat
                     document.querySelectorAll('.image-input').forEach(inp => inp.style.display = 'none');
-                    // Sadece bu kutunun inputunu aç
                     const slot = this.closest('.image-slot');
                     const input = slot.querySelector('.image-input');
                     if (input) {
@@ -2456,16 +2452,13 @@
                     }
                 };
             });
-            // Input dışında bir yere tıklanınca inputları kapat
             document.addEventListener('click', function(e) {
                 if (!e.target.classList.contains('image-input') && !e.target.classList.contains('image-placeholder') && !e.target.closest('.image-placeholder')) {
                     document.querySelectorAll('.image-input').forEach(inp => inp.style.display = 'none');
                 }
             });
         }
-        // Sayfa yüklendiğinde ve yeni kutu eklenince çağır
         window.addEventListener('DOMContentLoaded', enableSimpleImageUrlInputs);
-        // + Görsel Alanı Ekle butonuna tıklandığında da çağır
         const addImageSlotBtn = document.getElementById('addImageSlotBtn');
         if (addImageSlotBtn) {
             addImageSlotBtn.addEventListener('click', function() {
