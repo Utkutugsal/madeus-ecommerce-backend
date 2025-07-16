@@ -2108,7 +2108,6 @@
                 if (!this.currentProduct) return;
 
                 document.getElementById('productModalTitle').textContent = 'Ürün Düzenle';
-                
                 // Fill form
                 document.getElementById('productName').value = this.currentProduct.name;
                 document.getElementById('productBrand').value = this.currentProduct.brand || 'MADEUS';
@@ -2119,21 +2118,21 @@
                 document.getElementById('productStock').value = this.currentProduct.stock;
                 document.getElementById('productActive').value = this.currentProduct.is_active;
 
-                // Fill page control checkboxes
-                document.getElementById('showInHomepage').checked = this.currentProduct.show_in_homepage !== false;
-                document.getElementById('showInPopular').checked = this.currentProduct.show_in_popular === true;
-                document.getElementById('showInBestsellers').checked = this.currentProduct.show_in_bestsellers === true;
-                document.getElementById('showInFeatured').checked = this.currentProduct.show_in_featured === true;
-
-                // Fill image slots
-                const images = this.currentProduct.gallery_images 
-                    ? JSON.parse(this.currentProduct.gallery_images) 
-                    : [this.currentProduct.image_url];
-                
+                // Güvenli gallery_images parse
+                let images = [];
+                try {
+                  if (this.currentProduct.gallery_images && this.currentProduct.gallery_images !== 'null' && this.currentProduct.gallery_images !== '') {
+                    images = JSON.parse(this.currentProduct.gallery_images);
+                  }
+                } catch (e) {
+                  images = [];
+                }
+                if (!Array.isArray(images) || images.length === 0) {
+                  images = [this.currentProduct.image_url];
+                }
                 document.querySelectorAll('.image-slot').forEach((slot, index) => {
                     const imageUrl = images[index] || '';
                     const input = slot.querySelector('.image-input');
-                    
                     if (imageUrl) {
                         input.value = imageUrl;
                         this.updateImageSlot(slot, imageUrl);
