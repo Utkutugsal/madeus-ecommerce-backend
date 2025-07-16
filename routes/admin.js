@@ -505,6 +505,9 @@ router.post('/products', adminAuth, async (req, res) => {
             show_in_homepage, show_in_popular, show_in_bestsellers, show_in_featured
         } = req.body;
 
+        // gallery_images her zaman string olarak kaydedilmeli
+        const galleryImagesStr = Array.isArray(gallery_images) ? JSON.stringify(gallery_images) : (gallery_images || '[]');
+
         const sql = `
             INSERT INTO products (
                 name, description, price, original_price, 
@@ -516,7 +519,7 @@ router.post('/products', adminAuth, async (req, res) => {
 
         const result = await db.query(sql, [
             name, description, price, original_price || null,
-            category, stock || 0, image_url || '', gallery_images || '[]',
+            category, stock || 0, image_url || '', galleryImagesStr,
             brand || 'MADEUS', is_active ? 1 : 0,
             show_in_homepage ? 1 : 0, show_in_popular ? 1 : 0, 
             show_in_bestsellers ? 1 : 0, show_in_featured ? 1 : 0
@@ -579,8 +582,10 @@ router.put('/products/:id', adminAuth, async (req, res) => {
             updateValues.push(image_url);
         }
         if (gallery_images !== undefined) {
+            // gallery_images her zaman string olarak kaydedilmeli
+            const galleryImagesStr = Array.isArray(gallery_images) ? JSON.stringify(gallery_images) : (gallery_images || '[]');
             updateFields.push('gallery_images = ?');
-            updateValues.push(gallery_images);
+            updateValues.push(galleryImagesStr);
         }
         if (brand !== undefined) {
             updateFields.push('brand = ?');
