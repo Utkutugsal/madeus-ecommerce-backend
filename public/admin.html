@@ -2468,6 +2468,33 @@
         // Sayfa yüklendiğinde ve yeni kutu eklenince çağır
         window.addEventListener('DOMContentLoaded', bindImageInputEvents);
         // Eğer dinamik ekleme varsa, yeni kutu eklenince de bindImageInputEvents() çağrılmalı
+
+        // Görsel kutularında sadece + işaretine tıklanınca input açılır
+        function enableImageInputToggle() {
+            document.querySelectorAll('.image-slot').forEach(slot => {
+                const placeholder = slot.querySelector('.image-placeholder');
+                const input = slot.querySelector('.image-input');
+                if (placeholder && input) {
+                    input.style.display = 'none';
+                    placeholder.onclick = function(e) {
+                        e.stopPropagation();
+                        // Tüm inputları kapat
+                        document.querySelectorAll('.image-input').forEach(inp => inp.style.display = 'none');
+                        input.style.display = 'block';
+                        input.focus();
+                    };
+                }
+            });
+            // Input dışında bir yere tıklanınca inputları kapat
+            document.addEventListener('click', function(e) {
+                if (!e.target.classList.contains('image-input') && !e.target.classList.contains('image-placeholder') && !e.target.closest('.image-placeholder')) {
+                    document.querySelectorAll('.image-input').forEach(inp => inp.style.display = 'none');
+                }
+            });
+        }
+        // Görsel alanları her güncellendiğinde çağır
+        setTimeout(enableImageInputToggle, 500);
+        // bindImageEvents fonksiyonunun sonuna ekle
     </script>
 </body>
 </html> 
