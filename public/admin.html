@@ -2291,6 +2291,62 @@
                         this.updateImageSlot(slot, '');
                     }
                 });
+
+                // Dosya seçici ve sürükle-bırak
+                document.querySelectorAll('.image-slot').forEach(slot => {
+                    // Dosya seçici input ekle
+                    let fileInput = slot.querySelector('input[type="file"]');
+                    if (!fileInput) {
+                        fileInput = document.createElement('input');
+                        fileInput.type = 'file';
+                        fileInput.accept = 'image/*';
+                        fileInput.style.display = 'none';
+                        slot.appendChild(fileInput);
+                    }
+                    // Slot'a tıklayınca dosya seçici aç
+                    slot.addEventListener('click', (e) => {
+                        if (e.target.classList.contains('image-input') || e.target.classList.contains('remove-image')) return;
+                        fileInput.click();
+                    });
+                    // Dosya seçilince base64 önizle
+                    fileInput.addEventListener('change', (e) => {
+                        const file = fileInput.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => {
+                                const base64 = ev.target.result;
+                                const input = slot.querySelector('.image-input');
+                                input.value = base64;
+                                this.updateImageSlot(slot, base64);
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    });
+                    // Sürükle-bırak desteği
+                    slot.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        slot.classList.add('dragover');
+                    });
+                    slot.addEventListener('dragleave', (e) => {
+                        e.preventDefault();
+                        slot.classList.remove('dragover');
+                    });
+                    slot.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        slot.classList.remove('dragover');
+                        const file = e.dataTransfer.files[0];
+                        if (file && file.type.startsWith('image/')) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => {
+                                const base64 = ev.target.result;
+                                const input = slot.querySelector('.image-input');
+                                input.value = base64;
+                                this.updateImageSlot(slot, base64);
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    });
+                });
             }
 
             collectImageUrls() {
