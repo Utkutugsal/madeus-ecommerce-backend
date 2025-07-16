@@ -82,16 +82,9 @@ async function getProductsFromDatabase(filters = {}) {
     }
 
     // Pagination
-    let limit = 10;
-    let offset = 0;
-    if (filters.limit !== undefined && !isNaN(Number(filters.limit))) {
-      limit = Number(filters.limit);
-    }
-    if (filters.offset !== undefined && !isNaN(Number(filters.offset))) {
-      offset = Number(filters.offset);
-    }
-    query += ` LIMIT ? OFFSET ?`;
-    values.push(limit, offset);
+    const limit = Math.max(1, parseInt(filters.limit) || 10);
+    const offset = Math.max(0, parseInt(filters.offset) || 0);
+    query += ` LIMIT ${limit} OFFSET ${offset}`;
 
     // Execute both queries
     const countResultQuery = countQuery.replace(/SELECT .*? FROM/, 'SELECT COUNT(*) as total FROM');
