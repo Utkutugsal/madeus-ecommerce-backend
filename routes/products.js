@@ -82,8 +82,8 @@ async function getProductsFromDatabase(filters = {}) {
     }
 
     // Pagination
-    const limit = parseInt(filters.limit) || 10;
-    const offset = parseInt(filters.offset) || 0;
+    const limit = Math.max(1, parseInt(filters.limit) || 10);
+    const offset = Math.max(0, parseInt(filters.offset) || 0);
     query += ` LIMIT ? OFFSET ?`;
     values.push(limit, offset);
 
