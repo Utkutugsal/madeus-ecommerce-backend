@@ -46,7 +46,7 @@ async function getProductsFromDatabase(filters = {}) {
       gallery_images: (() => {
         try {
           if (!p.gallery_images || p.gallery_images === 'null' || p.gallery_images === '') return [];
-          return JSON.parse(p.gallery_images);
+          return Array.isArray(p.gallery_images) ? p.gallery_images : JSON.parse(p.gallery_images);
         } catch (e) {
           return [];
         }
@@ -76,9 +76,38 @@ async function getProductById(id) {
 
     return {
         ...product,
-        images: JSON.parse(product.images || '[]'),
-        ingredients: JSON.parse(product.ingredients || '[]'),
-        skinType: JSON.parse(product.skinType || '[]'),
+        images: (() => {
+            try {
+                if (!product.images || product.images === 'null' || product.images === '') return [];
+                return Array.isArray(product.images) ? product.images : JSON.parse(product.images);
+            } catch (e) {
+                return [];
+            }
+        })(),
+        gallery_images: (() => {
+            try {
+                if (!product.gallery_images || product.gallery_images === 'null' || product.gallery_images === '') return [];
+                return Array.isArray(product.gallery_images) ? product.gallery_images : JSON.parse(product.gallery_images);
+            } catch (e) {
+                return [];
+            }
+        })(),
+        ingredients: (() => {
+            try {
+                if (!product.ingredients || product.ingredients === 'null' || product.ingredients === '') return [];
+                return Array.isArray(product.ingredients) ? product.ingredients : JSON.parse(product.ingredients);
+            } catch (e) {
+                return [];
+            }
+        })(),
+        skinType: (() => {
+            try {
+                if (!product.skinType || product.skinType === 'null' || product.skinType === '') return [];
+                return Array.isArray(product.skinType) ? product.skinType : JSON.parse(product.skinType);
+            } catch (e) {
+                return [];
+            }
+        })(),
         discount: product.originalPrice ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0,
     };
 }
@@ -219,7 +248,7 @@ router.get('/:id', async (req, res, next) => {
     product.gallery_images = (() => {
       try {
         if (!product.gallery_images || product.gallery_images === 'null' || product.gallery_images === '') return [];
-        return JSON.parse(product.gallery_images);
+        return Array.isArray(product.gallery_images) ? product.gallery_images : JSON.parse(product.gallery_images);
       } catch (e) {
         return [];
       }
