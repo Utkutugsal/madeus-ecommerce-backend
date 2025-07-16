@@ -2445,6 +2445,29 @@
         if (addImageSlotBtn) {
             addImageSlotBtn.addEventListener('click', addImageSlot);
         }
+
+        function bindImageInputEvents() {
+            const slots = document.querySelectorAll('.image-slot');
+            slots.forEach(slot => {
+                const placeholder = slot.querySelector('.image-placeholder');
+                const input = slot.querySelector('.image-input');
+                if (placeholder && input) {
+                    // Başta input'u gizle
+                    input.style.display = 'none';
+                    // + işaretine tıklanınca sadece o input açılır
+                    placeholder.onclick = function() {
+                        // Önce tüm inputları gizle
+                        document.querySelectorAll('.image-input').forEach(inp => inp.style.display = 'none');
+                        // Sadece bu inputu aç
+                        input.style.display = 'block';
+                        input.focus();
+                    };
+                }
+            });
+        }
+        // Sayfa yüklendiğinde ve yeni kutu eklenince çağır
+        window.addEventListener('DOMContentLoaded', bindImageInputEvents);
+        // Eğer dinamik ekleme varsa, yeni kutu eklenince de bindImageInputEvents() çağrılmalı
     </script>
 </body>
 </html> 
