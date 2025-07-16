@@ -2073,6 +2073,25 @@
                 });
                 
                 document.getElementById('productModal').classList.add('active');
+
+                // Görsel URL inputlarını localStorage ile kalıcı yap:
+                // 1. Modal açıldığında (addProduct/editProduct), ürün ID'sine göre localStorage'dan görsel URL'leri yükle ve inputlara yaz.
+                // 2. Inputlarda değişiklik olursa localStorage'a kaydet.
+                // 3. Kaydetme başarılı olursa localStorage'dan sil.
+
+                // addProduct fonksiyonunun sonuna ekle:
+                for (let i = 1; i <= 6; i++) {
+                  const input = document.getElementById('imageUrl' + i);
+                  let urls = JSON.parse(localStorage.getItem('product_images_new') || '[]');
+                  input.value = urls[i - 1] || '';
+                  input.addEventListener('input', () => {
+                    const arr = [];
+                    for (let j = 1; j <= 6; j++) {
+                      arr.push(document.getElementById('imageUrl' + j).value.trim());
+                    }
+                    localStorage.setItem('product_images_new', JSON.stringify(arr));
+                  });
+                }
             }
 
             editProduct(productId) {
@@ -2122,6 +2141,22 @@
                 });
 
                 document.getElementById('productModal').classList.add('active');
+
+                // editProduct fonksiyonunun sonuna ekle:
+                if (this.currentProduct && this.currentProduct.id) {
+                  let urls = JSON.parse(localStorage.getItem('product_images_' + this.currentProduct.id) || '[]');
+                  for (let i = 1; i <= 6; i++) {
+                    const input = document.getElementById('imageUrl' + i);
+                    input.value = urls[i - 1] || '';
+                    input.addEventListener('input', () => {
+                      const arr = [];
+                      for (let j = 1; j <= 6; j++) {
+                        arr.push(document.getElementById('imageUrl' + j).value.trim());
+                      }
+                      localStorage.setItem('product_images_' + this.currentProduct.id, JSON.stringify(arr));
+                    });
+                  }
+                }
             }
 
             closeProductModal() {
@@ -2194,6 +2229,13 @@
 
                 btn.textContent = 'Kaydet';
                 btn.disabled = false;
+
+                // saveProduct fonksiyonunda, imageUrls dizisini oluşturduktan hemen sonra ekle:
+                if (this.currentProduct && this.currentProduct.id) {
+                  localStorage.removeItem('product_images_' + this.currentProduct.id);
+                } else {
+                  localStorage.removeItem('product_images_new');
+                }
             }
 
             async deleteProduct(productId) {
