@@ -337,25 +337,5 @@ async function migrateProductsToDatabase() {
   }
 }
 
-async function addCreatedAtIndex() {
-  const db = new Database();
-  try {
-    await db.query('CREATE INDEX IF NOT EXISTS idx_created_at ON products(created_at)');
-    console.log('✅ products.created_at alanına index eklendi (idx_created_at)');
-  } catch (error) {
-    if (error.message && error.message.includes('Duplicate key name')) {
-      console.log('ℹ️ idx_created_at indexi zaten mevcut.');
-    } else {
-      console.error('❌ Index eklenirken hata:', error);
-    }
-  } finally {
-    await db.close();
-  }
-}
-
-if (require.main === module) {
-  addCreatedAtIndex();
-}
-
 // Run migration
 migrateProductsToDatabase(); 

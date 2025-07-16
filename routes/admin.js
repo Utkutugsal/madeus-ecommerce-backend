@@ -380,26 +380,24 @@ router.get('/products', adminAuth, async (req, res) => {
                     CREATE TABLE products (
                         id INT AUTO_INCREMENT PRIMARY KEY,
                         name VARCHAR(255) NOT NULL,
-                        description TEXT,
                         price DECIMAL(10,2) NOT NULL,
-                        original_price DECIMAL(10,2),
                         category VARCHAR(50) NOT NULL,
                         stock INT DEFAULT 0,
                         image_url TEXT,
                         is_active BOOLEAN DEFAULT TRUE,
+                        brand VARCHAR(255),
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
                     )
                 `);
-                
                 // Add sample products
                 await db.query(`
-                    INSERT INTO products (name, description, price, original_price, category, stock, image_url, is_active) VALUES
-                    ('Vitamin C Serum', 'Güçlü antioksidan serum', 299.99, 399.99, 'serum', 50, '/placeholder.svg', 1),
-                    ('Hyaluronic Acid Serum', 'Yoğun nemlendirici serum', 249.99, 299.99, 'serum', 30, '/placeholder.svg', 1),
-                    ('Anti-Aging Cream', 'Yaşlanma karşıtı gece kremi', 399.99, 499.99, 'cream', 25, '/placeholder.svg', 1),
-                    ('Gentle Cleanser', 'Nazik temizlik jeli', 199.99, 249.99, 'cleanser', 40, '/placeholder.svg', 1),
-                    ('Hydrating Mask', 'Nemlendirici yüz maskesi', 159.99, 199.99, 'mask', 35, '/placeholder.svg', 1)
+                    INSERT INTO products (name, price, category, stock, image_url, is_active, brand) VALUES
+                    ('Vitamin C Serum', 299.99, 'serum', 50, '/placeholder.svg', 1, 'Madeus'),
+                    ('Hyaluronic Acid Serum', 249.99, 'serum', 30, '/placeholder.svg', 1, 'Madeus'),
+                    ('Anti-Aging Cream', 399.99, 'cream', 25, '/placeholder.svg', 1, 'Madeus'),
+                    ('Gentle Cleanser', 199.99, 'cleanser', 40, '/placeholder.svg', 1, 'Madeus'),
+                    ('Hydrating Mask', 159.99, 'mask', 35, '/placeholder.svg', 1, 'Madeus')
                 `);
                 console.log('Products table created and sample data inserted');
             }
@@ -422,16 +420,15 @@ router.get('/products', adminAuth, async (req, res) => {
         
         if (search && search.trim() !== '') {
             whereClause = whereClause ? 
-                `${whereClause} AND (name LIKE ? OR description LIKE ?)` :
-                'WHERE (name LIKE ? OR description LIKE ?)';
-            queryParams.push(`%${search}%`, `%${search}%`);
+                `${whereClause} AND (name LIKE ?)` :
+                'WHERE (name LIKE ?)';
+            queryParams.push(`%${search}%`);
         }
         
+        // Sadece gerekli alanları çekiyoruz
         const products = await db.query(`
             SELECT 
-                id, name, description, price, original_price, 
-                category, stock, image_url, gallery_images, brand, is_active, 
-                created_at, updated_at
+                id, name, price, stock, image_url, is_active, created_at, updated_at, brand, category
             FROM products
             ${whereClause}
             ORDER BY created_at DESC
