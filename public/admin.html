@@ -1259,51 +1259,27 @@
                     <div class="image-gallery">
                         <div class="image-slots">
                             <div class="image-slot" data-index="0">
-                                <div class="image-placeholder">
-                                    <i class="fas fa-plus"></i>
-                                    <span>Ana Görsel</span>
-                                </div>
-                                <input type="text" class="image-input" placeholder="Görsel URL'si">
+                                <input type="text" class="image-input" placeholder="1. Fotoğraf URL'si">
                                 <button type="button" class="remove-image">×</button>
                             </div>
                             <div class="image-slot" data-index="1">
-                                <div class="image-placeholder">
-                                    <i class="fas fa-plus"></i>
-                                    <span>Görsel 2</span>
-                                </div>
-                                <input type="text" class="image-input" placeholder="Görsel URL'si">
+                                <input type="text" class="image-input" placeholder="2. Fotoğraf URL'si">
                                 <button type="button" class="remove-image">×</button>
                             </div>
                             <div class="image-slot" data-index="2">
-                                <div class="image-placeholder">
-                                    <i class="fas fa-plus"></i>
-                                    <span>Görsel 3</span>
-                                </div>
-                                <input type="text" class="image-input" placeholder="Görsel URL'si">
+                                <input type="text" class="image-input" placeholder="3. Fotoğraf URL'si">
                                 <button type="button" class="remove-image">×</button>
                             </div>
                             <div class="image-slot" data-index="3">
-                                <div class="image-placeholder">
-                                    <i class="fas fa-plus"></i>
-                                    <span>Görsel 4</span>
-                                </div>
-                                <input type="text" class="image-input" placeholder="Görsel URL'si">
+                                <input type="text" class="image-input" placeholder="4. Fotoğraf URL'si">
                                 <button type="button" class="remove-image">×</button>
                             </div>
                             <div class="image-slot" data-index="4">
-                                <div class="image-placeholder">
-                                    <i class="fas fa-plus"></i>
-                                    <span>Görsel 5</span>
-                                </div>
-                                <input type="text" class="image-input" placeholder="Görsel URL'si">
+                                <input type="text" class="image-input" placeholder="5. Fotoğraf URL'si">
                                 <button type="button" class="remove-image">×</button>
                             </div>
                             <div class="image-slot" data-index="5">
-                                <div class="image-placeholder">
-                                    <i class="fas fa-plus"></i>
-                                    <span>Görsel 6</span>
-                                </div>
-                                <input type="text" class="image-input" placeholder="Görsel URL'si">
+                                <input type="text" class="image-input" placeholder="6. Fotoğraf URL'si">
                                 <button type="button" class="remove-image">×</button>
                             </div>
                         </div>
@@ -2277,74 +2253,21 @@
                     if (e.target.classList.contains('image-input')) {
                         const slot = e.target.closest('.image-slot');
                         const imageUrl = e.target.value.trim();
-                        this.updateImageSlot(slot, imageUrl);
+                        if (imageUrl) {
+                            slot.classList.add('has-image');
+                        } else {
+                            slot.classList.remove('has-image');
+                        }
                     }
                 });
-
                 // Remove image events
                 document.addEventListener('click', (e) => {
                     if (e.target.classList.contains('remove-image')) {
                         const slot = e.target.closest('.image-slot');
                         const input = slot.querySelector('.image-input');
                         input.value = '';
-                        this.updateImageSlot(slot, '');
+                        slot.classList.remove('has-image');
                     }
-                });
-
-                // Dosya seçici ve sürükle-bırak
-                document.querySelectorAll('.image-slot').forEach(slot => {
-                    // Dosya seçici input ekle
-                    let fileInput = slot.querySelector('input[type="file"]');
-                    if (!fileInput) {
-                        fileInput = document.createElement('input');
-                        fileInput.type = 'file';
-                        fileInput.accept = 'image/*';
-                        fileInput.style.display = 'none';
-                        slot.appendChild(fileInput);
-                    }
-                    // Slot'a tıklayınca dosya seçici aç
-                    slot.addEventListener('click', (e) => {
-                        if (e.target.classList.contains('image-input') || e.target.classList.contains('remove-image')) return;
-                        fileInput.click();
-                    });
-                    // Dosya seçilince base64 önizle
-                    fileInput.addEventListener('change', (e) => {
-                        const file = fileInput.files[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (ev) => {
-                                const base64 = ev.target.result;
-                                const input = slot.querySelector('.image-input');
-                                input.value = base64;
-                                this.updateImageSlot(slot, base64);
-                            };
-                            reader.readAsDataURL(file);
-                        }
-                    });
-                    // Sürükle-bırak desteği
-                    slot.addEventListener('dragover', (e) => {
-                        e.preventDefault();
-                        slot.classList.add('dragover');
-                    });
-                    slot.addEventListener('dragleave', (e) => {
-                        e.preventDefault();
-                        slot.classList.remove('dragover');
-                    });
-                    slot.addEventListener('drop', (e) => {
-                        e.preventDefault();
-                        slot.classList.remove('dragover');
-                        const file = e.dataTransfer.files[0];
-                        if (file && file.type.startsWith('image/')) {
-                            const reader = new FileReader();
-                            reader.onload = (ev) => {
-                                const base64 = ev.target.result;
-                                const input = slot.querySelector('.image-input');
-                                input.value = base64;
-                                this.updateImageSlot(slot, base64);
-                            };
-                            reader.readAsDataURL(file);
-                        }
-                    });
                 });
             }
 
