@@ -11,7 +11,7 @@ async function getProductsFromDatabase(filters = {}) {
   try {
     let query = `
       SELECT 
-        id, name, price, image_url, stock, is_active, brand, category, created_at, updated_at
+        id, name, price, image_url, gallery_images, stock, is_active, brand, category, created_at, updated_at
       FROM products 
       WHERE is_active = TRUE
     `;
@@ -40,7 +40,12 @@ async function getProductsFromDatabase(filters = {}) {
     // Toplam ürün sayısı
     const totalResult = await db.query('SELECT COUNT(*) as total FROM products WHERE is_active = TRUE');
     const total = totalResult[0].total;
-    return { products: results, total };
+    // Her ürünün gallery_images alanını array olarak döndür
+    const products = results.map(p => ({
+      ...p,
+      gallery_images: p.gallery_images ? JSON.parse(p.gallery_images) : []
+    }));
+    return { products, total };
   } catch (error) {
     console.error('❌ Error getting products from database:', error);
     throw error;
