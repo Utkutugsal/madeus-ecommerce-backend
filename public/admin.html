@@ -2192,7 +2192,7 @@
                         stock: parseInt(document.getElementById('productStock').value) || 0,
                         is_active: parseInt(document.getElementById('productActive').value),
                         image_url: imageUrls[0] || '', // Main image
-                        gallery_images: JSON.stringify(imageUrls), // All images as JSON
+                        gallery_images: imageUrls, // JSON.stringify(imageUrls) yerine direkt array gönder
                         show_in_homepage: document.getElementById('showInHomepage').checked,
                         show_in_popular: document.getElementById('showInPopular').checked,
                         show_in_bestsellers: document.getElementById('showInBestsellers').checked,
