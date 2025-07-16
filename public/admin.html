@@ -2112,7 +2112,9 @@
                 // Güvenli gallery_images parse
                 let images = [];
                 try {
-                  if (this.currentProduct.gallery_images && this.currentProduct.gallery_images !== 'null' && this.currentProduct.gallery_images !== '') {
+                  if (this.currentProduct.gallery_images && Array.isArray(this.currentProduct.gallery_images)) {
+                    images = this.currentProduct.gallery_images;
+                  } else if (typeof this.currentProduct.gallery_images === 'string' && this.currentProduct.gallery_images.startsWith('[')) {
                     images = JSON.parse(this.currentProduct.gallery_images);
                   }
                 } catch (e) {
@@ -2124,20 +2126,7 @@
                 document.querySelectorAll('.image-slot').forEach((slot, index) => {
                     const imageUrl = images[index] || '';
                     const input = slot.querySelector('.image-input');
-                    if (imageUrl) {
-                        input.value = imageUrl;
-                        this.updateImageSlot(slot, imageUrl);
-                    } else {
-                        slot.classList.remove('has-image');
-                        slot.innerHTML = `
-                            <div class="image-placeholder">
-                                <i class="fas fa-plus"></i>
-                                <span>Görsel ${index + 1}</span>
-                            </div>
-                            <input type="text" class="image-input" placeholder="Görsel URL'si">
-                            <button type="button" class="remove-image">×</button>
-                        `;
-                    }
+                    if (input) input.value = imageUrl;
                 });
 
                 document.getElementById('productModal').classList.add('active');
@@ -2192,7 +2181,7 @@
                         stock: parseInt(document.getElementById('productStock').value) || 0,
                         is_active: parseInt(document.getElementById('productActive').value),
                         image_url: imageUrls[0] || '', // Main image
-                        gallery_images: imageUrls, // JSON.stringify(imageUrls) yerine direkt array gönder
+                        gallery_images: imageUrls, // DİREKT ARRAY OLARAK GÖNDER
                         show_in_homepage: document.getElementById('showInHomepage').checked,
                         show_in_popular: document.getElementById('showInPopular').checked,
                         show_in_bestsellers: document.getElementById('showInBestsellers').checked,
