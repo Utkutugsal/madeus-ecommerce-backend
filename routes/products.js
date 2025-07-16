@@ -11,106 +11,39 @@ async function getProductsFromDatabase(filters = {}) {
   try {
     let query = `
       SELECT 
-        id, name, slug, description, short_description as shortDescription,
-        price, compare_price as originalPrice, featured_image as mainImage,
-        gallery_images as images, sku, brand, ingredients, skin_type as skinType,
-        stock, rating, reviews_count as reviewCount, is_featured as isFeatured,
-        created_at, updated_at
+        id, name, price, image_url, stock, is_active, brand, category, created_at, updated_at
       FROM products 
       WHERE is_active = TRUE
     `;
-    
     const values = [];
     const searchConditions = [];
-
     if (filters.category) {
-      query += ` AND brand = ?`; // Assuming category is stored in brand column
+      query += ` AND brand = ?`;
       values.push(filters.category);
     }
-    
-    if (filters.skinType) {
-        query += ` AND JSON_CONTAINS(skin_type, JSON_QUOTE(?))`;
-        values.push(filters.skinType);
-    }
-    
-    if (filters.minPrice) {
-        query += ` AND price >= ?`;
-        values.push(parseFloat(filters.minPrice));
-    }
-
-    if (filters.maxPrice) {
-        query += ` AND price <= ?`;
-        values.push(parseFloat(filters.maxPrice));
-    }
-
-    if (filters.featured === 'true') {
-      query += ` AND is_featured = TRUE`;
-    }
-    
-    if (filters.bestSeller === 'true') {
-        query += ` AND rating >= 4.5`; // Best seller logic
-    }
-    
-    if (filters.isNew === 'true') {
-        query += ` AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)`; // New product logic
-    }
-
     if (filters.search) {
-        const searchTerm = `%${filters.search}%`;
-        searchConditions.push(`name LIKE ?`);
-        searchConditions.push(`description LIKE ?`);
-        values.push(searchTerm, searchTerm);
+      const searchTerm = `%${filters.search}%`;
+      searchConditions.push(`name LIKE ?`);
+      values.push(searchTerm);
     }
-
     if(searchConditions.length > 0) {
-        query += ` AND (${searchConditions.join(' OR ')})`;
+      query += ` AND (${searchConditions.join(' OR ')})`;
     }
-
-    // Cloning query for total count before adding order and limit
-    let countQuery = query;
-    let countValues = [...values];
-
     // Sorting
-    const sortBy = filters.sortBy || 'name';
-    const order = filters.order === 'desc' ? 'DESC' : 'ASC';
-    // Whitelist sortBy to prevent SQL injection
-    const allowedSortBy = ['name', 'price', 'created_at', 'rating'];
-    if (allowedSortBy.includes(sortBy)) {
-        query += ` ORDER BY ${sortBy} ${order}`;
-    } else {
-        query += ` ORDER BY name ASC`; // Default sort
-    }
-
+    query += ` ORDER BY name ASC`;
     // Pagination
     const limit = Math.max(1, parseInt(filters.limit) || 10);
     const offset = Math.max(0, parseInt(filters.offset) || 0);
     query += ` LIMIT ${limit} OFFSET ${offset}`;
-
-    // Execute both queries
-    const countResultQuery = countQuery.replace(/SELECT .*? FROM/, 'SELECT COUNT(*) as total FROM');
-    const [totalResult, results] = await Promise.all([
-        db.query(countResultQuery, countValues),
-        values.length > 0 ? db.query(query, values) : db.query(query)
-    ]);
-    
+    // Execute query
+    const results = values.length > 0 ? await db.query(query, values) : await db.query(query);
+    // Toplam ürün sayısı
+    const totalResult = await db.query('SELECT COUNT(*) as total FROM products WHERE is_active = TRUE');
     const total = totalResult[0].total;
-    
-    // Parse JSON fields and format output
-    const products = results.map(p => ({
-      ...p,
-      images: JSON.parse(p.images || '[]'),
-      ingredients: JSON.parse(p.ingredients || '[]'),
-      skinType: JSON.parse(p.skinType || '[]'),
-      discount: p.originalPrice ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : 0,
-      isNew: (new Date(p.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)),
-      isBestSeller: p.rating >= 4.5
-    }));
-
-    return { products, total };
-
+    return { products: results, total };
   } catch (error) {
     console.error('❌ Error getting products from database:', error);
-    throw error; // Re-throw to be caught by the route handler
+    throw error;
   }
 }
 
