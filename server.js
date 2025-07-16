@@ -393,6 +393,14 @@ async function initializeDatabase() {
                 } catch (error) {
                     console.log('⚠️ Page control columns check failed:', error.message);
                 }
+
+                // Her deployda image_url alanını TEXT olarak güncelle
+                try {
+                    await db.query(`ALTER TABLE products MODIFY COLUMN image_url TEXT`);
+                    console.log('✅ image_url column type set to TEXT');
+                } catch (error) {
+                    console.log('⚠️ image_url column type set failed:', error.message);
+                }
             }
         } catch (error) {
             console.log('⚠️ Products table check failed:', error.message);
