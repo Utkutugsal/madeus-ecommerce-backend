@@ -2273,7 +2273,7 @@
             }
 
             bindImageEvents() {
-                // Image input change events
+                // Sadece input değişimini ve silmeyi bırak
                 document.addEventListener('input', (e) => {
                     if (e.target.classList.contains('image-input')) {
                         const slot = e.target.closest('.image-slot');
@@ -2281,8 +2281,6 @@
                         this.updateImageSlot(slot, imageUrl);
                     }
                 });
-
-                // Remove image events
                 document.addEventListener('click', (e) => {
                     if (e.target.classList.contains('remove-image')) {
                         const slot = e.target.closest('.image-slot');
@@ -2291,88 +2289,8 @@
                         this.updateImageSlot(slot, '');
                     }
                 });
-
-                // Dosya seçici ve sürükle-bırak
-                document.querySelectorAll('.image-slot').forEach(slot => {
-                    // Dosya seçici input ekle
-                    let fileInput = slot.querySelector('input[type="file"]');
-                    if (!fileInput) {
-                        fileInput = document.createElement('input');
-                        fileInput.type = 'file';
-                        fileInput.accept = 'image/*';
-                        fileInput.style.display = 'none';
-                        slot.appendChild(fileInput);
-                    }
-                    // Slot'a tıklayınca dosya seçici aç
-                    slot.addEventListener('click', (e) => {
-                        if (e.target.classList.contains('image-input') || e.target.classList.contains('remove-image')) return;
-                        fileInput.click();
-                    });
-                    // Dosya seçilince base64 önizle
-                    fileInput.addEventListener('change', (e) => {
-                        const file = fileInput.files[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (ev) => {
-                                const base64 = ev.target.result;
-                                const input = slot.querySelector('.image-input');
-                                input.value = base64;
-                                this.updateImageSlot(slot, base64);
-                            };
-                            reader.readAsDataURL(file);
-                        }
-                    });
-                    // Sürükle-bırak desteği
-                    slot.addEventListener('dragover', (e) => {
-                        e.preventDefault();
-                        slot.classList.add('dragover');
-                    });
-                    slot.addEventListener('dragleave', (e) => {
-                        e.preventDefault();
-                        slot.classList.remove('dragover');
-                    });
-                    slot.addEventListener('drop', (e) => {
-                        e.preventDefault();
-                        slot.classList.remove('dragover');
-                        const file = e.dataTransfer.files[0];
-                        if (file && file.type.startsWith('image/')) {
-                            const reader = new FileReader();
-                            reader.onload = (ev) => {
-                                const base64 = ev.target.result;
-                                const input = slot.querySelector('.image-input');
-                                input.value = base64;
-                                this.updateImageSlot(slot, base64);
-                            };
-                            reader.readAsDataURL(file);
-                        }
-                    });
-                });
-
-                // + Görsel Alanı Ekle butonu
-                const addImageSlotBtn = document.getElementById('addImageSlotBtn');
-                if (addImageSlotBtn) {
-                    addImageSlotBtn.addEventListener('click', () => {
-                        const imageSlots = document.getElementById('imageSlots');
-                        const currentCount = imageSlots.querySelectorAll('.image-slot').length;
-                        if (currentCount >= 10) {
-                            alert('En fazla 10 görsel ekleyebilirsiniz.');
-                            return;
-                        }
-                        const newIndex = currentCount;
-                        const slot = document.createElement('div');
-                        slot.className = 'image-slot';
-                        slot.setAttribute('data-index', newIndex);
-                        slot.innerHTML = `
-                            <div class="image-placeholder">
-                                <i class="fas fa-plus"></i>
-                                <span>Görsel ${newIndex + 1}</span>
-                            </div>
-                            <input type="text" class="image-input" placeholder="Görsel URL'si">
-                            <button type="button" class="remove-image">×</button>
-                        `;
-                        imageSlots.appendChild(slot);
-                    });
-                }
+                // Dosya seçici, base64, drag-drop ve dosya inputu ile ilgili kodlar tamamen kaldırıldı
+                // Sadece + işaretine tıklanınca input açılması için event zaten globalde var
             }
 
             collectImageUrls() {
