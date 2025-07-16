@@ -1257,32 +1257,57 @@
                 <div class="form-section">
                     <h4 class="section-title">Ürün Görselleri (En fazla 6 adet)</h4>
                     <div class="image-gallery">
-                        <div class="image-slots">
+                        <div class="image-slots" id="imageSlots">
                             <div class="image-slot" data-index="0">
-                                <input type="text" class="image-input" placeholder="1. Fotoğraf URL'si">
+                                <div class="image-placeholder">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Ana Görsel</span>
+                                </div>
+                                <input type="text" class="image-input" placeholder="Görsel URL'si">
                                 <button type="button" class="remove-image">×</button>
                             </div>
                             <div class="image-slot" data-index="1">
-                                <input type="text" class="image-input" placeholder="2. Fotoğraf URL'si">
+                                <div class="image-placeholder">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Görsel 2</span>
+                                </div>
+                                <input type="text" class="image-input" placeholder="Görsel URL'si">
                                 <button type="button" class="remove-image">×</button>
                             </div>
                             <div class="image-slot" data-index="2">
-                                <input type="text" class="image-input" placeholder="3. Fotoğraf URL'si">
+                                <div class="image-placeholder">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Görsel 3</span>
+                                </div>
+                                <input type="text" class="image-input" placeholder="Görsel URL'si">
                                 <button type="button" class="remove-image">×</button>
                             </div>
                             <div class="image-slot" data-index="3">
-                                <input type="text" class="image-input" placeholder="4. Fotoğraf URL'si">
+                                <div class="image-placeholder">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Görsel 4</span>
+                                </div>
+                                <input type="text" class="image-input" placeholder="Görsel URL'si">
                                 <button type="button" class="remove-image">×</button>
                             </div>
                             <div class="image-slot" data-index="4">
-                                <input type="text" class="image-input" placeholder="5. Fotoğraf URL'si">
+                                <div class="image-placeholder">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Görsel 5</span>
+                                </div>
+                                <input type="text" class="image-input" placeholder="Görsel URL'si">
                                 <button type="button" class="remove-image">×</button>
                             </div>
                             <div class="image-slot" data-index="5">
-                                <input type="text" class="image-input" placeholder="6. Fotoğraf URL'si">
+                                <div class="image-placeholder">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Görsel 6</span>
+                                </div>
+                                <input type="text" class="image-input" placeholder="Görsel URL'si">
                                 <button type="button" class="remove-image">×</button>
                             </div>
                         </div>
+                        <button type="button" class="btn-primary" id="addImageSlotBtn" style="margin-top:16px; width:100%"><i class="fas fa-plus"></i> Görsel Alanı Ekle</button>
                     </div>
                 </div>
 
@@ -2253,22 +2278,101 @@
                     if (e.target.classList.contains('image-input')) {
                         const slot = e.target.closest('.image-slot');
                         const imageUrl = e.target.value.trim();
-                        if (imageUrl) {
-                            slot.classList.add('has-image');
-                        } else {
-                            slot.classList.remove('has-image');
-                        }
+                        this.updateImageSlot(slot, imageUrl);
                     }
                 });
+
                 // Remove image events
                 document.addEventListener('click', (e) => {
                     if (e.target.classList.contains('remove-image')) {
                         const slot = e.target.closest('.image-slot');
                         const input = slot.querySelector('.image-input');
                         input.value = '';
-                        slot.classList.remove('has-image');
+                        this.updateImageSlot(slot, '');
                     }
                 });
+
+                // Dosya seçici ve sürükle-bırak
+                document.querySelectorAll('.image-slot').forEach(slot => {
+                    // Dosya seçici input ekle
+                    let fileInput = slot.querySelector('input[type="file"]');
+                    if (!fileInput) {
+                        fileInput = document.createElement('input');
+                        fileInput.type = 'file';
+                        fileInput.accept = 'image/*';
+                        fileInput.style.display = 'none';
+                        slot.appendChild(fileInput);
+                    }
+                    // Slot'a tıklayınca dosya seçici aç
+                    slot.addEventListener('click', (e) => {
+                        if (e.target.classList.contains('image-input') || e.target.classList.contains('remove-image')) return;
+                        fileInput.click();
+                    });
+                    // Dosya seçilince base64 önizle
+                    fileInput.addEventListener('change', (e) => {
+                        const file = fileInput.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => {
+                                const base64 = ev.target.result;
+                                const input = slot.querySelector('.image-input');
+                                input.value = base64;
+                                this.updateImageSlot(slot, base64);
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    });
+                    // Sürükle-bırak desteği
+                    slot.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        slot.classList.add('dragover');
+                    });
+                    slot.addEventListener('dragleave', (e) => {
+                        e.preventDefault();
+                        slot.classList.remove('dragover');
+                    });
+                    slot.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        slot.classList.remove('dragover');
+                        const file = e.dataTransfer.files[0];
+                        if (file && file.type.startsWith('image/')) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => {
+                                const base64 = ev.target.result;
+                                const input = slot.querySelector('.image-input');
+                                input.value = base64;
+                                this.updateImageSlot(slot, base64);
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    });
+                });
+
+                // + Görsel Alanı Ekle butonu
+                const addImageSlotBtn = document.getElementById('addImageSlotBtn');
+                if (addImageSlotBtn) {
+                    addImageSlotBtn.addEventListener('click', () => {
+                        const imageSlots = document.getElementById('imageSlots');
+                        const currentCount = imageSlots.querySelectorAll('.image-slot').length;
+                        if (currentCount >= 10) {
+                            alert('En fazla 10 görsel ekleyebilirsiniz.');
+                            return;
+                        }
+                        const newIndex = currentCount;
+                        const slot = document.createElement('div');
+                        slot.className = 'image-slot';
+                        slot.setAttribute('data-index', newIndex);
+                        slot.innerHTML = `
+                            <div class="image-placeholder">
+                                <i class="fas fa-plus"></i>
+                                <span>Görsel ${newIndex + 1}</span>
+                            </div>
+                            <input type="text" class="image-input" placeholder="Görsel URL'si">
+                            <button type="button" class="remove-image">×</button>
+                        `;
+                        imageSlots.appendChild(slot);
+                    });
+                }
             }
 
             collectImageUrls() {
@@ -2285,6 +2389,62 @@
 
         // Initialize
         const adminPanel = new AdminPanel();
+
+        function updateImageSlotTitles() {
+            const slots = document.querySelectorAll('.image-slot');
+            slots.forEach((slot, idx) => {
+                const span = slot.querySelector('.image-placeholder span');
+                if (span) span.textContent = idx === 0 ? 'Ana Görsel' : `Görsel ${idx + 1}`;
+                slot.setAttribute('data-index', idx);
+            });
+        }
+
+        function addImageSlot() {
+            const imageSlots = document.getElementById('imageSlots');
+            const currentCount = imageSlots.querySelectorAll('.image-slot').length;
+            if (currentCount >= 10) {
+                alert('En fazla 10 görsel ekleyebilirsiniz.');
+                return;
+            }
+            const slot = document.createElement('div');
+            slot.className = 'image-slot';
+            slot.setAttribute('data-index', currentCount);
+            slot.innerHTML = `
+                <div class="image-placeholder">
+                    <i class="fas fa-plus"></i>
+                    <span>${currentCount === 0 ? 'Ana Görsel' : `Görsel ${currentCount + 1}`}</span>
+                </div>
+                <input type="text" class="image-input" placeholder="Görsel URL'si" style="display:none;">
+                <button type="button" class="remove-image">×</button>
+            `;
+            imageSlots.appendChild(slot);
+            updateImageSlotTitles();
+        }
+
+        document.addEventListener('click', function(e) {
+            // Görsel kutusuna tıklayınca input açılır
+            if (e.target.closest('.image-placeholder')) {
+                const slot = e.target.closest('.image-slot');
+                const input = slot.querySelector('.image-input');
+                if (input) {
+                    input.style.display = 'block';
+                    input.focus();
+                }
+            }
+            // Kutu silinirse başlıklar güncellenir
+            if (e.target.classList.contains('remove-image')) {
+                const slot = e.target.closest('.image-slot');
+                if (slot) {
+                    slot.remove();
+                    updateImageSlotTitles();
+                }
+            }
+        });
+
+        const addImageSlotBtn = document.getElementById('addImageSlotBtn');
+        if (addImageSlotBtn) {
+            addImageSlotBtn.addEventListener('click', addImageSlot);
+        }
     </script>
 </body>
 </html> 

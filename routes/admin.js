@@ -427,10 +427,11 @@ router.get('/products', adminAuth, async (req, res) => {
             queryParams.push(`%${search}%`, `%${search}%`);
         }
         
-        // SADECE KÜÇÜK ALANLARI GETİR
         const products = await db.query(`
             SELECT 
-                id, name, price, category, stock, brand, is_active, created_at, updated_at
+                id, name, description, price, original_price, 
+                category, stock, image_url, gallery_images, brand, is_active, 
+                created_at, updated_at
             FROM products
             ${whereClause}
             ORDER BY created_at DESC

@@ -430,3 +430,36 @@ router.post('/orders', async (req, res) => {
 });
 
 module.exports = router; 
+            customerEmail: user_email,
+            customerPhone: user_phone,
+            items,
+            totalAmount: total_amount,
+            shippingCost: shipping_cost,
+            shippingAddress: shipping_address
+        };
+
+        await emailService.sendOrderNotification(orderDetails);
+
+        res.json({
+            success: true,
+            message: 'Sipariş başarıyla oluşturuldu',
+            orderId,
+            data: {
+                orderId,
+                status: 'pending',
+                total: total_amount
+            }
+        });
+
+    } catch (error) {
+        console.error('Order creation error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Sipariş oluşturulurken hata oluştu',
+            error: error.message
+        });
+    }
+});
+
+module.exports = router; 
+
