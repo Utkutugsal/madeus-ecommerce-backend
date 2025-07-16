@@ -1253,61 +1253,32 @@
                     </div>
                 </div>
 
-                <!-- Image Gallery -->
+                <!-- Ürün Görselleri (Sade 6 input) -->
                 <div class="form-section">
-                    <h4 class="section-title">Ürün Görselleri (En fazla 6 adet)</h4>
-                    <div class="image-gallery">
-                        <div class="image-slots" id="imageSlots">
-                            <div class="image-slot" data-index="0">
-                                <div class="image-placeholder">
-                                    <i class="fas fa-plus"></i>
-                                    <span>Ana Görsel</span>
-                                </div>
-                                <input type="text" class="image-input" placeholder="Görsel URL'si">
-                                <button type="button" class="remove-image">×</button>
-                            </div>
-                            <div class="image-slot" data-index="1">
-                                <div class="image-placeholder">
-                                    <i class="fas fa-plus"></i>
-                                    <span>Görsel 2</span>
-                                </div>
-                                <input type="text" class="image-input" placeholder="Görsel URL'si">
-                                <button type="button" class="remove-image">×</button>
-                            </div>
-                            <div class="image-slot" data-index="2">
-                                <div class="image-placeholder">
-                                    <i class="fas fa-plus"></i>
-                                    <span>Görsel 3</span>
-                                </div>
-                                <input type="text" class="image-input" placeholder="Görsel URL'si">
-                                <button type="button" class="remove-image">×</button>
-                            </div>
-                            <div class="image-slot" data-index="3">
-                                <div class="image-placeholder">
-                                    <i class="fas fa-plus"></i>
-                                    <span>Görsel 4</span>
-                                </div>
-                                <input type="text" class="image-input" placeholder="Görsel URL'si">
-                                <button type="button" class="remove-image">×</button>
-                            </div>
-                            <div class="image-slot" data-index="4">
-                                <div class="image-placeholder">
-                                    <i class="fas fa-plus"></i>
-                                    <span>Görsel 5</span>
-                                </div>
-                                <input type="text" class="image-input" placeholder="Görsel URL'si">
-                                <button type="button" class="remove-image">×</button>
-                            </div>
-                            <div class="image-slot" data-index="5">
-                                <div class="image-placeholder">
-                                    <i class="fas fa-plus"></i>
-                                    <span>Görsel 6</span>
-                                </div>
-                                <input type="text" class="image-input" placeholder="Görsel URL'si">
-                                <button type="button" class="remove-image">×</button>
-                            </div>
-                        </div>
-                        <button type="button" class="btn-primary" id="addImageSlotBtn" style="margin-top:16px; width:100%"><i class="fas fa-plus"></i> Görsel Alanı Ekle</button>
+                    <h4 class="section-title">Ürün Görselleri (En fazla 6 adet, sadece URL giriniz)</h4>
+                    <div class="form-group">
+                        <label for="imageUrl1">Görsel 1 URL</label>
+                        <input type="text" id="imageUrl1" name="imageUrl1" class="form-input" placeholder="Görsel 1 URL'si">
+                    </div>
+                    <div class="form-group">
+                        <label for="imageUrl2">Görsel 2 URL</label>
+                        <input type="text" id="imageUrl2" name="imageUrl2" class="form-input" placeholder="Görsel 2 URL'si">
+                    </div>
+                    <div class="form-group">
+                        <label for="imageUrl3">Görsel 3 URL</label>
+                        <input type="text" id="imageUrl3" name="imageUrl3" class="form-input" placeholder="Görsel 3 URL'si">
+                    </div>
+                    <div class="form-group">
+                        <label for="imageUrl4">Görsel 4 URL</label>
+                        <input type="text" id="imageUrl4" name="imageUrl4" class="form-input" placeholder="Görsel 4 URL'si">
+                    </div>
+                    <div class="form-group">
+                        <label for="imageUrl5">Görsel 5 URL</label>
+                        <input type="text" id="imageUrl5" name="imageUrl5" class="form-input" placeholder="Görsel 5 URL'si">
+                    </div>
+                    <div class="form-group">
+                        <label for="imageUrl6">Görsel 6 URL</label>
+                        <input type="text" id="imageUrl6" name="imageUrl6" class="form-input" placeholder="Görsel 6 URL'si">
                     </div>
                 </div>
 
@@ -2437,34 +2408,6 @@
         }
         setTimeout(enableImageUrlInputOnly, 500);
         // bindImageEvents fonksiyonundan dosya seçici, base64 ve drag-drop ile ilgili tüm kodları kaldır
-
-        function enableSimpleImageUrlInputs() {
-            document.querySelectorAll('.image-input').forEach(inp => inp.style.display = 'none');
-            document.querySelectorAll('.image-placeholder').forEach(placeholder => {
-                placeholder.onclick = function(e) {
-                    e.stopPropagation();
-                    document.querySelectorAll('.image-input').forEach(inp => inp.style.display = 'none');
-                    const slot = this.closest('.image-slot');
-                    const input = slot.querySelector('.image-input');
-                    if (input) {
-                        input.style.display = 'block';
-                        input.focus();
-                    }
-                };
-            });
-            document.addEventListener('click', function(e) {
-                if (!e.target.classList.contains('image-input') && !e.target.classList.contains('image-placeholder') && !e.target.closest('.image-placeholder')) {
-                    document.querySelectorAll('.image-input').forEach(inp => inp.style.display = 'none');
-                }
-            });
-        }
-        window.addEventListener('DOMContentLoaded', enableSimpleImageUrlInputs);
-        const addImageSlotBtn = document.getElementById('addImageSlotBtn');
-        if (addImageSlotBtn) {
-            addImageSlotBtn.addEventListener('click', function() {
-                setTimeout(enableSimpleImageUrlInputs, 100);
-            });
-        }
     </script>
 </body>
 </html> 
