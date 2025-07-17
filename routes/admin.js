@@ -1222,6 +1222,48 @@ router.get('/debug-database-public', async (req, res) => {
     }
 });
 
+// Manuel Trendyol rating girişi endpoint'i
+router.post('/manual-trendyol-rating', adminAuth, async (req, res) => {
+    try {
+        const db = new Database();
+        const { productId, rating, reviewCount } = req.body;
+        
+        if (!productId || !rating) {
+            return res.status(400).json({
+                success: false,
+                message: 'Product ID ve rating gerekli'
+            });
+        }
+        
+        // Rating'i güncelle
+        await db.query(`
+            UPDATE products 
+            SET trendyol_rating = ?, trendyol_review_count = ?, trendyol_last_update = NOW() 
+            WHERE id = ?
+        `, [parseFloat(rating), parseInt(reviewCount) || 0, productId]);
+        
+        // Güncellenen ürünü getir
+        const product = await db.query('SELECT name FROM products WHERE id = ?', [productId]);
+        
+        res.json({
+            success: true,
+            message: `${product[0]?.name || 'Ürün'} için Trendyol rating başarıyla güncellendi`,
+            data: {
+                productId: productId,
+                rating: parseFloat(rating),
+                reviewCount: parseInt(reviewCount) || 0
+            }
+        });
+        
+    } catch (error) {
+        console.error('Manuel Trendyol rating error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Manuel rating güncellemesi başarısız: ' + error.message
+        });
+    }
+});
+
 // Trendyol rating çekme sistemi
 router.post('/update-trendyol-ratings', adminAuth, async (req, res) => {
     try {

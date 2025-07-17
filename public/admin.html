@@ -1238,6 +1238,10 @@
                                         <i class="fas fa-star"></i>
                                         Trendyol Rating Güncelle
                                     </button>
+                                    <button class="btn btn-info" onclick="adminPanel.showManualRatingModal()" id="manualRatingBtn">
+                                        <i class="fas fa-edit"></i>
+                                        Manuel Rating Gir
+                                    </button>
                                 </div>
                                 <div class="filters">
                                     <select id="categoryFilter" onchange="adminPanel.filterProducts()">
@@ -1522,6 +1526,38 @@
             <div class="modal-footer">
                 <button class="btn-secondary" id="cancelProductBtn">İptal</button>
                 <button class="btn-primary" id="saveProductBtn">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manuel Trendyol Rating Modal -->
+    <div id="manualRatingModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Manuel Trendyol Rating Girişi</h3>
+                <button class="modal-close" id="closeManualRatingBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="ratingProductSelect">Ürün Seç</label>
+                    <select id="ratingProductSelect" class="form-input">
+                        <option value="">Ürün seçin...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="manualRating">Rating (1-5)</label>
+                    <input type="number" id="manualRating" class="form-input" min="1" max="5" step="0.1" 
+                           placeholder="4.5">
+                </div>
+                <div class="form-group">
+                    <label for="manualReviewCount">Yorum Sayısı</label>
+                    <input type="number" id="manualReviewCount" class="form-input" min="0" 
+                           placeholder="124">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelManualRatingBtn">İptal</button>
+                <button class="btn-primary" id="saveManualRatingBtn">Kaydet</button>
             </div>
         </div>
     </div>
@@ -2690,7 +2726,81 @@
                     btn.disabled = false;
                 }
             }
-        }
+
+            // Manuel Trendyol Rating Modal Fonksiyonları
+            showManualRatingModal() {
+                // Ürün listesini doldur
+                const select = document.getElementById('ratingProductSelect');
+                select.innerHTML = '<option value="">Ürün seçin...</option>';
+                
+                this.products.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.id;
+                    option.textContent = product.name;
+                    select.appendChild(option);
+                });
+                
+                document.getElementById('manualRatingModal').classList.add('active');
+                
+                // Event listener'ları ekle
+                document.getElementById('saveManualRatingBtn').onclick = () => this.saveManualRating();
+                document.getElementById('cancelManualRatingBtn').onclick = () => this.closeManualRatingModal();
+                document.getElementById('closeManualRatingBtn').onclick = () => this.closeManualRatingModal();
+            }
+            
+            closeManualRatingModal() {
+                document.getElementById('manualRatingModal').classList.remove('active');
+                document.getElementById('ratingProductSelect').value = '';
+                document.getElementById('manualRating').value = '';
+                document.getElementById('manualReviewCount').value = '';
+            }
+            
+            async saveManualRating() {
+                const productId = document.getElementById('ratingProductSelect').value;
+                const rating = document.getElementById('manualRating').value;
+                const reviewCount = document.getElementById('manualReviewCount').value;
+                
+                if (!productId || !rating) {
+                    this.showToast('Ürün ve rating seçimi gerekli!', 'error');
+                    return;
+                }
+                
+                const btn = document.getElementById('saveManualRatingBtn');
+                btn.textContent = 'Kaydediliyor...';
+                btn.disabled = true;
+                
+                try {
+                    const response = await fetch('/api/admin/manual-trendyol-rating', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${this.token}`
+                        },
+                        body: JSON.stringify({
+                            productId: parseInt(productId),
+                            rating: parseFloat(rating),
+                            reviewCount: parseInt(reviewCount) || 0
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.showToast(data.message, 'success');
+                        this.closeManualRatingModal();
+                        this.loadProducts(); // Listeyi yenile
+                    } else {
+                        this.showToast(data.message || 'Kaydetme başarısız', 'error');
+                    }
+                } catch (error) {
+                    this.showToast('Bağlantı hatası', 'error');
+                }
+                
+                btn.textContent = 'Kaydet';
+                btn.disabled = false;
+            }
+
+        } // AdminPanel class sonu
 
         // Initialize
         const adminPanel = new AdminPanel();
