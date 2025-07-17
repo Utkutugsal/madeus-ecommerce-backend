@@ -125,10 +125,10 @@ async function updateTrendyolRatings(productIds) {
                 const ratingData = await fetchTrendyolRating(product.trendyol_url);
                 
                 if (ratingData.success && ratingData.rating > 0) {
-                    // Veritabanını güncelle
+                    // Veritabanını güncelle - Trendyol alanlarına kaydet
                     await db.query(`
                         UPDATE products 
-                        SET rating = ?, reviews_count = ?, trendyol_last_update = NOW() 
+                        SET trendyol_rating = ?, trendyol_review_count = ?, trendyol_last_update = NOW() 
                         WHERE id = ?
                     `, [ratingData.rating, ratingData.reviewCount, product.id]);
                     
@@ -1069,10 +1069,10 @@ router.post('/update-trendyol-ratings', adminAuth, async (req, res) => {
                 const ratingData = await fetchTrendyolRating(product.trendyol_url);
                 
                 if (ratingData.success && ratingData.rating > 0) {
-                    // Veritabanını güncelle
+                    // Veritabanını güncelle - Trendyol alanlarına kaydet
                     await db.query(`
                         UPDATE products 
-                        SET rating = ?, reviews_count = ?, trendyol_last_update = NOW() 
+                        SET trendyol_rating = ?, trendyol_review_count = ?, trendyol_last_update = NOW() 
                         WHERE id = ?
                     `, [ratingData.rating, ratingData.reviewCount, product.id]);
                     
