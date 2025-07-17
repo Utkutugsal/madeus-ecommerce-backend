@@ -257,6 +257,70 @@ const adminAuth = (req, res, next) => {
     }
 };
 
+// Add Trendyol columns to database manually
+router.post('/add-trendyol-columns', adminAuth, async (req, res) => {
+  const db = new Database();
+  
+  try {
+    console.log('🚀 Trendyol kolonları ekleniyor...');
+    
+    const columns = [
+      {
+        name: 'trendyol_url',
+        sql: 'ALTER TABLE products ADD COLUMN trendyol_url VARCHAR(500) NULL'
+      },
+      {
+        name: 'trendyol_rating', 
+        sql: 'ALTER TABLE products ADD COLUMN trendyol_rating DECIMAL(3,2) DEFAULT 0'
+      },
+      {
+        name: 'trendyol_review_count',
+        sql: 'ALTER TABLE products ADD COLUMN trendyol_review_count INT DEFAULT 0' 
+      },
+      {
+        name: 'trendyol_last_update',
+        sql: 'ALTER TABLE products ADD COLUMN trendyol_last_update TIMESTAMP NULL'
+      }
+    ];
+    
+    let addedColumns = 0;
+    const results = [];
+    
+    for (const column of columns) {
+      try {
+        await db.query(column.sql);
+        console.log(`✅ ${column.name} column added`);
+        results.push(`✅ ${column.name} eklendi`);
+        addedColumns++;
+      } catch (error) {
+        if (error.message.includes('Duplicate column name')) {
+          console.log(`ℹ️ ${column.name} already exists`);
+          results.push(`ℹ️ ${column.name} zaten mevcut`);
+        } else {
+          console.error(`❌ Error adding ${column.name}:`, error.message);
+          results.push(`❌ ${column.name} eklenemedi: ${error.message}`);
+        }
+      }
+    }
+    
+    res.json({
+      success: true,
+      message: 'Trendyol kolonları işlendi!',
+      addedColumns: addedColumns,
+      results: results
+    });
+    
+  } catch (error) {
+    console.error('❌ Migration error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  } finally {
+    await db.close();
+  }
+});
+
 // Get dashboard stats
 router.get('/dashboard/stats', adminAuth, async (req, res) => {
     try {
