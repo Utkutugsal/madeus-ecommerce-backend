@@ -985,6 +985,91 @@
             object-fit: cover;
             border-radius: 6px;
         }
+
+        /* Site Settings Styles */
+        .settings-section {
+            padding: 24px;
+        }
+
+        .settings-content {
+            margin-top: 24px;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 24px;
+        }
+
+        .settings-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: #f8fafc;
+            padding: 16px 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .card-header h4 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-header i {
+            color: #3b82f6;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        .settings-card .form-group {
+            margin-bottom: 20px;
+        }
+
+        .settings-card .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .settings-card label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        .settings-card .form-input,
+        .settings-card .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+        }
+
+        .settings-card .form-input:focus,
+        .settings-card .form-textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .settings-card .form-textarea {
+            height: 80px;
+            resize: vertical;
+        }
     </style>
 </head>
 <body>
@@ -1033,13 +1118,10 @@
                     <i class="fas fa-box"></i>
                     Ürünler
                 </a>
-                <!-- Site Ayarları Sekmesi Ekle -->
-                <li class="nav-item">
-                    <a href="#" class="nav-link" onclick="adminPanel.showSiteSettings()" id="siteSettingsNav">
-                        <i class="fas fa-cog"></i>
-                        <span>Site Ayarları</span>
-                    </a>
-                </li>
+                <a href="#" class="nav-item" data-page="settings">
+                    <i class="fas fa-cog"></i>
+                    Site Ayarları
+                </a>
                 <a href="#" class="nav-item" id="logoutBtn">
                     <i class="fas fa-sign-out-alt"></i>
                     Çıkış Yap
@@ -1172,6 +1254,93 @@
                             </div>
                         </div>
                         <div id="productsTableContainer"></div>
+                    </div>
+                </div>
+
+                <!-- Site Settings Page -->
+                <div id="settingsPage" class="page hidden">
+                    <div class="settings-section">
+                        <div class="section-header">
+                            <h3 class="section-title">Site Ayarları</h3>
+                            <div class="action-bar">
+                                <button class="btn btn-primary" onclick="adminPanel.saveSiteSettings()" id="saveSettingsBtn">
+                                    <i class="fas fa-save"></i>
+                                    Ayarları Kaydet
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-content">
+                            <div class="settings-grid">
+                                <!-- Hero Section Images -->
+                                <div class="settings-card">
+                                    <div class="card-header">
+                                        <h4><i class="fas fa-image"></i> Ana Sayfa Hero Görselleri</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <label for="heroImage1">Hero Görsel 1 URL</label>
+                                            <input type="url" id="heroImage1" class="form-input" placeholder="https://example.com/hero1.jpg">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="heroImage2">Hero Görsel 2 URL</label>
+                                            <input type="url" id="heroImage2" class="form-input" placeholder="https://example.com/hero2.jpg">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="heroImage3">Hero Görsel 3 URL</label>
+                                            <input type="url" id="heroImage3" class="form-input" placeholder="https://example.com/hero3.jpg">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Campaign Images -->
+                                <div class="settings-card">
+                                    <div class="card-header">
+                                        <h4><i class="fas fa-bullhorn"></i> Kampanya Görselleri</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <label for="campaignImage1">Kampanya Görsel 1 URL</label>
+                                            <input type="url" id="campaignImage1" class="form-input" placeholder="https://example.com/campaign1.jpg">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="campaignImage2">Kampanya Görsel 2 URL</label>
+                                            <input type="url" id="campaignImage2" class="form-input" placeholder="https://example.com/campaign2.jpg">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Brand Settings -->
+                                <div class="settings-card">
+                                    <div class="card-header">
+                                        <h4><i class="fas fa-building"></i> Marka Ayarları</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <label for="brandLogo">Marka Logo URL</label>
+                                            <input type="url" id="brandLogo" class="form-input" placeholder="https://example.com/logo.png">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Text Settings -->
+                                <div class="settings-card">
+                                    <div class="card-header">
+                                        <h4><i class="fas fa-font"></i> Metin Ayarları</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <label for="heroTitle">Ana Başlık</label>
+                                            <input type="text" id="heroTitle" class="form-input" placeholder="Doğal Cilt Bakımının Gücü">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="heroSubtitle">Alt Başlık</label>
+                                            <textarea id="heroSubtitle" class="form-textarea" placeholder="Premium kalitede, doğal içerikli cilt bakım ürünleri ile cildinize en iyi bakımı sağlayın."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1602,7 +1771,8 @@
                 const titles = {
                     dashboard: 'Dashboard',
                     orders: 'Siparişler',
-                    products: 'Ürünler'
+                    products: 'Ürünler',
+                    settings: 'Site Ayarları'
                 };
                 document.getElementById('pageTitle').textContent = titles[page];
 
@@ -1619,6 +1789,8 @@
                     this.loadOrders();
                 } else if (page === 'products') {
                     this.loadProducts();
+                } else if (page === 'settings') {
+                    this.loadSiteSettings();
                 }
             }
 
@@ -2066,6 +2238,10 @@
                 `;
             }
 
+            showProductModal() {
+                this.addProduct();
+            }
+
             addProduct() {
                 this.currentProduct = null;
                 document.getElementById('productModalTitle').textContent = 'Yeni Ürün Ekle';
@@ -2405,6 +2581,100 @@
                 } catch (error) {
                     console.error('Trendyol update error:', error);
                     this.showToast('❌ Trendyol güncelleme hatası: ' + error.message, 'error');
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            }
+
+            // ===========================================
+            // SITE SETTINGS MANAGEMENT
+            // ===========================================
+            
+            async loadSiteSettings() {
+                if (!this.token) return;
+                
+                try {
+                    const response = await fetch('/api/admin/site-settings', {
+                        headers: { 'Authorization': `Bearer ${this.token}` }
+                    });
+                    
+                    if (response.status === 401) {
+                        this.logout();
+                        return;
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // Form alanlarını doldur
+                        const settings = data.data;
+                        
+                        document.getElementById('heroImage1').value = settings.hero_image_1 || '';
+                        document.getElementById('heroImage2').value = settings.hero_image_2 || '';
+                        document.getElementById('heroImage3').value = settings.hero_image_3 || '';
+                        document.getElementById('campaignImage1').value = settings.campaign_image_1 || '';
+                        document.getElementById('campaignImage2').value = settings.campaign_image_2 || '';
+                        document.getElementById('brandLogo').value = settings.brand_logo || '';
+                        document.getElementById('heroTitle').value = settings.hero_title || '';
+                        document.getElementById('heroSubtitle').value = settings.hero_subtitle || '';
+                        
+                        console.log('Site ayarları yüklendi:', settings);
+                    } else {
+                        this.showToast('Site ayarları yüklenemedi: ' + data.message, 'error');
+                    }
+                } catch (error) {
+                    console.error('Site settings load error:', error);
+                    this.showToast('Site ayarları yüklenemedi: ' + error.message, 'error');
+                }
+            }
+            
+            async saveSiteSettings() {
+                if (!this.token) return;
+                
+                const btn = document.getElementById('saveSettingsBtn');
+                const originalText = btn.innerHTML;
+                
+                try {
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Kaydediliyor...';
+                    btn.disabled = true;
+                    
+                    const settings = {
+                        hero_image_1: document.getElementById('heroImage1').value.trim(),
+                        hero_image_2: document.getElementById('heroImage2').value.trim(),
+                        hero_image_3: document.getElementById('heroImage3').value.trim(),
+                        campaign_image_1: document.getElementById('campaignImage1').value.trim(),
+                        campaign_image_2: document.getElementById('campaignImage2').value.trim(),
+                        brand_logo: document.getElementById('brandLogo').value.trim(),
+                        hero_title: document.getElementById('heroTitle').value.trim(),
+                        hero_subtitle: document.getElementById('heroSubtitle').value.trim()
+                    };
+                    
+                    const response = await fetch('/api/admin/site-settings', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${this.token}`
+                        },
+                        body: JSON.stringify(settings)
+                    });
+                    
+                    if (response.status === 401) {
+                        this.logout();
+                        return;
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.showToast('✅ Site ayarları başarıyla kaydedildi!', 'success');
+                    } else {
+                        this.showToast('❌ ' + (data.message || 'Site ayarları kaydedilemedi'), 'error');
+                    }
+                    
+                } catch (error) {
+                    console.error('Site settings save error:', error);
+                    this.showToast('❌ Site ayarları kaydedilemedi: ' + error.message, 'error');
                 } finally {
                     btn.innerHTML = originalText;
                     btn.disabled = false;
