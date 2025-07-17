@@ -2082,15 +2082,20 @@
                 // addProduct fonksiyonunun sonuna ekle:
                 for (let i = 1; i <= 6; i++) {
                   const input = document.getElementById('imageUrl' + i);
-                  let urls = JSON.parse(localStorage.getItem('product_images_new') || '[]');
-                  input.value = urls[i - 1] || '';
-                  input.addEventListener('input', () => {
-                    const arr = [];
-                    for (let j = 1; j <= 6; j++) {
-                      arr.push(document.getElementById('imageUrl' + j).value.trim());
-                    }
-                    localStorage.setItem('product_images_new', JSON.stringify(arr));
-                  });
+                  if (input) {
+                    // Yeni ürün için 'new' key'i kullan
+                    let urls = JSON.parse(localStorage.getItem('product_images_new') || '[]');
+                    input.value = urls[i - 1] || '';
+                    
+                    input.addEventListener('input', () => {
+                      const arr = [];
+                      for (let j = 1; j <= 6; j++) {
+                        const inp = document.getElementById('imageUrl' + j);
+                        if (inp) arr.push(inp.value.trim());
+                      }
+                      localStorage.setItem('product_images_new', JSON.stringify(arr));
+                    });
+                  }
                 }
             }
 
@@ -2133,17 +2138,24 @@
 
                 // editProduct fonksiyonunun sonuna ekle:
                 if (this.currentProduct && this.currentProduct.id) {
-                  let urls = JSON.parse(localStorage.getItem('product_images_' + this.currentProduct.id) || '[]');
                   for (let i = 1; i <= 6; i++) {
                     const input = document.getElementById('imageUrl' + i);
-                    input.value = urls[i - 1] || '';
-                    input.addEventListener('input', () => {
-                      const arr = [];
-                      for (let j = 1; j <= 6; j++) {
-                        arr.push(document.getElementById('imageUrl' + j).value.trim());
-                      }
-                      localStorage.setItem('product_images_' + this.currentProduct.id, JSON.stringify(arr));
-                    });
+                    if (input) {
+                      let urls = JSON.parse(localStorage.getItem('product_images_' + this.currentProduct.id) || '[]');
+                      input.value = urls[i - 1] || '';
+                      
+                      input.addEventListener('input', () => {
+                        const arr = [];
+                        for (let j = 1; j <= 6; j++) {
+                          const inp = document.getElementById('imageUrl' + j);
+                          if (inp) arr.push(inp.value.trim());
+                        }
+                        // Güvenli localStorage kayıt
+                        if (this.currentProduct && this.currentProduct.id) {
+                          localStorage.setItem('product_images_' + this.currentProduct.id, JSON.stringify(arr));
+                        }
+                      });
+                    }
                   }
                 }
             }
