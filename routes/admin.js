@@ -14,17 +14,31 @@ async function fetchTrendyolRating(url) {
     try {
         console.log(`🔍 Trendyol sayfası kontrol ediliyor: ${url}`);
         
-        // User-Agent ve headers ekle (bot gibi görünmemek için)
+        // Daha gerçekçi User-Agent ve headers ekle (anti-bot için)
         const response = await axios.get(url, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Language': 'tr-TR,tr;q=0.9,en;q=0.8',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7',
                 'Accept-Encoding': 'gzip, deflate, br',
+                'DNT': '1',
                 'Connection': 'keep-alive',
-                'Upgrade-Insecure-Requests': '1'
+                'Upgrade-Insecure-Requests': '1',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Sec-Fetch-User': '?1',
+                'Pragma': 'no-cache',
+                'Cache-Control': 'no-cache',
+                'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-platform': '"Windows"'
             },
-            timeout: 15000 // 15 saniye timeout (daha uzun)
+            timeout: 20000, // 20 saniye timeout
+            maxRedirects: 5,
+            validateStatus: function (status) {
+                return status >= 200 && status < 400; // 200-399 arası kabul et
+            }
         });
 
         console.log(`📄 HTTP Status: ${response.status}`);
@@ -37,39 +51,41 @@ async function fetchTrendyolRating(url) {
         console.log(`📄 Sayfa başlığı: ${pageTitle}`);
         
         // Anti-bot kontrolü var mı?
-        if (pageTitle.includes('Bot') || pageTitle.includes('Verify') || response.data.includes('cloudflare')) {
+        if (pageTitle.includes('Bot') || pageTitle.includes('Verify') || pageTitle.includes('Cloudflare') || 
+            response.data.includes('cloudflare') || response.data.includes('challenge')) {
             console.log('🚫 Anti-bot koruması tespit edildi');
         }
         
         let rating = 0;
         let reviewCount = 0;
         
-        // Güncel Trendyol rating selector'larını dene
+        // 2024 Güncel Trendyol rating selector'larını dene
         const ratingSelectors = [
-            '.rating-score',
-            '.average-rating', 
-            '.product-rating .rating',
-            '[data-testid="rating-score"]',
-            '.stars-wrapper .rating-score',
+            '.rating-line .rating-score',
             '.pr-rnr-header__rating-score',
-            '.pr-rnr-header-summary__score',
+            '.product-rating-score',
+            '.rating-score',
+            '.product-detail__rating .rating-score',
+            '[data-testid="rating-score"]',
             '.rnr-summary-rating__score',
-            '.product-detail-summary-price-info__rating-score',
+            '.product-rating .rating-score',
             '[class*="rating-score"]',
-            '[class*="rating"]'
+            '.stars-container .rating-score',
+            '.review-summary .rating-score'
         ];
         
         const reviewSelectors = [
-            '.rating-count',
-            '.review-count', 
-            '.total-review-count',
-            '[data-testid="review-count"]',
+            '.rating-line .rating-count',
             '.pr-rnr-header__comment-count',
-            '.pr-rnr-header-summary__comment-count',
+            '.product-review-count',
+            '.rating-count', 
+            '.product-detail__rating .rating-count',
+            '[data-testid="review-count"]',
             '.rnr-summary-rating__comment-count',
-            '.product-detail-summary-price-info__rating-count',
+            '.product-rating .rating-count',
             '[class*="comment-count"]',
-            '[class*="review-count"]'
+            '[class*="review-count"]',
+            '.review-summary .review-count'
         ];
         
         console.log(`🔍 ${ratingSelectors.length} rating selector'u deneniyor...`);
@@ -83,8 +99,8 @@ async function fetchTrendyolRating(url) {
                 const ratingText = ratingElement.text().trim();
                 console.log(`✅ Selector "${selector}" buldu: "${ratingText}"`);
                 
-                const parsedRating = parseFloat(ratingText.replace(',', '.'));
-                if (!isNaN(parsedRating) && parsedRating > 0) {
+                const parsedRating = parseFloat(ratingText.replace(',', '.').replace(/[^\d.,]/g, ''));
+                if (!isNaN(parsedRating) && parsedRating > 0 && parsedRating <= 5) {
                     rating = parsedRating;
                     console.log(`⭐ Rating bulundu: ${rating}`);
                     break;
@@ -114,24 +130,41 @@ async function fetchTrendyolRating(url) {
         
         // Hiçbir şey bulunamadıysa sayfayı debug et
         if (rating === 0 && reviewCount === 0) {
-            console.log('🔍 Rating bulunamadı, sayfada arama yapılıyor...');
+            console.log('🔍 Rating bulunamadı, sayfada regex arama yapılıyor...');
             
-            // Sayfada rating ile ilgili metinleri ara
+            // Sayfada rating ile ilgili regex pattern'ler ara
             const bodyText = $('body').text();
-            const ratingMatches = bodyText.match(/\d+[,\.]\d+\s*\/\s*5/g);
-            const reviewMatches = bodyText.match(/\d+\s*yorum/gi);
             
-            console.log(`📝 Rating patterns: ${ratingMatches ? ratingMatches.slice(0, 3) : 'Bulunamadı'}`);
-            console.log(`📝 Review patterns: ${reviewMatches ? reviewMatches.slice(0, 3) : 'Bulunamadı'}`);
+            // Rating pattern'leri (4.5, 4,5, 4.5/5, vb.)
+            const ratingMatches = bodyText.match(/(\d+[,\.]\d+)\s*(?:\/\s*5|\s*üzerinden|\s*puan|\s*yıldız)/gi);
+            const starMatches = bodyText.match(/(\d+[,\.]\d+)\s*(?:star|yıldız)/gi);
             
-            // Tüm class'ları logla (debugging için)
-            const allClasses = [];
-            $('[class*="rating"], [class*="score"], [class*="review"], [class*="comment"]').each((i, el) => {
-                if (i < 10) { // İlk 10 element
-                    allClasses.push($(el).attr('class'));
+            // Review pattern'leri
+            const reviewMatches = bodyText.match(/(\d+)\s*(?:yorum|değerlendirme|review)/gi);
+            
+            console.log(`📝 Rating patterns: ${ratingMatches ? ratingMatches.slice(0, 3).join(', ') : 'Bulunamadı'}`);
+            console.log(`📝 Star patterns: ${starMatches ? starMatches.slice(0, 3).join(', ') : 'Bulunamadı'}`);
+            console.log(`📝 Review patterns: ${reviewMatches ? reviewMatches.slice(0, 3).join(', ') : 'Bulunamadı'}`);
+            
+            // İlk bulduğu rating'i kullan
+            if (ratingMatches && ratingMatches.length > 0) {
+                const firstMatch = ratingMatches[0];
+                const extractedRating = parseFloat(firstMatch.match(/(\d+[,\.]\d+)/)[1].replace(',', '.'));
+                if (!isNaN(extractedRating) && extractedRating > 0 && extractedRating <= 5) {
+                    rating = extractedRating;
+                    console.log(`🎯 Regex ile rating bulundu: ${rating}`);
                 }
-            });
-            console.log(`📝 İlgili CSS class'lar: ${allClasses.join(', ')}`);
+            }
+            
+            // İlk bulduğu review count'u kullan
+            if (reviewMatches && reviewMatches.length > 0) {
+                const firstReview = reviewMatches[0];
+                const extractedCount = parseInt(firstReview.match(/(\d+)/)[1]);
+                if (!isNaN(extractedCount) && extractedCount > 0) {
+                    reviewCount = extractedCount;
+                    console.log(`🎯 Regex ile review count bulundu: ${reviewCount}`);
+                }
+            }
         }
         
         return {
