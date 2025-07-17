@@ -501,8 +501,7 @@ router.post('/products', adminAuth, async (req, res) => {
         const db = new Database();
         const { 
             name, description, price, original_price, 
-            category, stock, image_url, gallery_images, brand, is_active,
-            show_in_homepage, show_in_popular, show_in_bestsellers, show_in_featured
+            category, stock, image_url, gallery_images, brand, is_active
         } = req.body;
 
         // gallery_images her zaman string olarak kaydedilmeli
@@ -513,21 +512,26 @@ router.post('/products', adminAuth, async (req, res) => {
             galleryImagesStr = gallery_images;
         }
 
+        // Sadece mevcut olan alanları kullan
         const sql = `
             INSERT INTO products (
                 name, description, price, original_price, 
                 category, stock, image_url, gallery_images, brand, is_active,
-                show_in_homepage, show_in_popular, show_in_bestsellers, show_in_featured,
                 created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
         `;
 
         const result = await db.query(sql, [
-            name, description, price, original_price || null,
-            category, stock || 0, image_url || '', galleryImagesStr,
-            brand || 'MADEUS', is_active ? 1 : 0,
-            show_in_homepage ? 1 : 0, show_in_popular ? 1 : 0, 
-            show_in_bestsellers ? 1 : 0, show_in_featured ? 1 : 0
+            name || 'Ürün Adı',
+            description || '',
+            price || 0,
+            original_price || null,
+            category || 'serum',
+            stock || 0,
+            image_url || '',
+            galleryImagesStr,
+            brand || 'MADEUS',
+            is_active ? 1 : 0
         ]);
 
         res.json({
@@ -539,7 +543,7 @@ router.post('/products', adminAuth, async (req, res) => {
         console.error('❌ Add product error:', error);
         res.status(500).json({
             success: false,
-            message: 'Ürün eklenirken hata oluştu'
+            message: 'Ürün eklenirken hata oluştu: ' + error.message
         });
     }
 });
