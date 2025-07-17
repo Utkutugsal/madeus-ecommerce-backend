@@ -12,6 +12,8 @@ const cheerio = require('cheerio');
 // Trendyol'dan rating çekme fonksiyonu
 async function fetchTrendyolRating(url) {
     try {
+        console.log(`🔍 Trendyol sayfası kontrol ediliyor: ${url}`);
+        
         // User-Agent ve headers ekle (bot gibi görünmemek için)
         const response = await axios.get(url, {
             headers: {
@@ -22,66 +24,125 @@ async function fetchTrendyolRating(url) {
                 'Connection': 'keep-alive',
                 'Upgrade-Insecure-Requests': '1'
             },
-            timeout: 10000 // 10 saniye timeout
+            timeout: 15000 // 15 saniye timeout (daha uzun)
         });
+
+        console.log(`📄 HTTP Status: ${response.status}`);
+        console.log(`📄 Content Length: ${response.data.length}`);
 
         const $ = cheerio.load(response.data);
         
-        // Trendyol'daki rating elementlerini bul (CSS selector'ları güncellenmeli)
+        // Sayfa title'ını kontrol et
+        const pageTitle = $('title').text();
+        console.log(`📄 Sayfa başlığı: ${pageTitle}`);
+        
+        // Anti-bot kontrolü var mı?
+        if (pageTitle.includes('Bot') || pageTitle.includes('Verify') || response.data.includes('cloudflare')) {
+            console.log('🚫 Anti-bot koruması tespit edildi');
+        }
+        
         let rating = 0;
         let reviewCount = 0;
         
-        // Farklı rating selector'larını dene
+        // Güncel Trendyol rating selector'larını dene
         const ratingSelectors = [
             '.rating-score',
-            '.average-rating',
+            '.average-rating', 
             '.product-rating .rating',
             '[data-testid="rating-score"]',
-            '.stars-wrapper .rating-score'
+            '.stars-wrapper .rating-score',
+            '.pr-rnr-header__rating-score',
+            '.pr-rnr-header-summary__score',
+            '.rnr-summary-rating__score',
+            '.product-detail-summary-price-info__rating-score',
+            '[class*="rating-score"]',
+            '[class*="rating"]'
         ];
         
         const reviewSelectors = [
             '.rating-count',
-            '.review-count',
+            '.review-count', 
             '.total-review-count',
-            '[data-testid="review-count"]'
+            '[data-testid="review-count"]',
+            '.pr-rnr-header__comment-count',
+            '.pr-rnr-header-summary__comment-count',
+            '.rnr-summary-rating__comment-count',
+            '.product-detail-summary-price-info__rating-count',
+            '[class*="comment-count"]',
+            '[class*="review-count"]'
         ];
         
+        console.log(`🔍 ${ratingSelectors.length} rating selector'u deneniyor...`);
+        
         // Rating'i bulmaya çalış
-        for (const selector of ratingSelectors) {
+        for (let i = 0; i < ratingSelectors.length; i++) {
+            const selector = ratingSelectors[i];
             const ratingElement = $(selector).first();
+            
             if (ratingElement.length) {
                 const ratingText = ratingElement.text().trim();
+                console.log(`✅ Selector "${selector}" buldu: "${ratingText}"`);
+                
                 const parsedRating = parseFloat(ratingText.replace(',', '.'));
                 if (!isNaN(parsedRating) && parsedRating > 0) {
                     rating = parsedRating;
+                    console.log(`⭐ Rating bulundu: ${rating}`);
                     break;
                 }
             }
         }
         
+        console.log(`🔍 ${reviewSelectors.length} review selector'u deneniyor...`);
+        
         // Review sayısını bulmaya çalış
-        for (const selector of reviewSelectors) {
+        for (let i = 0; i < reviewSelectors.length; i++) {
+            const selector = reviewSelectors[i];
             const reviewElement = $(selector).first();
+            
             if (reviewElement.length) {
                 const reviewText = reviewElement.text().trim();
+                console.log(`✅ Selector "${selector}" buldu: "${reviewText}"`);
+                
                 const parsedCount = parseInt(reviewText.replace(/[^\d]/g, ''));
                 if (!isNaN(parsedCount) && parsedCount > 0) {
                     reviewCount = parsedCount;
+                    console.log(`💬 Review count bulundu: ${reviewCount}`);
                     break;
                 }
             }
         }
         
+        // Hiçbir şey bulunamadıysa sayfayı debug et
+        if (rating === 0 && reviewCount === 0) {
+            console.log('🔍 Rating bulunamadı, sayfada arama yapılıyor...');
+            
+            // Sayfada rating ile ilgili metinleri ara
+            const bodyText = $('body').text();
+            const ratingMatches = bodyText.match(/\d+[,\.]\d+\s*\/\s*5/g);
+            const reviewMatches = bodyText.match(/\d+\s*yorum/gi);
+            
+            console.log(`📝 Rating patterns: ${ratingMatches ? ratingMatches.slice(0, 3) : 'Bulunamadı'}`);
+            console.log(`📝 Review patterns: ${reviewMatches ? reviewMatches.slice(0, 3) : 'Bulunamadı'}`);
+            
+            // Tüm class'ları logla (debugging için)
+            const allClasses = [];
+            $('[class*="rating"], [class*="score"], [class*="review"], [class*="comment"]').each((i, el) => {
+                if (i < 10) { // İlk 10 element
+                    allClasses.push($(el).attr('class'));
+                }
+            });
+            console.log(`📝 İlgili CSS class'lar: ${allClasses.join(', ')}`);
+        }
+        
         return {
-            success: true,
+            success: rating > 0 || reviewCount > 0,
             rating: rating,
             reviewCount: reviewCount,
             lastUpdated: new Date()
         };
         
     } catch (error) {
-        console.error('Trendyol fetch error:', error.message);
+        console.error('🚫 Trendyol fetch error:', error.message);
         return {
             success: false,
             error: error.message
