@@ -923,7 +923,7 @@ router.put('/products/:id', adminAuth, async (req, res) => {
             name, description, price, original_price, 
             category, stock, image_url, gallery_images, brand, is_active,
             show_in_homepage, show_in_popular, show_in_bestsellers, show_in_featured,
-            trendyol_url
+            trendyol_url, trendyol_rating, trendyol_review_count
         } = req.body;
 
         const updateFields = [];
@@ -997,6 +997,20 @@ router.put('/products/:id', adminAuth, async (req, res) => {
             console.log('✅ Trendyol URL ekleniyor:', trendyol_url);
         } else {
             console.log('❌ Trendyol URL undefined!');
+        }
+        if (trendyol_rating !== undefined) {
+            updateFields.push('trendyol_rating = ?');
+            updateValues.push(trendyol_rating);
+            console.log('✅ Trendyol Rating ekleniyor:', trendyol_rating);
+        } else {
+            console.log('❌ Trendyol Rating undefined!');
+        }
+        if (trendyol_review_count !== undefined) {
+            updateFields.push('trendyol_review_count = ?');
+            updateValues.push(trendyol_review_count);
+            console.log('✅ Trendyol Review Count ekleniyor:', trendyol_review_count);
+        } else {
+            console.log('❌ Trendyol Review Count undefined!');
         }
 
         updateFields.push('updated_at = NOW()');
@@ -1222,7 +1236,7 @@ router.get('/debug-database-public', async (req, res) => {
     }
 });
 
-// Manuel Trendyol rating girişi endpoint'i
+// Manuel Trendyol rating girişi endpoint'i (sadece bu kalacak, otomatik çekme kaldırılacak)
 router.post('/manual-trendyol-rating', adminAuth, async (req, res) => {
     try {
         const db = new Database();
@@ -1260,103 +1274,6 @@ router.post('/manual-trendyol-rating', adminAuth, async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Manuel rating güncellemesi başarısız: ' + error.message
-        });
-    }
-});
-
-// Trendyol rating çekme sistemi
-router.post('/update-trendyol-ratings', adminAuth, async (req, res) => {
-    try {
-        const db = new Database();
-        const { productIds } = req.body; // Hangi ürünlerin güncelleneceği
-        
-        // Trendyol URL'si olan ürünleri çek
-        let sql = 'SELECT id, name, trendyol_url FROM products WHERE trendyol_url IS NOT NULL AND trendyol_url != ""';
-        let params = [];
-        
-        if (productIds && productIds.length > 0) {
-            sql += ' AND id IN (' + productIds.map(() => '?').join(',') + ')';
-            params = productIds;
-        }
-        
-        const products = await db.query(sql, params);
-        
-        if (products.length === 0) {
-            return res.json({
-                success: true,
-                message: 'Güncellenecek ürün bulunamadı',
-                updated: 0
-            });
-        }
-        
-        let updatedCount = 0;
-        const results = [];
-        
-        // Her ürün için rating çek (5 saniye bekleyerek)
-        for (const product of products) {
-            try {
-                console.log(`🔄 ${product.name} için Trendyol rating çekiliyor...`);
-                
-                const ratingData = await fetchTrendyolRating(product.trendyol_url);
-                
-                if (ratingData.success && ratingData.rating > 0) {
-                    // Veritabanını güncelle - Trendyol alanlarına kaydet
-                    await db.query(`
-                        UPDATE products 
-                        SET trendyol_rating = ?, trendyol_review_count = ?, trendyol_last_update = NOW() 
-                        WHERE id = ?
-                    `, [ratingData.rating, ratingData.reviewCount, product.id]);
-                    
-                    updatedCount++;
-                    results.push({
-                        id: product.id,
-                        name: product.name,
-                        rating: ratingData.rating,
-                        reviewCount: ratingData.reviewCount,
-                        success: true
-                    });
-                    
-                    console.log(`✅ ${product.name}: ${ratingData.rating} ⭐ (${ratingData.reviewCount} yorum)`);
-                } else {
-                    results.push({
-                        id: product.id,
-                        name: product.name,
-                        success: false,
-                        error: ratingData.error || 'Rating bulunamadı'
-                    });
-                    
-                    console.log(`❌ ${product.name}: Rating çekilemedi`);
-                }
-                
-                // 5 saniye bekle (rate limiting)
-                if (products.indexOf(product) < products.length - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 5000));
-                }
-                
-            } catch (error) {
-                console.error(`❌ ${product.name} error:`, error);
-                results.push({
-                    id: product.id,
-                    name: product.name,
-                    success: false,
-                    error: error.message
-                });
-            }
-        }
-        
-        res.json({
-            success: true,
-            message: `${updatedCount}/${products.length} ürün güncellendi`,
-            updated: updatedCount,
-            total: products.length,
-            results: results
-        });
-        
-    } catch (error) {
-        console.error('Trendyol update error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Trendyol rating güncellemesi başarısız: ' + error.message
         });
     }
 });

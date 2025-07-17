@@ -1234,14 +1234,6 @@
                                         <i class="fas fa-plus"></i>
                                         Yeni Ürün Ekle
                                     </button>
-                                    <button class="btn btn-secondary" onclick="adminPanel.updateTrendyolRatings()" id="trendyolUpdateBtn">
-                                        <i class="fas fa-star"></i>
-                                        Trendyol Rating Güncelle
-                                    </button>
-                                    <button class="btn btn-info" onclick="adminPanel.showManualRatingModal()" id="manualRatingBtn">
-                                        <i class="fas fa-edit"></i>
-                                        Manuel Rating Gir
-                                    </button>
                                 </div>
                                 <div class="filters">
                                     <select id="categoryFilter" onchange="adminPanel.filterProducts()">
@@ -1520,44 +1512,26 @@
                     <label for="trendyolUrl">Trendyol URL'si</label>
                     <input type="url" id="trendyolUrl" name="trendyolUrl" class="form-input" 
                            placeholder="https://www.trendyol.com/madeus/urun-adi-p-123456">
-                    <small class="form-help">Otomatik rating güncellemesi için Trendyol ürün linkini girin</small>
+                    <small class="form-help">Ürünün Trendyol linkini girin</small>
+                </div>
+
+                <!-- Trendyol Rating Alanları -->
+                <div class="form-row">
+                    <div class="form-group" style="width: 50%;">
+                        <label for="trendyolRating">Trendyol Rating (1-5)</label>
+                        <input type="number" id="trendyolRating" name="trendyolRating" class="form-input" 
+                               min="0" max="5" step="0.1" placeholder="4.5">
+                    </div>
+                    <div class="form-group" style="width: 50%;">
+                        <label for="trendyolReviewCount">Yorum Sayısı</label>
+                        <input type="number" id="trendyolReviewCount" name="trendyolReviewCount" class="form-input" 
+                               min="0" placeholder="124">
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn-secondary" id="cancelProductBtn">İptal</button>
                 <button class="btn-primary" id="saveProductBtn">Kaydet</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Manuel Trendyol Rating Modal -->
-    <div id="manualRatingModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Manuel Trendyol Rating Girişi</h3>
-                <button class="modal-close" id="closeManualRatingBtn">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="ratingProductSelect">Ürün Seç</label>
-                    <select id="ratingProductSelect" class="form-input">
-                        <option value="">Ürün seçin...</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="manualRating">Rating (1-5)</label>
-                    <input type="number" id="manualRating" class="form-input" min="1" max="5" step="0.1" 
-                           placeholder="4.5">
-                </div>
-                <div class="form-group">
-                    <label for="manualReviewCount">Yorum Sayısı</label>
-                    <input type="number" id="manualReviewCount" class="form-input" min="0" 
-                           placeholder="124">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" id="cancelManualRatingBtn">İptal</button>
-                <button class="btn-primary" id="saveManualRatingBtn">Kaydet</button>
             </div>
         </div>
     </div>
@@ -2355,6 +2329,10 @@
                 
                 // Trendyol URL alanını doldur
                 document.getElementById('trendyolUrl').value = this.currentProduct.trendyol_url || '';
+                
+                // Trendyol Rating alanlarını doldur
+                document.getElementById('trendyolRating').value = this.currentProduct.trendyol_rating || '';
+                document.getElementById('trendyolReviewCount').value = this.currentProduct.trendyol_review_count || '';
 
                 // Show/hide checkboxes
                 document.getElementById('showInHomepage').checked = Boolean(this.currentProduct.show_in_homepage);
@@ -2446,7 +2424,9 @@
                         show_in_popular: document.getElementById('showInPopular').checked,
                         show_in_bestsellers: document.getElementById('showInBestsellers').checked,
                         show_in_featured: document.getElementById('showInFeatured').checked,
-                        trendyol_url: document.getElementById('trendyolUrl').value || null
+                        trendyol_url: document.getElementById('trendyolUrl').value || null,
+                        trendyol_rating: parseFloat(document.getElementById('trendyolRating').value) || null,
+                        trendyol_review_count: parseInt(document.getElementById('trendyolReviewCount').value) || null
                     };
 
                     const url = this.currentProduct ? 
