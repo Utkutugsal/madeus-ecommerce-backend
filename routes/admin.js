@@ -877,6 +877,15 @@ router.put('/products/:id', adminAuth, async (req, res) => {
     try {
         const db = new Database();
         const { id } = req.params;
+        
+        // DEBUG: Gelen tüm body'yi logla
+        console.log('🔄 Product Update Debug:', {
+            productId: id,
+            bodyKeys: Object.keys(req.body),
+            trendyolUrl: req.body.trendyol_url,
+            fullBody: req.body
+        });
+        
         const { 
             name, description, price, original_price, 
             category, stock, image_url, gallery_images, brand, is_active,
@@ -952,13 +961,22 @@ router.put('/products/:id', adminAuth, async (req, res) => {
         if (trendyol_url !== undefined) {
             updateFields.push('trendyol_url = ?');
             updateValues.push(trendyol_url);
+            console.log('✅ Trendyol URL ekleniyor:', trendyol_url);
+        } else {
+            console.log('❌ Trendyol URL undefined!');
         }
 
         updateFields.push('updated_at = NOW()');
         updateValues.push(id);
 
         const sql = `UPDATE products SET ${updateFields.join(', ')} WHERE id = ?`;
-        await db.query(sql, updateValues);
+        
+        console.log('🔍 SQL Query:', sql);
+        console.log('🔍 Values:', updateValues);
+        
+        const result = await db.query(sql, updateValues);
+        
+        console.log('✅ Update Result:', result);
 
         res.json({
             success: true,
