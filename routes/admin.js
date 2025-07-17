@@ -880,7 +880,8 @@ router.put('/products/:id', adminAuth, async (req, res) => {
         const { 
             name, description, price, original_price, 
             category, stock, image_url, gallery_images, brand, is_active,
-            show_in_homepage, show_in_popular, show_in_bestsellers, show_in_featured
+            show_in_homepage, show_in_popular, show_in_bestsellers, show_in_featured,
+            trendyol_url
         } = req.body;
 
         const updateFields = [];
@@ -947,6 +948,10 @@ router.put('/products/:id', adminAuth, async (req, res) => {
         if (show_in_featured !== undefined) {
             updateFields.push('show_in_featured = ?');
             updateValues.push(show_in_featured ? 1 : 0);
+        }
+        if (trendyol_url !== undefined) {
+            updateFields.push('trendyol_url = ?');
+            updateValues.push(trendyol_url);
         }
 
         updateFields.push('updated_at = NOW()');
