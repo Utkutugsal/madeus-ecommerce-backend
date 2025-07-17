@@ -2316,6 +2316,15 @@
                 document.getElementById('productCategory').value = this.currentProduct.category;
                 document.getElementById('productStock').value = this.currentProduct.stock;
                 document.getElementById('productActive').value = this.currentProduct.is_active;
+                
+                // Trendyol URL alanını doldur
+                document.getElementById('trendyolUrl').value = this.currentProduct.trendyol_url || '';
+
+                // Show/hide checkboxes
+                document.getElementById('showInHomepage').checked = Boolean(this.currentProduct.show_in_homepage);
+                document.getElementById('showInPopular').checked = Boolean(this.currentProduct.show_in_popular);
+                document.getElementById('showInBestsellers').checked = Boolean(this.currentProduct.show_in_bestsellers);
+                document.getElementById('showInFeatured').checked = Boolean(this.currentProduct.show_in_featured);
 
                 // Güvenli gallery_images parse
                 let images = [];
@@ -2400,7 +2409,8 @@
                         show_in_homepage: document.getElementById('showInHomepage').checked,
                         show_in_popular: document.getElementById('showInPopular').checked,
                         show_in_bestsellers: document.getElementById('showInBestsellers').checked,
-                        show_in_featured: document.getElementById('showInFeatured').checked
+                        show_in_featured: document.getElementById('showInFeatured').checked,
+                        trendyol_url: document.getElementById('trendyolUrl').value || null
                     };
 
                     const url = this.currentProduct ? 
