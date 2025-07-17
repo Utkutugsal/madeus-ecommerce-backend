@@ -512,17 +512,35 @@ router.post('/products', adminAuth, async (req, res) => {
             galleryImagesStr = gallery_images;
         }
 
-        // Sadece mevcut olan alanları kullan
+        // Slug oluştur (Türkçe karakterleri değiştir ve URL-friendly yap)
+        const createSlug = (text) => {
+            return text
+                .toLowerCase()
+                .replace(/ğ/g, 'g')
+                .replace(/ü/g, 'u')
+                .replace(/ş/g, 's')
+                .replace(/ı/g, 'i')
+                .replace(/ö/g, 'o')
+                .replace(/ç/g, 'c')
+                .replace(/[^a-z0-9]/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '');
+        };
+
+        const slug = createSlug(name || 'urun') + '-' + Date.now();
+
+        // Slug alanını da ekle
         const sql = `
             INSERT INTO products (
-                name, description, price, original_price, 
+                name, slug, description, price, original_price, 
                 category, stock, image_url, gallery_images, brand, is_active,
                 created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
         `;
 
         const result = await db.query(sql, [
             name || 'Ürün Adı',
+            slug,
             description || '',
             price || 0,
             original_price || null,
