@@ -5,6 +5,187 @@ const { Database } = require('../config/database');
 const multer = require('multer');
 const path = require('path');
 
+// Trendyol rating çekme sistemi
+const axios = require('axios');
+const cheerio = require('cheerio');
+
+// Trendyol'dan rating çekme fonksiyonu
+async function fetchTrendyolRating(url) {
+    try {
+        // User-Agent ve headers ekle (bot gibi görünmemek için)
+        const response = await axios.get(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'tr-TR,tr;q=0.9,en;q=0.8',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1'
+            },
+            timeout: 10000 // 10 saniye timeout
+        });
+
+        const $ = cheerio.load(response.data);
+        
+        // Trendyol'daki rating elementlerini bul (CSS selector'ları güncellenmeli)
+        let rating = 0;
+        let reviewCount = 0;
+        
+        // Farklı rating selector'larını dene
+        const ratingSelectors = [
+            '.rating-score',
+            '.average-rating',
+            '.product-rating .rating',
+            '[data-testid="rating-score"]',
+            '.stars-wrapper .rating-score'
+        ];
+        
+        const reviewSelectors = [
+            '.rating-count',
+            '.review-count',
+            '.total-review-count',
+            '[data-testid="review-count"]'
+        ];
+        
+        // Rating'i bulmaya çalış
+        for (const selector of ratingSelectors) {
+            const ratingElement = $(selector).first();
+            if (ratingElement.length) {
+                const ratingText = ratingElement.text().trim();
+                const parsedRating = parseFloat(ratingText.replace(',', '.'));
+                if (!isNaN(parsedRating) && parsedRating > 0) {
+                    rating = parsedRating;
+                    break;
+                }
+            }
+        }
+        
+        // Review sayısını bulmaya çalış
+        for (const selector of reviewSelectors) {
+            const reviewElement = $(selector).first();
+            if (reviewElement.length) {
+                const reviewText = reviewElement.text().trim();
+                const parsedCount = parseInt(reviewText.replace(/[^\d]/g, ''));
+                if (!isNaN(parsedCount) && parsedCount > 0) {
+                    reviewCount = parsedCount;
+                    break;
+                }
+            }
+        }
+        
+        return {
+            success: true,
+            rating: rating,
+            reviewCount: reviewCount,
+            lastUpdated: new Date()
+        };
+        
+    } catch (error) {
+        console.error('Trendyol fetch error:', error.message);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+}
+
+// Manuel Trendyol rating güncelleme endpoint'i
+async function updateTrendyolRatings(productIds) {
+    try {
+        const db = new Database();
+        
+        // Trendyol URL'si olan ürünleri çek
+        let sql = 'SELECT id, name, trendyol_url FROM products WHERE trendyol_url IS NOT NULL AND trendyol_url != ""';
+        let params = [];
+        
+        if (productIds && productIds.length > 0) {
+            sql += ' AND id IN (' + productIds.map(() => '?').join(',') + ')';
+            params = productIds;
+        }
+        
+        const products = await db.query(sql, params);
+        
+        if (products.length === 0) {
+            console.log('Güncellenecek ürün bulunamadı');
+            return {
+                success: true,
+                message: 'Güncellenecek ürün bulunamadı',
+                updated: 0
+            };
+        }
+        
+        let updatedCount = 0;
+        const results = [];
+        
+        // Her ürün için rating çek (5 saniye bekleyerek)
+        for (const product of products) {
+            try {
+                console.log(`🔄 ${product.name} için Trendyol rating çekiliyor...`);
+                
+                const ratingData = await fetchTrendyolRating(product.trendyol_url);
+                
+                if (ratingData.success && ratingData.rating > 0) {
+                    // Veritabanını güncelle
+                    await db.query(`
+                        UPDATE products 
+                        SET rating = ?, reviews_count = ?, trendyol_last_update = NOW() 
+                        WHERE id = ?
+                    `, [ratingData.rating, ratingData.reviewCount, product.id]);
+                    
+                    updatedCount++;
+                    results.push({
+                        id: product.id,
+                        name: product.name,
+                        rating: ratingData.rating,
+                        reviewCount: ratingData.reviewCount,
+                        success: true
+                    });
+                    
+                    console.log(`✅ ${product.name}: ${ratingData.rating} ⭐ (${ratingData.reviewCount} yorum)`);
+                } else {
+                    results.push({
+                        id: product.id,
+                        name: product.name,
+                        success: false,
+                        error: ratingData.error || 'Rating bulunamadı'
+                    });
+                    
+                    console.log(`❌ ${product.name}: Rating çekilemedi`);
+                }
+                
+                // 5 saniye bekle (rate limiting)
+                if (products.indexOf(product) < products.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                }
+                
+            } catch (error) {
+                console.error(`❌ ${product.name} error:`, error);
+                results.push({
+                    id: product.id,
+                    name: product.name,
+                    success: false,
+                    error: error.message
+                });
+            }
+        }
+        
+        return {
+            success: true,
+            message: `${updatedCount}/${products.length} ürün güncellendi`,
+            updated: updatedCount,
+            total: products.length,
+            results: results
+        };
+        
+    } catch (error) {
+        console.error('Trendyol update error:', error);
+        return {
+            success: false,
+            message: 'Trendyol rating güncellemesi başarısız: ' + error.message
+        };
+    }
+}
+
 const router = express.Router();
 
 // Admin credentials (in production, this should be in database)
@@ -699,6 +880,190 @@ router.post('/upload', adminAuth, upload.single('image'), (req, res) => {
   }
   const filePath = '/lovable-uploads/' + req.file.filename;
   res.json({ success: true, filePath });
+});
+
+// Site ayarları için endpoint'ler ekle
+// GET /api/admin/site-settings - Site ayarlarını çek
+router.get('/site-settings', adminAuth, async (req, res) => {
+    try {
+        const db = new Database();
+        
+        // Site ayarları tablosu var mı kontrol et
+        const tableCheck = await db.query(`SHOW TABLES LIKE 'site_settings'`);
+        
+        if (tableCheck.length === 0) {
+            // Tablo yoksa oluştur
+            await db.query(`
+                CREATE TABLE site_settings (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    setting_key VARCHAR(100) UNIQUE NOT NULL,
+                    setting_value TEXT,
+                    setting_type ENUM('text', 'image', 'json') DEFAULT 'text',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                )
+            `);
+            
+            // Varsayılan ayarları ekle
+            await db.query(`
+                INSERT INTO site_settings (setting_key, setting_value, setting_type) VALUES
+                ('hero_image_1', '', 'image'),
+                ('hero_image_2', '', 'image'),
+                ('hero_image_3', '', 'image'),
+                ('campaign_image_1', '', 'image'),
+                ('campaign_image_2', '', 'image'),
+                ('brand_logo', '', 'image'),
+                ('hero_title', 'Doğal Cilt Bakımının Gücü', 'text'),
+                ('hero_subtitle', 'Premium kalitede, doğal içerikli cilt bakım ürünleri ile cildinize en iyi bakımı sağlayın.', 'text')
+            `);
+        }
+        
+        const settings = await db.query('SELECT * FROM site_settings ORDER BY setting_key');
+        
+        // Ayarları key-value formatında dönüştür
+        const settingsObj = {};
+        settings.forEach(setting => {
+            settingsObj[setting.setting_key] = setting.setting_value;
+        });
+        
+        res.json({
+            success: true,
+            data: settingsObj
+        });
+        
+    } catch (error) {
+        console.error('Site settings fetch error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Site ayarları yüklenemedi: ' + error.message
+        });
+    }
+});
+
+// PUT /api/admin/site-settings - Site ayarlarını güncelle
+router.put('/site-settings', adminAuth, async (req, res) => {
+    try {
+        const db = new Database();
+        const settings = req.body;
+        
+        for (const [key, value] of Object.entries(settings)) {
+            await db.query(`
+                INSERT INTO site_settings (setting_key, setting_value) 
+                VALUES (?, ?)
+                ON DUPLICATE KEY UPDATE 
+                setting_value = ?, updated_at = NOW()
+            `, [key, value, value]);
+        }
+        
+        res.json({
+            success: true,
+            message: 'Site ayarları güncellendi'
+        });
+        
+    } catch (error) {
+        console.error('Site settings update error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Site ayarları güncellenemedi: ' + error.message
+        });
+    }
+});
+
+// Trendyol rating çekme sistemi
+router.post('/update-trendyol-ratings', adminAuth, async (req, res) => {
+    try {
+        const db = new Database();
+        const { productIds } = req.body; // Hangi ürünlerin güncelleneceği
+        
+        // Trendyol URL'si olan ürünleri çek
+        let sql = 'SELECT id, name, trendyol_url FROM products WHERE trendyol_url IS NOT NULL AND trendyol_url != ""';
+        let params = [];
+        
+        if (productIds && productIds.length > 0) {
+            sql += ' AND id IN (' + productIds.map(() => '?').join(',') + ')';
+            params = productIds;
+        }
+        
+        const products = await db.query(sql, params);
+        
+        if (products.length === 0) {
+            return res.json({
+                success: true,
+                message: 'Güncellenecek ürün bulunamadı',
+                updated: 0
+            });
+        }
+        
+        let updatedCount = 0;
+        const results = [];
+        
+        // Her ürün için rating çek (5 saniye bekleyerek)
+        for (const product of products) {
+            try {
+                console.log(`🔄 ${product.name} için Trendyol rating çekiliyor...`);
+                
+                const ratingData = await fetchTrendyolRating(product.trendyol_url);
+                
+                if (ratingData.success && ratingData.rating > 0) {
+                    // Veritabanını güncelle
+                    await db.query(`
+                        UPDATE products 
+                        SET rating = ?, reviews_count = ?, trendyol_last_update = NOW() 
+                        WHERE id = ?
+                    `, [ratingData.rating, ratingData.reviewCount, product.id]);
+                    
+                    updatedCount++;
+                    results.push({
+                        id: product.id,
+                        name: product.name,
+                        rating: ratingData.rating,
+                        reviewCount: ratingData.reviewCount,
+                        success: true
+                    });
+                    
+                    console.log(`✅ ${product.name}: ${ratingData.rating} ⭐ (${ratingData.reviewCount} yorum)`);
+                } else {
+                    results.push({
+                        id: product.id,
+                        name: product.name,
+                        success: false,
+                        error: ratingData.error || 'Rating bulunamadı'
+                    });
+                    
+                    console.log(`❌ ${product.name}: Rating çekilemedi`);
+                }
+                
+                // 5 saniye bekle (rate limiting)
+                if (products.indexOf(product) < products.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                }
+                
+            } catch (error) {
+                console.error(`❌ ${product.name} error:`, error);
+                results.push({
+                    id: product.id,
+                    name: product.name,
+                    success: false,
+                    error: error.message
+                });
+            }
+        }
+        
+        res.json({
+            success: true,
+            message: `${updatedCount}/${products.length} ürün güncellendi`,
+            updated: updatedCount,
+            total: products.length,
+            results: results
+        });
+        
+    } catch (error) {
+        console.error('Trendyol update error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Trendyol rating güncellemesi başarısız: ' + error.message
+        });
+    }
 });
 
 module.exports = router; 

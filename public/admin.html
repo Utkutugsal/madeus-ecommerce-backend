@@ -1033,6 +1033,13 @@
                     <i class="fas fa-box"></i>
                     Ürünler
                 </a>
+                <!-- Site Ayarları Sekmesi Ekle -->
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="adminPanel.showSiteSettings()" id="siteSettingsNav">
+                        <i class="fas fa-cog"></i>
+                        <span>Site Ayarları</span>
+                    </a>
+                </li>
                 <a href="#" class="nav-item" id="logoutBtn">
                     <i class="fas fa-sign-out-alt"></i>
                     Çıkış Yap
@@ -1138,18 +1145,30 @@
                     <div class="products-section">
                         <div class="section-header">
                             <h3 class="section-title">Ürün Yönetimi</h3>
-                            <div class="filters">
-                                <select class="filter-select" id="categoryFilter">
-                                    <option value="all">Tüm Kategoriler</option>
-                                    <option value="serum">Serum</option>
-                                    <option value="cream">Krem</option>
-                                    <option value="cleanser">Temizlik</option>
-                                    <option value="mask">Maske</option>
-                                </select>
-                                <input type="text" class="search-input" id="productSearchInput" placeholder="Ürün ara...">
-                                <button class="btn-primary" id="addProductBtn">
-                                    <i class="fas fa-plus"></i> Yeni Ürün
-                                </button>
+                            <!-- Trendyol Rating Güncelleme Butonu Ekle -->
+                            <div class="action-bar">
+                                <div class="action-buttons">
+                                    <button class="btn btn-primary" onclick="adminPanel.showProductModal()">
+                                        <i class="fas fa-plus"></i>
+                                        Yeni Ürün Ekle
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="adminPanel.updateTrendyolRatings()" id="trendyolUpdateBtn">
+                                        <i class="fas fa-star"></i>
+                                        Trendyol Rating Güncelle
+                                    </button>
+                                </div>
+                                <div class="filters">
+                                    <select id="categoryFilter" onchange="adminPanel.filterProducts()">
+                                        <option value="">Tüm Kategoriler</option>
+                                        <option value="serum">Serum</option>
+                                        <option value="cream">Krem</option>
+                                        <option value="cleanser">Temizleyici</option>
+                                        <option value="mask">Maske</option>
+                                        <option value="toner">Toner</option>
+                                        <option value="oil">Yağ</option>
+                                    </select>
+                                    <input type="text" id="searchProduct" placeholder="Ürün ara..." onkeyup="adminPanel.filterProducts()">
+                                </div>
                             </div>
                         </div>
                         <div id="productsTableContainer"></div>
@@ -1321,6 +1340,14 @@
                             </label>
                         </div>
                     </div>
+                </div>
+
+                <!-- Trendyol URL Alanı Ekle -->
+                <div class="form-group">
+                    <label for="trendyolUrl">Trendyol URL'si</label>
+                    <input type="url" id="trendyolUrl" name="trendyolUrl" class="form-input" 
+                           placeholder="https://www.trendyol.com/madeus/urun-adi-p-123456">
+                    <small class="form-help">Otomatik rating güncellemesi için Trendyol ürün linkini girin</small>
                 </div>
             </div>
             <div class="modal-footer">
@@ -2327,6 +2354,62 @@
                 });
                 return imageUrls;
             }
+
+            // Trendyol Rating Güncelleme Fonksiyonu
+            async updateTrendyolRatings() {
+                const btn = document.getElementById('trendyolUpdateBtn');
+                const originalText = btn.innerHTML;
+                
+                // Onay al
+                if (!confirm('Trendyol\'dan rating verilerini güncellemek istediğinizden emin misiniz?\n\nBu işlem birkaç dakika sürebilir.')) {
+                    return;
+                }
+                
+                try {
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Güncelleniyor...';
+                    btn.disabled = true;
+                    
+                    const response = await fetch('/api/admin/update-trendyol-ratings', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${this.token}`
+                        },
+                        body: JSON.stringify({}) // Tüm ürünleri güncelle
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.showToast(`✅ ${result.updated}/${result.total} ürün başarıyla güncellendi!`, 'success');
+                        
+                        // Sonuçları detaylı göster
+                        if (result.results && result.results.length > 0) {
+                            let detailMessage = 'Güncelleme Sonuçları:\n\n';
+                            result.results.forEach(item => {
+                                if (item.success) {
+                                    detailMessage += `✅ ${item.name}: ${item.rating} ⭐ (${item.reviewCount} yorum)\n`;
+                                } else {
+                                    detailMessage += `❌ ${item.name}: ${item.error}\n`;
+                                }
+                            });
+                            console.log(detailMessage);
+                        }
+                        
+                        // Ürün listesini yenile
+                        this.loadProducts();
+                    } else {
+                        this.showToast(`❌ ${result.message}`, 'error');
+                    }
+                    
+                } catch (error) {
+                    console.error('Trendyol update error:', error);
+                    this.showToast('❌ Trendyol güncelleme hatası: ' + error.message, 'error');
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            },
         }
 
         // Initialize
