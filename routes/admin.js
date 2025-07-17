@@ -1130,6 +1130,42 @@ router.get('/debug-database', adminAuth, async (req, res) => {
     }
 });
 
+// Geçici public debug endpoint (auth yok)
+router.get('/debug-database-public', async (req, res) => {
+    try {
+        const db = new Database();
+        
+        // Products tablosunun yapısını kontrol et
+        const tableStructure = await db.query('DESCRIBE products');
+        
+        // Trendyol URL'si olan ürünleri say
+        const trendyolProducts = await db.query('SELECT COUNT(*) as count FROM products WHERE trendyol_url IS NOT NULL AND trendyol_url != ""');
+        
+        // Örnek ürün verisini al (sadece güvenli alanlar)
+        const sampleProducts = await db.query('SELECT id, name, trendyol_url, trendyol_rating, trendyol_review_count FROM products LIMIT 5');
+        
+        // Tüm ürün sayısı
+        const totalProducts = await db.query('SELECT COUNT(*) as count FROM products');
+        
+        res.json({
+            success: true,
+            data: {
+                tableStructure: tableStructure,
+                totalProducts: totalProducts[0].count,
+                trendyolProducts: trendyolProducts[0].count,
+                sampleProducts: sampleProducts
+            }
+        });
+        
+    } catch (error) {
+        console.error('Database debug error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Database debug başarısız: ' + error.message
+        });
+    }
+});
+
 // Trendyol rating çekme sistemi
 router.post('/update-trendyol-ratings', adminAuth, async (req, res) => {
     try {
