@@ -1238,12 +1238,12 @@
                                 <div class="filters">
                                     <select id="categoryFilter" onchange="adminPanel.filterProducts()">
                                         <option value="">Tüm Kategoriler</option>
-                                        <option value="serum">Serum</option>
-                                        <option value="cream">Krem</option>
-                                        <option value="cleanser">Temizleyici</option>
-                                        <option value="mask">Maske</option>
-                                        <option value="toner">Toner</option>
-                                        <option value="oil">Yağ</option>
+                                        <option value="1">Dudak Bakımı</option>
+                                        <option value="2">Yüz Serumları</option>
+                                        <option value="3">Temizlik Ürünleri</option>
+                                        <option value="4">Güneş Koruma</option>
+                                        <option value="5">Saç Bakımı</option>
+                                        <option value="6">Aksesuarlar</option>
                                     </select>
                                     <input type="text" id="searchProduct" placeholder="Ürün ara..." onkeyup="adminPanel.filterProducts()">
                                 </div>
@@ -1424,10 +1424,13 @@
                         <div class="form-group">
                             <label for="productCategory">Kategori</label>
                             <select id="productCategory" class="form-select">
-                                <option value="serum">Serum</option>
-                                <option value="cream">Krem</option>
-                                <option value="cleanser">Temizlik</option>
-                                <option value="mask">Maske</option>
+                                <option value="">Kategori Seçin</option>
+                                <option value="1">Dudak Bakımı</option>
+                                <option value="2">Yüz Serumları</option>
+                                <option value="3">Temizlik Ürünleri</option>
+                                <option value="4">Güneş Koruma</option>
+                                <option value="5">Saç Bakımı</option>
+                                <option value="6">Aksesuarlar</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -2176,8 +2179,13 @@
                                 <!-- Product Info -->
                                 <div style="padding: 12px; height: 120px; display: flex; flex-direction: column;">
                                     <!-- Brand -->
-                                    <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                                    <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">
                                         ${product.brand || 'MADEUS'}
+                                    </div>
+                                    
+                                    <!-- Category -->
+                                    <div style="font-size: 11px; color: #8b5cf6; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; margin-bottom: 6px; width: fit-content;">
+                                        ${product.category_name || `Kategori ${product.category}`}
                                     </div>
                                     
                                     <!-- Product Name -->

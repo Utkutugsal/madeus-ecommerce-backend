@@ -1302,15 +1302,12 @@ router.post('/create-tables', async (req, res) => {
         
         // Insert sample categories
         const categories = [
-            { name: 'Dudak Bakımı', slug: 'dudak-bakimi', description: 'SPF korumalı renkli ve şeffaf dudak nemlendiricileri' },
-            { name: 'Serumlar', slug: 'serumlar', description: 'Yoğun bakım serumları - Vitamin C, Hyaluronic Acid, Bakuchiol' },
-            { name: 'Temizleme & Tonik', slug: 'temizleme-tonik', description: 'Yüz temizleme jelleri ve gözenek sıkılaştırıcı tonikler' },
-            { name: 'Güneş Koruma', slug: 'gunes-koruma', description: 'SPF içerikli koruyucu kremler ve nemlendiriciler' },
-            { name: 'Saç Bakımı', slug: 'sac-bakimi', description: 'Doğal saç toniği ve besleyici ürünler' },
-            { name: 'Aksesuarlar', slug: 'aksesuarlar', description: 'Cilt bakım rutini için pratik aksesuarlar' },
-            { name: 'Anti-Aging', slug: 'anti-aging', description: 'Yaşlanma karşıtı ve yaşlılık belirtilerini önleyici ürünler' },
-            { name: 'Leke Karşıtı', slug: 'leke-karsiti', description: 'Cilt lekelerine karşı aydınlatıcı ve eşitleyici ürünler' },
-            { name: 'Akne & Siyah Nokta', slug: 'akne-siyah-nokta', description: 'Akne ve siyah nokta karşıtı özel bakım ürünleri' }
+            { name: 'Dudak Bakımı', slug: 'dudak-bakimi', description: 'SPF korumalı ve nemlendirici dudak ürünleri' },
+            { name: 'Yüz Serumları', slug: 'yuz-serumlari', description: 'Vitamin C, Hyaluronic Acid, Bakuchiol ve diğer özel bakım serumları' },
+            { name: 'Temizlik Ürünleri', slug: 'temizlik-urunleri', description: 'Yüz temizleme jelleri, tonikler ve gözenek bakım ürünleri' },
+            { name: 'Güneş Koruma', slug: 'gunes-koruma', description: 'SPF içerikli koruyucu kremler ve güneş bakım ürünleri' },
+            { name: 'Saç Bakımı', slug: 'sac-bakimi', description: 'Doğal saç toniği ve saç bakım ürünleri' },
+            { name: 'Aksesuarlar', slug: 'aksesuarlar', description: 'Cilt bakım rutini için pratik aksesuarlar ve araçlar' }
         ];
         
         for (const category of categories) {

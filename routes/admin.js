@@ -764,13 +764,15 @@ router.get('/products', adminAuth, async (req, res) => {
             queryParams.push(`%${search}%`);
         }
         
-        // Sadece gerekli alanları çekiyoruz
+        // Sadece gerekli alanları çekiyoruz (kategoriler ile JOIN)
         const products = await db.query(`
             SELECT 
-                id, name, price, stock, image_url, is_active, created_at, updated_at, brand, category
-            FROM products
+                p.id, p.name, p.price, p.stock, p.image_url, p.is_active, p.created_at, p.updated_at, p.brand, p.category,
+                c.name as category_name
+            FROM products p
+            LEFT JOIN categories c ON p.category = c.id
             ${whereClause}
-            ORDER BY created_at DESC
+            ORDER BY p.created_at DESC
             LIMIT ${limit} OFFSET ${offset}
         `, queryParams);
         
@@ -812,7 +814,10 @@ router.get('/products/:productId', adminAuth, async (req, res) => {
         const { productId } = req.params;
         
         const product = await db.query(`
-            SELECT * FROM products WHERE id = ?
+            SELECT p.*, c.name as category_name
+            FROM products p
+            LEFT JOIN categories c ON p.category = c.id
+            WHERE p.id = ?
         `, [productId]);
         
         if (!product || product.length === 0) {
