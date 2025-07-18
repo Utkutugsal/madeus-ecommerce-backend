@@ -1302,12 +1302,15 @@ router.post('/create-tables', async (req, res) => {
         
         // Insert sample categories
         const categories = [
-            { name: 'Serumlar', slug: 'serumlar', description: 'Cilde yoğun bakım sağlayan serumlar' },
-            { name: 'Nemlendiriciler', slug: 'nemlendiriciler', description: 'Cilt nemlendirici ürünler' },
-            { name: 'Temizleyiciler', slug: 'temizleyiciler', description: 'Cilt temizleme ürünleri' },
-            { name: 'Gece Kremleri', slug: 'gece-kremleri', description: 'Gece kullanımı için onarıcı kremler' },
-            { name: 'Tonerler', slug: 'tonerler', description: 'Cilt dengeleyici tonerler' },
-            { name: 'Maskeler', slug: 'maskeler', description: 'Yoğun bakım maskeleri' }
+            { name: 'Dudak Bakımı', slug: 'dudak-bakimi', description: 'SPF korumalı renkli ve şeffaf dudak nemlendiricileri' },
+            { name: 'Serumlar', slug: 'serumlar', description: 'Yoğun bakım serumları - Vitamin C, Hyaluronic Acid, Bakuchiol' },
+            { name: 'Temizleme & Tonik', slug: 'temizleme-tonik', description: 'Yüz temizleme jelleri ve gözenek sıkılaştırıcı tonikler' },
+            { name: 'Güneş Koruma', slug: 'gunes-koruma', description: 'SPF içerikli koruyucu kremler ve nemlendiriciler' },
+            { name: 'Saç Bakımı', slug: 'sac-bakimi', description: 'Doğal saç toniği ve besleyici ürünler' },
+            { name: 'Aksesuarlar', slug: 'aksesuarlar', description: 'Cilt bakım rutini için pratik aksesuarlar' },
+            { name: 'Anti-Aging', slug: 'anti-aging', description: 'Yaşlanma karşıtı ve yaşlılık belirtilerini önleyici ürünler' },
+            { name: 'Leke Karşıtı', slug: 'leke-karsiti', description: 'Cilt lekelerine karşı aydınlatıcı ve eşitleyici ürünler' },
+            { name: 'Akne & Siyah Nokta', slug: 'akne-siyah-nokta', description: 'Akne ve siyah nokta karşıtı özel bakım ürünleri' }
         ];
         
         for (const category of categories) {
