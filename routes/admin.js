@@ -333,20 +333,34 @@ router.post('/login', async (req, res) => {
 
 // Admin middleware
 const adminAuth = (req, res, next) => {
-    const token = req.headers.authorization?.split(' ')[1];
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.split(' ')[1];
+    
+    console.log('🔐 Admin Auth Check:', {
+        path: req.path,
+        method: req.method,
+        authHeader: authHeader ? 'Present' : 'Missing',
+        token: token ? 'Present' : 'Missing',
+        tokenPrefix: token ? token.substring(0, 10) + '...' : 'No token'
+    });
     
     if (!token) {
+        console.log('❌ Token missing in request');
         return res.status(401).json({ success: false, message: 'Token gerekli' });
     }
     
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+        console.log('✅ Token verified:', { username: decoded.username, role: decoded.role });
+        
         if (decoded.role !== 'admin') {
+            console.log('❌ Not admin role:', decoded.role);
             return res.status(403).json({ success: false, message: 'Admin yetkisi gerekli' });
         }
         req.admin = decoded;
         next();
     } catch (error) {
+        console.log('❌ Token verification failed:', error.message);
         return res.status(401).json({ success: false, message: 'Geçersiz token' });
     }
 };
@@ -883,10 +897,21 @@ router.post('/products', adminAuth, async (req, res) => {
         db = new Database();
         const { 
             name, description, price, original_price, 
-            category, stock, image_url, gallery_images, brand, is_active
+            category, stock, image_url, gallery_images, brand, is_active,
+            show_in_homepage, show_in_popular, show_in_bestsellers, show_in_featured,
+            rating, reviews_count
         } = req.body;
 
-        console.log('➕ Yeni ürün ekleniyor:', { name, category, price, stock });
+        console.log('➕ Yeni ürün ekleme isteği:', {
+            name, 
+            category, 
+            price, 
+            stock,
+            gallery_images_type: typeof gallery_images,
+            gallery_images_length: Array.isArray(gallery_images) ? gallery_images.length : 'Not array',
+            headers: Object.keys(req.headers),
+            authorization: req.headers.authorization ? 'Present' : 'Missing'
+        });
 
         // gallery_images her zaman string olarak kaydedilmeli
         let galleryImagesStr = '[]';
