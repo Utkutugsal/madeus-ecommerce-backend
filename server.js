@@ -82,7 +82,48 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static('public'));
 
 // Admin panel route
-app.get('/admin', (req, res) => {
+app.get('/admin', async (req, res) => {
+    const { username, password } = req.query;
+    
+    // Eğer URL'de username ve password varsa ve doğruysa, otomatik token oluştur
+    if (username && password) {
+        const bcrypt = require('bcrypt');
+        const jwt = require('jsonwebtoken');
+        
+        const ADMIN_CREDENTIALS = {
+            username: 'admin',
+            password: '$2b$10$aiR7Lt6ejm0s/ra./bDXiOQsWwOXfy2g5TOFlWoubt7jt/Mp.dX0e' // "497D3212e" hashed
+        };
+        
+        if (username === ADMIN_CREDENTIALS.username) {
+            const isValid = await bcrypt.compare(password, ADMIN_CREDENTIALS.password);
+            if (isValid) {
+                const token = jwt.sign(
+                    { username, role: 'admin' },
+                    process.env.JWT_SECRET || 'your-secret-key',
+                    { expiresIn: '24h' }
+                );
+                
+                // Admin.html dosyasını oku ve token'ı localStorage'a set eden JavaScript kodu ekle
+                const fs = require('fs');
+                const path = require('path');
+                const adminHtmlPath = path.join(__dirname, 'public', 'admin.html');
+                let htmlContent = fs.readFileSync(adminHtmlPath, 'utf8');
+                
+                // Token'ı localStorage'a kaydeden JavaScript kodu ekle
+                const autoLoginScript = `
+                    <script>
+                        localStorage.setItem('adminToken', '${token}');
+                        window.location.href = '/admin';
+                    </script>
+                `;
+                
+                htmlContent = htmlContent.replace('</body>', autoLoginScript + '</body>');
+                return res.send(htmlContent);
+            }
+        }
+    }
+    
     res.sendFile(__dirname + '/public/admin.html');
 });
 
