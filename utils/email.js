@@ -21,19 +21,16 @@ class EmailService {
         console.log('🔧 Creating email transporter...');
         
         const emailConfig = {
-            host: process.env.EMAIL_HOST || 'srvc121.trwww.com',
-            port: parseInt(process.env.EMAIL_PORT) || 587,
-            secure: false, // Use STARTTLS
+            host: process.env.EMAIL_HOST || 'srvm15.trwww.com',
+            port: parseInt(process.env.EMAIL_PORT) || 465,
+            secure: true, // SSL kullan
             auth: {
                 user: process.env.EMAIL_USER || 'noreply@madeusskincare.com',
                 pass: process.env.EMAIL_PASS || '05319759947Utku'
             },
             tls: {
                 rejectUnauthorized: false
-            },
-            requireTLS: false, // TLS'i zorunlu yapma
-            debug: false, // Debug'ı kapat
-            logger: false // Logging'i kapat
+            }
         };
 
         console.log('📧 Email config:', {

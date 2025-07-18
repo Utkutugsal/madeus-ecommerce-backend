@@ -287,7 +287,12 @@ router.post('/login', loginValidation, async (req, res) => {
         // Check if email is verified (warning only for now)
         if (!user.is_verified) {
             console.log('⚠️ User login without email verification:', user.email);
-            // Allow login but warn - we'll enforce this later
+            return res.status(403).json({ 
+                error: 'Email verification required', 
+                message: 'Lütfen önce email adresinizi doğrulayın. Spam klasörünüzü de kontrol edin.',
+                requires_verification: true,
+                email: user.email 
+            });
         }
 
         // Reset login attempts and update last login
@@ -375,13 +380,80 @@ router.post('/verify-email', async (req, res) => {
         );
 
         // Send welcome email
-        await emailService.sendWelcomeEmail(user);
+        try {
+            await emailService.sendWelcomeEmail(user);
+        } catch (emailError) {
+            console.error('Failed to send welcome email:', emailError);
+        }
 
         res.json({ message: 'Email verified successfully' });
 
     } catch (error) {
         console.error('Email verification error:', error);
         res.status(500).json({ error: 'Email verification failed' });
+    }
+});
+
+// Resend verification email
+router.post('/resend-verification', async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ error: 'Email is required' });
+        }
+
+        // Find user
+        const user = await db.findOne(
+            'SELECT * FROM users WHERE email = ?',
+            [email]
+        );
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        if (user.is_verified) {
+            return res.status(400).json({ error: 'Email already verified' });
+        }
+
+        // Generate new verification token
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+        // Update user with new token
+        await db.update(
+            'users',
+            {
+                verification_token: verificationToken,
+                verification_expires: verificationExpires
+            },
+            'id = ?',
+            [user.id]
+        );
+
+        // Send verification email
+        try {
+            await emailService.sendVerificationEmail(
+                { name: user.name, email: user.email },
+                verificationToken
+            );
+            
+            res.json({ 
+                message: 'Verification email sent successfully',
+                email_sent: true 
+            });
+        } catch (emailError) {
+            console.error('Failed to send verification email:', emailError);
+            res.status(500).json({ 
+                error: 'Failed to send verification email',
+                email_sent: false 
+            });
+        }
+
+    } catch (error) {
+        console.error('Resend verification error:', error);
+        res.status(500).json({ error: 'Failed to resend verification email' });
     }
 });
 
