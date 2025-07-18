@@ -146,6 +146,13 @@ class Database {
         }
     }
 
+    // Close connection (pool-based, so this is just for compatibility)
+    async close() {
+        // Pool connections are automatically managed
+        // This method exists for compatibility but doesn't actually close the pool
+        return Promise.resolve();
+    }
+
     // Execute transaction
     async transaction(callback) {
         const connection = await this.pool.getConnection();

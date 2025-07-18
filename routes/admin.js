@@ -410,8 +410,6 @@ router.post('/add-trendyol-columns', adminAuth, async (req, res) => {
       success: false,
       error: error.message
     });
-  } finally {
-    await db.close();
   }
 });
 
@@ -791,17 +789,29 @@ router.get('/products', adminAuth, async (req, res) => {
             queryParams.push(`%${search}%`);
         }
         
-        // Kategori slug yerine name göstermek için categories tablosu ile JOIN
+        // Kategori mapping - JOIN yerine manuel mapping kullan
+        const categoryNameMap = {
+            'dudak-bakimi': 'Dudak Bakımı',
+            'yuz-serumlari': 'Yüz Serumları',
+            'temizlik-urunleri': 'Temizlik Ürünleri',
+            'gunes-koruma': 'Güneş Koruma',
+            'sac-bakimi': 'Saç Bakımı',
+            'aksesuarlar': 'Aksesuarlar'
+        };
+
         const products = await db.query(`
             SELECT 
-                p.id, p.name, p.price, p.stock, p.image_url, p.is_active, p.created_at, p.updated_at, p.brand, p.category,
-                c.name as category_name
+                p.id, p.name, p.price, p.stock, p.image_url, p.is_active, p.created_at, p.updated_at, p.brand, p.category
             FROM products p
-            LEFT JOIN categories c ON p.category = c.slug
             ${whereClause}
             ORDER BY p.created_at DESC
             LIMIT ${limit} OFFSET ${offset}
         `, queryParams);
+
+        // Kategori adını manuel olarak ekle
+        products.forEach(product => {
+            product.category_name = categoryNameMap[product.category] || product.category;
+        });
         
         const totalResult = await db.query(`
             SELECT COUNT(*) as total 
@@ -831,10 +841,6 @@ router.get('/products', adminAuth, async (req, res) => {
             message: 'Ürünler yüklenemedi',
             error: error.message 
         });
-    } finally {
-        if (db) {
-            await db.close();
-        }
     }
 });
 
@@ -960,10 +966,6 @@ router.post('/products', adminAuth, async (req, res) => {
             success: false,
             message: 'Ürün eklenirken hata oluştu: ' + error.message
         });
-    } finally {
-        if (db) {
-            await db.close();
-        }
     }
 });
 
