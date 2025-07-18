@@ -1481,7 +1481,7 @@
                     </div>
                 </div>
 
-                <!-- Page Control -->
+                <!-- Sayfa Görünürlüğü -->
                 <div class="form-section">
                     <h4 class="section-title">Sayfa Görünürlüğü</h4>
                     <div class="form-row">
@@ -1510,6 +1510,20 @@
                     </div>
                 </div>
 
+                <!-- Rating ve Review -->
+                <div class="form-section">
+                    <h4 class="section-title">Değerlendirme</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productRating">Rating (1-5)</label>
+                            <input type="number" id="productRating" placeholder="4.5" min="0" max="5" step="0.1" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="productReviewCount">Yorum Sayısı</label>
+                            <input type="number" id="productReviewCount" placeholder="0" min="0" class="form-input">
+                        </div>
+                    </div>
+                </div>
 
             </div>
             <div class="modal-footer">
@@ -2402,11 +2416,41 @@
                 btn.disabled = true;
 
                 try {
+                    // Element kontrolü ekle
+                    const requiredElements = [
+                        'productName', 'productBrand', 'productDescription', 
+                        'productPrice', 'productOriginalPrice', 'productCategory',
+                        'productStock', 'productActive', 'showInHomepage',
+                        'showInPopular', 'showInBestsellers', 'showInFeatured',
+                        'productRating', 'productReviewCount'
+                    ];
+                    
+                    const missingElements = [];
+                    requiredElements.forEach(id => {
+                        const element = document.getElementById(id);
+                        if (!element) {
+                            missingElements.push(id);
+                        }
+                    });
+                    
+                    if (missingElements.length > 0) {
+                        console.error('❌ Missing form elements:', missingElements);
+                        this.showToast(`Form elementleri bulunamadı: ${missingElements.join(', ')}`, 'error');
+                        btn.textContent = 'Kaydet';
+                        btn.disabled = false;
+                        return;
+                    }
+                    
+                    console.log('✅ All form elements found');
+                    
                     // 6 görsel URL'sini topla
                     const imageUrls = [];
                     for (let i = 1; i <= 6; i++) {
-                        const val = document.getElementById('imageUrl' + i).value.trim();
-                        if (val) imageUrls.push(val);
+                        const element = document.getElementById('imageUrl' + i);
+                        if (element && element.value) {
+                            const val = element.value.trim();
+                            if (val) imageUrls.push(val);
+                        }
                     }
                     if (imageUrls.length > 6) {
                         this.showToast('En fazla 6 görsel URL girebilirsiniz!', 'error');
@@ -2415,22 +2459,22 @@
                         return;
                     }
                     const productData = {
-                        name: document.getElementById('productName').value,
-                        brand: document.getElementById('productBrand').value || 'MADEUS',
-                        description: document.getElementById('productDescription').value,
-                        price: parseFloat(document.getElementById('productPrice').value),
-                        original_price: parseFloat(document.getElementById('productOriginalPrice').value) || null,
-                        category: document.getElementById('productCategory').value,
-                        stock: parseInt(document.getElementById('productStock').value) || 0,
-                        is_active: parseInt(document.getElementById('productActive').value),
+                        name: document.getElementById('productName')?.value || '',
+                        brand: document.getElementById('productBrand')?.value || 'MADEUS',
+                        description: document.getElementById('productDescription')?.value || '',
+                        price: parseFloat(document.getElementById('productPrice')?.value) || 0,
+                        original_price: parseFloat(document.getElementById('productOriginalPrice')?.value) || null,
+                        category: document.getElementById('productCategory')?.value || '',
+                        stock: parseInt(document.getElementById('productStock')?.value) || 0,
+                        is_active: parseInt(document.getElementById('productActive')?.value) || 1,
                         image_url: imageUrls[0] || '', // Main image
                         gallery_images: imageUrls, // DİREKT ARRAY OLARAK GÖNDER
-                        show_in_homepage: document.getElementById('showInHomepage').checked,
-                        show_in_popular: document.getElementById('showInPopular').checked,
-                        show_in_bestsellers: document.getElementById('showInBestsellers').checked,
-                        show_in_featured: document.getElementById('showInFeatured').checked,
-                        rating: parseFloat(document.getElementById('productRating').value) || 0,
-                        reviews_count: parseInt(document.getElementById('productReviewCount').value) || 0
+                        show_in_homepage: document.getElementById('showInHomepage')?.checked || false,
+                        show_in_popular: document.getElementById('showInPopular')?.checked || false,
+                        show_in_bestsellers: document.getElementById('showInBestsellers')?.checked || false,
+                        show_in_featured: document.getElementById('showInFeatured')?.checked || false,
+                        rating: parseFloat(document.getElementById('productRating')?.value) || 0,
+                        reviews_count: parseInt(document.getElementById('productReviewCount')?.value) || 0
                     };
 
                     const url = this.currentProduct ? 
