@@ -1542,6 +1542,19 @@
                 this.bindEvents();
                 this.bindImageEvents();
                 
+                // URL parametrelerini kontrol et
+                const urlParams = new URLSearchParams(window.location.search);
+                const username = urlParams.get('username');
+                const password = urlParams.get('password');
+                
+                if (username && password && !this.token) {
+                    // URL'den gelen bilgilerle otomatik giriş yap
+                    document.getElementById('username').value = username;
+                    document.getElementById('password').value = password;
+                    this.login();
+                    return;
+                }
+                
                 if (this.token) {
                     this.showDashboard();
                     this.loadData();
@@ -2413,16 +2426,11 @@
                         reviews_count: parseInt(document.getElementById('productReviewCount').value) || 0
                     };
 
-                    console.log('🔍 Product Data Debug:', productData);
-                    console.log('🔍 Token:', this.token);
-
                     const url = this.currentProduct ? 
                         `/api/admin/products/${this.currentProduct.id}` : 
                         '/api/admin/products';
                     
                     const method = this.currentProduct ? 'PUT' : 'POST';
-
-                    console.log('🔍 Request Debug:', { url, method });
 
                     const response = await fetch(url, {
                         method: method,
@@ -2433,11 +2441,7 @@
                         body: JSON.stringify(productData)
                     });
 
-                    console.log('🔍 Response Status:', response.status);
-                    console.log('🔍 Response Headers:', response.headers);
-
                     const data = await response.json();
-                    console.log('🔍 Response Data:', data);
 
                     if (data.success) {
                         this.showToast(data.message, 'success');
@@ -2445,11 +2449,9 @@
                         this.loadProducts();
                     } else {
                         this.showToast(data.message || 'Kaydetme başarısız', 'error');
-                        console.error('❌ Server Error:', data);
                     }
                 } catch (err) {
-                    console.error('❌ Fetch Error:', err);
-                    this.showToast('Bağlantı hatası: ' + err.message, 'error');
+                    this.showToast('Bağlantı hatası', 'error');
                 }
 
                 btn.textContent = 'Kaydet';
@@ -2750,3 +2752,165 @@
                         headers: {
                             'Content-Type': 'application/json',
                             'Authorization': `Bearer ${this.token}`
+                        },
+                        body: JSON.stringify({
+                            productId: parseInt(productId),
+                            rating: parseFloat(rating),
+                            reviewCount: parseInt(reviewCount) || 0
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.showToast(data.message, 'success');
+                        this.closeManualRatingModal();
+                        this.loadProducts(); // Listeyi yenile
+                    } else {
+                        this.showToast(data.message || 'Kaydetme başarısız', 'error');
+                    }
+                } catch (error) {
+                    this.showToast('Bağlantı hatası', 'error');
+                }
+                
+                btn.textContent = 'Kaydet';
+                btn.disabled = false;
+            }
+
+        } // AdminPanel class sonu
+
+        // Initialize
+        const adminPanel = new AdminPanel();
+
+        function updateImageSlotTitles() {
+            const slots = document.querySelectorAll('.image-slot');
+            slots.forEach((slot, idx) => {
+                const span = slot.querySelector('.image-placeholder span');
+                if (span) span.textContent = idx === 0 ? 'Ana Görsel' : `Görsel ${idx + 1}`;
+                slot.setAttribute('data-index', idx);
+            });
+        }
+
+        function addImageSlot() {
+            const imageSlots = document.getElementById('imageSlots');
+            const currentCount = imageSlots.querySelectorAll('.image-slot').length;
+            if (currentCount >= 10) {
+                alert('En fazla 10 görsel ekleyebilirsiniz.');
+                return;
+            }
+            const slot = document.createElement('div');
+            slot.className = 'image-slot';
+            slot.setAttribute('data-index', currentCount);
+            slot.innerHTML = `
+                <div class="image-placeholder" style="cursor:pointer;">
+                    <i class="fas fa-plus"></i>
+                    <span>${currentCount === 0 ? 'Ana Görsel' : `Görsel ${currentCount + 1}`}</span>
+                </div>
+                <input type="text" class="image-input" placeholder="Görsel URL'si" style="display:none;">
+                <button type="button" class="remove-image">×</button>
+            `;
+            imageSlots.appendChild(slot);
+            updateImageSlotTitles();
+        }
+
+        document.addEventListener('click', function(e) {
+            // Sadece + işaretine tıklanınca input açılır
+            if (e.target.closest('.image-placeholder')) {
+                const slot = e.target.closest('.image-slot');
+                const input = slot.querySelector('.image-input');
+                if (input) {
+                    input.style.display = 'block';
+                    input.focus();
+                }
+            }
+            // Kutu silinirse başlıklar güncellenir
+            if (e.target.classList.contains('remove-image')) {
+                const slot = e.target.closest('.image-slot');
+                if (slot) {
+                    slot.remove();
+                    updateImageSlotTitles();
+                }
+            }
+        });
+
+        const addImageSlotBtn = document.getElementById('addImageSlotBtn');
+        if (addImageSlotBtn) {
+            addImageSlotBtn.addEventListener('click', addImageSlot);
+        }
+
+        function bindImageInputEvents() {
+            const slots = document.querySelectorAll('.image-slot');
+            slots.forEach(slot => {
+                const placeholder = slot.querySelector('.image-placeholder');
+                const input = slot.querySelector('.image-input');
+                if (placeholder && input) {
+                    // Başta input'u gizle
+                    input.style.display = 'none';
+                    // + işaretine tıklanınca sadece o input açılır
+                    placeholder.onclick = function() {
+                        // Önce tüm inputları gizle
+                        document.querySelectorAll('.image-input').forEach(inp => inp.style.display = 'none');
+                        // Sadece bu inputu aç
+                        input.style.display = 'block';
+                        input.focus();
+                    };
+                }
+            });
+        }
+        // Sayfa yüklendiğinde ve yeni kutu eklenince çağır
+        window.addEventListener('DOMContentLoaded', bindImageInputEvents);
+        // Eğer dinamik ekleme varsa, yeni kutu eklenince de bindImageInputEvents() çağrılmalı
+
+        // Görsel kutularında sadece + işaretine tıklanınca input açılır
+        function enableImageInputToggle() {
+            document.querySelectorAll('.image-slot').forEach(slot => {
+                const placeholder = slot.querySelector('.image-placeholder');
+                const input = slot.querySelector('.image-input');
+                if (placeholder && input) {
+                    input.style.display = 'none';
+                    placeholder.onclick = function(e) {
+                        e.stopPropagation();
+                        // Tüm inputları kapat
+                        document.querySelectorAll('.image-input').forEach(inp => inp.style.display = 'none');
+                        input.style.display = 'block';
+                        input.focus();
+                    };
+                }
+            });
+            // Input dışında bir yere tıklanınca inputları kapat
+            document.addEventListener('click', function(e) {
+                if (!e.target.classList.contains('image-input') && !e.target.classList.contains('image-placeholder') && !e.target.closest('.image-placeholder')) {
+                    document.querySelectorAll('.image-input').forEach(inp => inp.style.display = 'none');
+                }
+            });
+        }
+        // Görsel alanları her güncellendiğinde çağır
+        setTimeout(enableImageInputToggle, 500);
+        // bindImageEvents fonksiyonunun sonuna ekle
+
+        // Görsel kutularında sadece + işaretine tıklanınca input açılır, dosya seçici ve base64 kodları tamamen kaldırıldı
+        function enableImageUrlInputOnly() {
+            document.querySelectorAll('.image-slot').forEach(slot => {
+                const placeholder = slot.querySelector('.image-placeholder');
+                const input = slot.querySelector('.image-input');
+                if (placeholder && input) {
+                    input.style.display = 'none';
+                    placeholder.onclick = function(e) {
+                        e.stopPropagation();
+                        document.querySelectorAll('.image-input').forEach(inp => inp.style.display = 'none');
+                        input.style.display = 'block';
+                        input.focus();
+                    };
+                }
+            });
+            document.addEventListener('click', function(e) {
+                if (!e.target.classList.contains('image-input') && !e.target.classList.contains('image-placeholder') && !e.target.closest('.image-placeholder')) {
+                    document.querySelectorAll('.image-input').forEach(inp => inp.style.display = 'none');
+                }
+            });
+        }
+        setTimeout(enableImageUrlInputOnly, 500);
+        // bindImageEvents fonksiyonundan dosya seçici, base64 ve drag-drop ile ilgili tüm kodları kaldır
+    </script>
+</body>
+</html> 
