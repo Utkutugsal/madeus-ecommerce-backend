@@ -1542,6 +1542,13 @@
                 this.bindEvents();
                 this.bindImageEvents();
                 
+                // Token kontrolü ekle
+                console.log('🔑 Token kontrolü:', {
+                    localStorage_token: localStorage.getItem('adminToken'),
+                    this_token: this.token,
+                    token_length: this.token ? this.token.length : 0
+                });
+                
                 // URL parametrelerini kontrol et
                 const urlParams = new URLSearchParams(window.location.search);
                 const username = urlParams.get('username');
@@ -2465,7 +2472,29 @@
                         this.showToast(data.message || 'Kaydetme başarısız', 'error');
                     }
                 } catch (err) {
-                    this.showToast('Bağlantı hatası', 'error');
+                    console.error('💥 Save product error:', {
+                        error: err.message,
+                        stack: err.stack,
+                        name: err.name,
+                        type: typeof err
+                    });
+                    
+                    let errorMessage = 'Bağlantı hatası';
+                    
+                    if (err.message.includes('HTTP 401')) {
+                        errorMessage = 'Oturum süresi doldu, lütfen tekrar giriş yapın';
+                        this.logout();
+                    } else if (err.message.includes('HTTP 403')) {
+                        errorMessage = 'Yetki hatası';
+                    } else if (err.message.includes('HTTP 500')) {
+                        errorMessage = 'Sunucu hatası';
+                    } else if (err.message.includes('Failed to fetch')) {
+                        errorMessage = 'Ağ bağlantısı hatası';
+                    } else if (err.message.includes('CORS')) {
+                        errorMessage = 'CORS policy hatası';
+                    }
+                    
+                    this.showToast(errorMessage, 'error');
                 }
 
                 btn.textContent = 'Kaydet';
