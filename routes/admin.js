@@ -690,13 +690,40 @@ router.put('/orders/:orderId', adminAuth, async (req, res) => {
 });
 
 // ===========================================
+// CATEGORIES MANAGEMENT
+// ===========================================
+
+// Get all categories for admin panel
+router.get('/categories', adminAuth, async (req, res) => {
+    try {
+        const db = new Database();
+        
+        const categories = await db.query('SELECT * FROM categories WHERE is_active = 1 ORDER BY name');
+        
+        res.json({
+            success: true,
+            data: categories
+        });
+        
+    } catch (error) {
+        console.error('Admin categories fetch error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Kategoriler yüklenemedi',
+            error: error.message 
+        });
+    }
+});
+
+// ===========================================
 // PRODUCTS MANAGEMENT
 // ===========================================
 
 // Get all products
 router.get('/products', adminAuth, async (req, res) => {
+    let db;
     try {
-        const db = new Database();
+        db = new Database();
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 20;
         const offset = (page - 1) * limit;
@@ -732,11 +759,11 @@ router.get('/products', adminAuth, async (req, res) => {
                 // Add sample products
                 await db.query(`
                     INSERT INTO products (name, price, category, stock, image_url, is_active, brand) VALUES
-                    ('Vitamin C Serum', 299.99, 'serum', 50, '/placeholder.svg', 1, 'Madeus'),
-                    ('Hyaluronic Acid Serum', 249.99, 'serum', 30, '/placeholder.svg', 1, 'Madeus'),
-                    ('Anti-Aging Cream', 399.99, 'cream', 25, '/placeholder.svg', 1, 'Madeus'),
-                    ('Gentle Cleanser', 199.99, 'cleanser', 40, '/placeholder.svg', 1, 'Madeus'),
-                    ('Hydrating Mask', 159.99, 'mask', 35, '/placeholder.svg', 1, 'Madeus')
+                    ('Vitamin C Serum', 299.99, 'yuz-serumlari', 50, '/placeholder.svg', 1, 'Madeus'),
+                    ('Hyaluronic Acid Serum', 249.99, 'yuz-serumlari', 30, '/placeholder.svg', 1, 'Madeus'),
+                    ('Anti-Aging Cream', 399.99, 'temizlik-urunleri', 25, '/placeholder.svg', 1, 'Madeus'),
+                    ('Gentle Cleanser', 199.99, 'temizlik-urunleri', 40, '/placeholder.svg', 1, 'Madeus'),
+                    ('Hydrating Mask', 159.99, 'dudak-bakimi', 35, '/placeholder.svg', 1, 'Madeus')
                 `);
                 console.log('Products table created and sample data inserted');
             }
@@ -753,24 +780,24 @@ router.get('/products', adminAuth, async (req, res) => {
         let queryParams = [];
         
         if (category && category !== 'all' && category !== '') {
-            whereClause = 'WHERE category = ?';
+            whereClause = 'WHERE p.category = ?';
             queryParams.push(category);
         }
         
         if (search && search.trim() !== '') {
             whereClause = whereClause ? 
-                `${whereClause} AND (name LIKE ?)` :
-                'WHERE (name LIKE ?)';
+                `${whereClause} AND (p.name LIKE ?)` :
+                'WHERE (p.name LIKE ?)';
             queryParams.push(`%${search}%`);
         }
         
-        // Sadece gerekli alanları çekiyoruz (kategoriler ile JOIN)
+        // Kategori slug yerine name göstermek için categories tablosu ile JOIN
         const products = await db.query(`
             SELECT 
                 p.id, p.name, p.price, p.stock, p.image_url, p.is_active, p.created_at, p.updated_at, p.brand, p.category,
                 c.name as category_name
             FROM products p
-            LEFT JOIN categories c ON p.category = c.id
+            LEFT JOIN categories c ON p.category = c.slug
             ${whereClause}
             ORDER BY p.created_at DESC
             LIMIT ${limit} OFFSET ${offset}
@@ -778,7 +805,7 @@ router.get('/products', adminAuth, async (req, res) => {
         
         const totalResult = await db.query(`
             SELECT COUNT(*) as total 
-            FROM products
+            FROM products p
             ${whereClause}
         `, queryParams);
         
@@ -804,6 +831,10 @@ router.get('/products', adminAuth, async (req, res) => {
             message: 'Ürünler yüklenemedi',
             error: error.message 
         });
+    } finally {
+        if (db) {
+            await db.close();
+        }
     }
 });
 
@@ -841,12 +872,15 @@ router.get('/products/:productId', adminAuth, async (req, res) => {
 
 // Add new product
 router.post('/products', adminAuth, async (req, res) => {
+    let db;
     try {
-        const db = new Database();
+        db = new Database();
         const { 
             name, description, price, original_price, 
             category, stock, image_url, gallery_images, brand, is_active
         } = req.body;
+
+        console.log('➕ Yeni ürün ekleniyor:', { name, category, price, stock });
 
         // gallery_images her zaman string olarak kaydedilmeli
         let galleryImagesStr = '[]';
@@ -873,6 +907,23 @@ router.post('/products', adminAuth, async (req, res) => {
 
         const slug = createSlug(name || 'urun') + '-' + Date.now();
 
+        // Kategori slug'ını doğru şekilde işle
+        let categorySlug = category || 'yuz-serumlari';
+        
+        // Eğer kategori ID gelirse slug'a çevir
+        const categoryMappings = {
+            '1': 'dudak-bakimi',
+            '2': 'yuz-serumlari', 
+            '3': 'temizlik-urunleri',
+            '4': 'gunes-koruma',
+            '5': 'sac-bakimi',
+            '6': 'aksesuarlar'
+        };
+        
+        if (categoryMappings[category]) {
+            categorySlug = categoryMappings[category];
+        }
+
         // Slug alanını da ekle
         const sql = `
             INSERT INTO products (
@@ -886,15 +937,17 @@ router.post('/products', adminAuth, async (req, res) => {
             name || 'Ürün Adı',
             slug,
             description || '',
-            price || 0,
-            original_price || null,
-            category || 'serum',
-            stock || 0,
+            parseFloat(price) || 0,
+            original_price ? parseFloat(original_price) : null,
+            categorySlug,
+            parseInt(stock) || 0,
             image_url || '',
             galleryImagesStr,
             brand || 'MADEUS',
             is_active ? 1 : 0
         ]);
+
+        console.log('✅ Ürün başarıyla eklendi:', result.insertId);
 
         res.json({
             success: true,
@@ -907,6 +960,10 @@ router.post('/products', adminAuth, async (req, res) => {
             success: false,
             message: 'Ürün eklenirken hata oluştu: ' + error.message
         });
+    } finally {
+        if (db) {
+            await db.close();
+        }
     }
 });
 
