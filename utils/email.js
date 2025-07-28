@@ -193,7 +193,7 @@ class EmailService {
             `;
 
             const mailOptions = {
-                from: process.env.EMAIL_FROM || 'Madeus Skincare <noreply@madeusskincare.com>',
+                from: process.env.BREVO_SMTP_USER || 'Madeus Skincare <932d65001@smtp-brevo.com>',
                 to: userEmail,
                 subject: '📧 Email Adresinizi Doğrulayın - Madeus Skincare',
                 html: htmlTemplate
