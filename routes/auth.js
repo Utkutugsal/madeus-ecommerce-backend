@@ -104,9 +104,9 @@ router.post('/register', registerValidation, async (req, res) => {
             });
         }
 
-        const { name, email, password, phone, skin_type } = req.body;
-
-        console.log('📝 Registration request:', { name, email, phone, skin_type });
+        const { name, email, password, phone } = req.body;
+        
+        console.log('📝 Registration request:', { name, email, phone });
         console.log('🔐 Password received:', password ? 'provided' : 'missing');
         console.log('🔐 Password length:', password ? password.length : 0);
         console.log('🔐 Password actual value:', password);
@@ -138,7 +138,6 @@ router.post('/register', registerValidation, async (req, res) => {
                         name,
                         password: hashedPassword,
                         phone,
-                        skin_type,
                         verification_token: verificationToken,
                         verification_expires: verificationExpires
                     },
@@ -183,7 +182,6 @@ router.post('/register', registerValidation, async (req, res) => {
             email,
             password: hashedPassword,
             phone,
-            skin_type,
             verification_token: verificationToken,
             verification_expires: verificationExpires,
             is_verified: false,
@@ -202,6 +200,20 @@ router.post('/register', registerValidation, async (req, res) => {
             console.error('❌ Failed to send verification email:', emailError);
             // Email gönderim hatası kayıt işlemini durdurmasın
             // Kullanıcı manuel olarak email doğrulama yapabilir
+        }
+
+        // Send admin notification
+        try {
+            await emailService.sendAdminNewUserNotification({
+                name,
+                email,
+                phone: phone || null,
+                created_at: new Date()
+            });
+            console.log('✅ Admin notification sent successfully');
+        } catch (adminEmailError) {
+            console.error('❌ Failed to send admin notification:', adminEmailError);
+            // Admin bildirimi hatası kayıt işlemini durdurmasın
         }
 
         res.status(201).json({
@@ -337,8 +349,7 @@ router.post('/login', loginValidation, async (req, res) => {
                 id: user.id,
                 name: user.name,
                 email: user.email,
-                role: user.role,
-                skin_type: user.skin_type
+                role: user.role
             }
         });
 
@@ -384,6 +395,18 @@ router.post('/verify-email', async (req, res) => {
             await emailService.sendWelcomeEmail(user);
         } catch (emailError) {
             console.error('Failed to send welcome email:', emailError);
+        }
+
+        // Send admin notification about email verification
+        try {
+            await emailService.sendAdminEmailVerifiedNotification({
+                name: user.name,
+                email: user.email,
+                verified_at: new Date()
+            });
+            console.log('✅ Admin email verification notification sent successfully');
+        } catch (adminEmailError) {
+            console.error('❌ Failed to send admin email verification notification:', adminEmailError);
         }
 
         res.json({ message: 'Email verified successfully' });
@@ -588,7 +611,7 @@ router.post('/logout', authenticateToken, async (req, res) => {
 router.get('/profile', authenticateToken, async (req, res) => {
     try {
         const user = await db.findOne(
-            'SELECT id, name, email, phone, skin_type, role, created_at FROM users WHERE id = ?',
+            'SELECT id, name, email, phone, role, created_at FROM users WHERE id = ?',
             [req.user.userId]
         );
 
@@ -602,7 +625,6 @@ router.get('/profile', authenticateToken, async (req, res) => {
             name: user.name,
             email: user.email,
             phone: user.phone,
-            skin_type: user.skin_type,
             role: user.role,
             created_at: user.created_at
         });
@@ -616,11 +638,11 @@ router.get('/profile', authenticateToken, async (req, res) => {
 // Update profile
 router.put('/profile', authenticateToken, async (req, res) => {
     try {
-        const { name, phone, skin_type, birth_date, gender } = req.body;
+        const { name, phone, birth_date, gender } = req.body;
         
         await db.update(
             'users',
-            { name, phone, skin_type, birth_date, gender },
+            { name, phone, birth_date, gender },
             'id = ?',
             [req.user.userId]
         );

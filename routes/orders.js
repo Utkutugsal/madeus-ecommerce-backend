@@ -1,6 +1,7 @@
 const express = require('express');
 const { Database } = require('../config/database');
 const emailService = require('../utils/email');
+const { paytrService, paytrUtils } = require('../utils/payment');
 
 const router = express.Router();
 
@@ -341,6 +342,186 @@ router.post('/create', async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Sipariş oluşturulurken hata oluştu',
+            error: error.message
+        });
+    }
+});
+
+// PayTR Payment Route
+router.post('/create-payment', async (req, res) => {
+    try {
+        const {
+            user_id,
+            user_email,
+            user_name,
+            user_phone,
+            shipping_address,
+            items,
+            total_amount,
+            shipping_cost
+        } = req.body;
+
+        // Validate required fields
+        if (!user_email || !user_name || !items || !total_amount) {
+            return res.status(400).json({
+                success: false,
+                message: 'Eksik bilgiler: email, isim, ürünler ve toplam tutar gerekli'
+            });
+        }
+
+        // Generate order number
+        const orderNumber = paytrUtils.generateOrderNumber();
+
+        // Create order first
+        const db = new Database();
+        const orderResult = await db.query(
+            `INSERT INTO orders (
+                order_number, user_id, user_email, user_name, user_phone,
+                shipping_address, total_amount, shipping_cost,
+                status, payment_status, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending', NOW())`,
+            [
+                orderNumber,
+                user_id,
+                user_email,
+                user_name,
+                user_phone || '',
+                JSON.stringify(shipping_address),
+                total_amount,
+                shipping_cost || 0
+            ]
+        );
+
+        const orderId = orderResult.insertId;
+
+        // Add order items
+        for (const item of items) {
+            await db.query(
+                `INSERT INTO order_items (order_id, product_id, product_name, quantity, price, total) 
+                 VALUES (?, ?, ?, ?, ?, ?)`,
+                [orderId, item.id, item.name, item.quantity, item.price, item.quantity * item.price]
+            );
+        }
+
+        // Prepare payment data for PayTR
+        const orderData = paytrService.formatOrderForPayment(
+            { order_number: orderNumber, total_amount },
+            { email: user_email, name: user_name, phone: user_phone },
+            items,
+            shipping_address
+        );
+
+        // Get user IP
+        const userIp = req.ip || req.connection.remoteAddress || '127.0.0.1';
+
+        // Create PayTR payment
+        const paymentResult = await paytrService.createPayment(orderData, userIp);
+
+        if (paymentResult.success) {
+            res.json({
+                success: true,
+                message: 'Ödeme başlatıldı',
+                orderId,
+                orderNumber,
+                paymentUrl: paymentResult.paymentUrl,
+                token: paymentResult.token
+            });
+        } else {
+            // If payment creation fails, update order status
+            await db.query(
+                `UPDATE orders SET status = 'cancelled', payment_status = 'failed' WHERE id = ?`,
+                [orderId]
+            );
+
+            res.status(400).json({
+                success: false,
+                message: 'Ödeme başlatılamadı: ' + paymentResult.error,
+                error: paymentResult.error
+            });
+        }
+
+    } catch (error) {
+        console.error('Payment creation error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Ödeme oluşturulurken hata oluştu',
+            error: error.message
+        });
+    }
+});
+
+// PayTR Callback Route
+router.post('/payment-callback', async (req, res) => {
+    try {
+        const callbackData = req.body;
+        console.log('PayTR Callback received:', callbackData);
+
+        // Verify callback
+        const verification = paytrService.verifyCallback(callbackData);
+
+        if (!verification.isValid) {
+            console.error('Invalid PayTR callback:', callbackData);
+            return res.status(400).send('INVALID_CALLBACK');
+        }
+
+        const db = new Database();
+
+        // Update order status
+        const updateData = {
+            payment_status: verification.status,
+            status: verification.status === 'paid' ? 'confirmed' : 'cancelled',
+            updated_at: new Date()
+        };
+
+        await db.query(
+            `UPDATE orders SET 
+                payment_status = ?, 
+                status = ?, 
+                updated_at = NOW() 
+             WHERE order_number = ?`,
+            [updateData.payment_status, updateData.status, verification.orderNumber]
+        );
+
+        // Get order details for email
+        const order = await db.query(
+            `SELECT * FROM orders WHERE order_number = ?`,
+            [verification.orderNumber]
+        );
+
+        if (order.length > 0 && verification.status === 'paid') {
+            // Send success email
+            const orderDetails = {
+                orderId: order[0].id,
+                orderNumber: verification.orderNumber,
+                customerName: order[0].user_name,
+                customerEmail: order[0].user_email,
+                totalAmount: verification.amount
+            };
+
+            // Send emails asynchronously
+            emailService.sendOrderNotification(orderDetails).catch(console.error);
+            emailService.sendOrderConfirmationEmail(order[0].user_email, orderDetails).catch(console.error);
+        }
+
+        res.send('OK');
+
+    } catch (error) {
+        console.error('Payment callback error:', error);
+        res.status(500).send('ERROR');
+    }
+});
+
+// Test PayTR connection
+router.get('/test-payment', async (req, res) => {
+    try {
+        const testResult = await paytrService.testConnection();
+        res.json({
+            success: true,
+            data: testResult
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
             error: error.message
         });
     }

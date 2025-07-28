@@ -500,11 +500,11 @@ app.get('/api', (req, res) => {
 // Email configuration check
 app.get('/api/setup/email-config', (req, res) => {
     console.log('🚀 Email configuration check:', {
-        host: process.env.EMAIL_HOST || 'not set',
-        port: process.env.EMAIL_PORT || 'not set',
-        user: process.env.EMAIL_USER || 'not set',
-        hasPassword: !!process.env.EMAIL_PASS,
-        secure: process.env.EMAIL_SECURE || 'not set',
+        host: process.env.BREVO_SMTP_HOST || 'not set',
+        port: process.env.BREVO_SMTP_PORT || 'not set',
+        user: process.env.BREVO_SMTP_USER || 'not set',
+        hasPassword: !!process.env.BREVO_SMTP_PASS,
+        hasApiKey: !!process.env.BREVO_API_KEY,
         from: process.env.EMAIL_FROM || 'not set',
         frontendUrl: process.env.FRONTEND_URL || 'not set'
     });
@@ -513,15 +513,15 @@ app.get('/api/setup/email-config', (req, res) => {
         success: true,
         message: 'Email configuration retrieved',
         config: {
-            host: process.env.EMAIL_HOST,
-            port: process.env.EMAIL_PORT,
-            user: process.env.EMAIL_USER,
-            hasPassword: !!process.env.EMAIL_PASS,
-            secure: process.env.EMAIL_SECURE,
+            host: process.env.BREVO_SMTP_HOST,
+            port: process.env.BREVO_SMTP_PORT,
+            user: process.env.BREVO_SMTP_USER,
+            hasPassword: !!process.env.BREVO_SMTP_PASS,
+            hasApiKey: !!process.env.BREVO_API_KEY,
             from: process.env.EMAIL_FROM,
             frontendUrl: process.env.FRONTEND_URL
         },
-        isConfigured: !!(process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASS)
+        isConfigured: !!(process.env.BREVO_SMTP_HOST && process.env.BREVO_SMTP_USER && process.env.BREVO_SMTP_PASS)
     });
 });
 

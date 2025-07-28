@@ -667,26 +667,41 @@ router.get('/db-test', async (req, res) => {
 router.get('/email-test', async (req, res) => {
   try {
     const emailConfig = {
-      host: process.env.EMAIL_HOST,
-      port: process.env.EMAIL_PORT || 587,
-      secure: process.env.EMAIL_SECURE === 'true',
-      user: process.env.EMAIL_USER,
-      from: process.env.EMAIL_FROM || process.env.EMAIL_USER
+      host: process.env.BREVO_SMTP_HOST,
+      port: parseInt(process.env.BREVO_SMTP_PORT) || 587,
+      secure: false,
+      user: process.env.BREVO_SMTP_USER,
+      pass: process.env.BREVO_SMTP_PASS,
+      from: process.env.EMAIL_FROM || 'Madeus Skincare <noreply@madeusskincare.com>'
     };
 
-    if (!emailConfig.host || !emailConfig.user) {
+    if (!emailConfig.host || !emailConfig.user || !emailConfig.pass) {
       return res.json({
         status: 'not_configured',
         message: 'Email service not configured',
-        config: emailConfig
+        config: {
+          host: emailConfig.host,
+          port: emailConfig.port,
+          secure: emailConfig.secure,
+          user: emailConfig.user ? 'configured' : 'missing',
+          pass: emailConfig.pass ? 'configured' : 'missing'
+        }
       });
     }
 
-    // Mock email test - gerçek projede gerçek email gönderimi test edilecek
+    // Test email connection
+    const testResult = await emailService.testConnection();
+    
     const emailTest = {
-      status: 'ready',
+      status: testResult.success ? 'ready' : 'error',
       timestamp: new Date().toISOString(),
-      config: emailConfig,
+      config: {
+        host: emailConfig.host,
+        port: emailConfig.port,
+        secure: emailConfig.secure,
+        user: emailConfig.user ? 'configured' : 'missing'
+      },
+      testResult: testResult,
       capabilities: {
         welcomeEmail: '✅ Ready',
         orderConfirmation: '✅ Ready',
@@ -789,6 +804,43 @@ router.get('/system-info', (req, res) => {
   } catch (error) {
     console.error('System info error:', error);
     res.status(500).json({ error: 'Failed to get system information' });
+  }
+});
+
+// Environment variables debug
+router.get('/env-debug', (req, res) => {
+  try {
+    const envDebug = {
+      timestamp: new Date().toISOString(),
+      email: {
+        BREVO_SMTP_HOST: process.env.BREVO_SMTP_HOST || 'NOT_SET',
+        BREVO_SMTP_PORT: process.env.BREVO_SMTP_PORT || 'NOT_SET',
+        BREVO_SMTP_USER: process.env.BREVO_SMTP_USER || 'NOT_SET',
+        BREVO_SMTP_PASS: process.env.BREVO_SMTP_PASS ? 'SET' : 'NOT_SET',
+        BREVO_API_KEY: process.env.BREVO_API_KEY ? 'SET' : 'NOT_SET',
+        EMAIL_FROM: process.env.EMAIL_FROM || 'NOT_SET',
+        ADMIN_NOTIFY_EMAIL: process.env.ADMIN_NOTIFY_EMAIL || 'NOT_SET'
+      },
+      database: {
+        DATABASE_URL: process.env.DATABASE_URL ? 'SET' : 'NOT_SET',
+        MYSQL_URL: process.env.MYSQL_URL ? 'SET' : 'NOT_SET',
+        MYSQLHOST: process.env.MYSQLHOST || 'NOT_SET',
+        MYSQLDATABASE: process.env.MYSQLDATABASE || 'NOT_SET'
+      },
+      jwt: {
+        JWT_SECRET: process.env.JWT_SECRET ? 'SET' : 'NOT_SET',
+        JWT_EXPIRE: process.env.JWT_EXPIRE || 'NOT_SET'
+      },
+      frontend: {
+        FRONTEND_URL: process.env.FRONTEND_URL || 'NOT_SET'
+      }
+    };
+
+    res.json(envDebug);
+
+  } catch (error) {
+    console.error('Env debug error:', error);
+    res.status(500).json({ error: 'Failed to get environment debug info' });
   }
 });
 

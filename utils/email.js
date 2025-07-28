@@ -18,22 +18,23 @@ class EmailService {
     }
 
     createTransporter() {
-        console.log('🔧 Creating email transporter...');
+        console.log('🔧 Creating Brevo email transporter...');
         
+        // Sadece Brevo SMTP ayarları
         const emailConfig = {
-            host: process.env.EMAIL_HOST || 'srvm15.trwww.com',
-            port: parseInt(process.env.EMAIL_PORT) || 465,
-            secure: true, // SSL kullan
+            host: process.env.BREVO_SMTP_HOST || 'smtp-relay.brevo.com',
+            port: parseInt(process.env.BREVO_SMTP_PORT) || 587,
+            secure: false, // TLS için false
             auth: {
-                user: process.env.EMAIL_USER || 'noreply@madeusskincare.com',
-                pass: process.env.EMAIL_PASS || '05319759947Utku'
+                user: process.env.BREVO_SMTP_USER || '932d65001@smtp-brevo.com',
+                pass: process.env.BREVO_SMTP_PASS || 'api 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'
             },
             tls: {
                 rejectUnauthorized: false
             }
         };
 
-        console.log('📧 Email config:', {
+        console.log('📧 Brevo Email config:', {
             host: emailConfig.host,
             port: emailConfig.port,
             user: emailConfig.auth.user,

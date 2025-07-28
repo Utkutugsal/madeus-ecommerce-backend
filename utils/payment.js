@@ -229,7 +229,7 @@ class PayTRService {
             const testData = {
                 merchant_id: this.merchantId,
                 user_ip: '127.0.0.1',
-                merchant_oid: 'TEST_' + Date.now(),
+                merchant_oid: 'TEST' + Date.now(), // Remove underscore for alphanumeric
                 email: 'test@example.com',
                 payment_amount: 100, // 1 TL in kuruş
                 payment_type: 'card',
@@ -244,7 +244,10 @@ class PayTRService {
                 merchant_fail_url: 'https://example.com/fail',
                 user_basket: JSON.stringify([['Test Product', '1.00', 1]]),
                 debug_on: 1,
-                lang: 'tr'
+                lang: 'tr',
+                no_installment: 0,
+                max_installment: 0,
+                timeout_limit: 30
             };
 
             testData.paytr_token = this.createPaymentHash(testData);
