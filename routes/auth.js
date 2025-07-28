@@ -146,12 +146,14 @@ router.post('/register', registerValidation, async (req, res) => {
                 );
 
                 // Send verification email
+                let emailSent = false;
                 try {
-                    await emailService.sendVerificationEmail(
+                    const emailResult = await emailService.sendVerificationEmail(
                         email,
                         verificationToken
                     );
                     console.log('✅ Verification email sent successfully');
+                    emailSent = emailResult.success;
                 } catch (emailError) {
                     console.error('❌ Failed to send verification email:', emailError);
                     // Email gönderim hatası kayıt işlemini durdurmasın
@@ -190,12 +192,14 @@ router.post('/register', registerValidation, async (req, res) => {
         console.log('✅ User created with ID:', result.insertId);
 
         // Send verification email
+        let emailSent = false;
         try {
-            await emailService.sendVerificationEmail(
+            const emailResult = await emailService.sendVerificationEmail(
                 email,
                 verificationToken
             );
             console.log('✅ Verification email sent successfully');
+            emailSent = emailResult.success;
         } catch (emailError) {
             console.error('❌ Failed to send verification email:', emailError);
             // Email gönderim hatası kayıt işlemini durdurmasın
@@ -206,8 +210,8 @@ router.post('/register', registerValidation, async (req, res) => {
             message: 'User registered successfully. Please check your email for verification.',
             userId: result.insertId,
             requires_verification: true,
-            email_sent: false, // Email gönderim durumu
-            note: 'Email verification will be available soon. You can login with your credentials.'
+            email_sent: emailSent, // Email gönderim durumu
+            note: emailSent ? 'Email doğrulama maili gönderildi.' : 'Email verification will be available soon. You can login with your credentials.'
         });
 
     } catch (error) {
