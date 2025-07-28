@@ -2349,9 +2349,16 @@
                 document.getElementById('productStock').value = this.currentProduct.stock;
                 document.getElementById('productActive').value = this.currentProduct.is_active;
                 
-                // Rating alanlarını doldur
-                document.getElementById('productRating').value = this.currentProduct.rating || '';
-                document.getElementById('productReviewCount').value = this.currentProduct.reviews_count || '';
+                // Rating alanlarını doldur - null check ekle
+                const ratingElement = document.getElementById('productRating');
+                const reviewCountElement = document.getElementById('productReviewCount');
+                
+                if (ratingElement) {
+                    ratingElement.value = this.currentProduct.rating || '';
+                }
+                if (reviewCountElement) {
+                    reviewCountElement.value = this.currentProduct.reviews_count || '';
+                }
 
                 // Show/hide checkboxes
                 document.getElementById('showInHomepage').checked = Boolean(this.currentProduct.show_in_homepage);
@@ -2362,47 +2369,53 @@
                 // Güvenli gallery_images parse
                 let images = [];
                 try {
-                  if (this.currentProduct.gallery_images && Array.isArray(this.currentProduct.gallery_images)) {
-                    images = this.currentProduct.gallery_images;
-                  } else if (typeof this.currentProduct.gallery_images === 'string' && this.currentProduct.gallery_images.startsWith('[')) {
-                    images = JSON.parse(this.currentProduct.gallery_images);
-                  }
-                } catch (e) {
-                  images = [];
+                    if (this.currentProduct.gallery_images) {
+                        if (typeof this.currentProduct.gallery_images === 'string') {
+                            images = JSON.parse(this.currentProduct.gallery_images);
+                        } else if (Array.isArray(this.currentProduct.gallery_images)) {
+                            images = this.currentProduct.gallery_images;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Gallery images parse error:', error);
+                    images = [];
                 }
-                if (!Array.isArray(images) || images.length === 0) {
-                  images = [this.currentProduct.image_url];
-                }
-                document.querySelectorAll('.image-slot').forEach((slot, index) => {
-                    const imageUrl = images[index] || '';
-                    const input = slot.querySelector('.image-input');
-                    if (input) input.value = imageUrl;
-                });
 
-                document.getElementById('productModal').classList.add('active');
-
-                // editProduct fonksiyonunun sonuna ekle:
-                if (this.currentProduct && this.currentProduct.id) {
-                  for (let i = 1; i <= 6; i++) {
+                // Görsel URL'lerini doldur - Önce veritabanından, sonra localStorage'dan
+                for (let i = 1; i <= 6; i++) {
                     const input = document.getElementById('imageUrl' + i);
                     if (input) {
-                      let urls = JSON.parse(localStorage.getItem('product_images_' + this.currentProduct.id) || '[]');
-                      input.value = urls[i - 1] || '';
-                      
-                      input.addEventListener('input', () => {
-                        const arr = [];
-                        for (let j = 1; j <= 6; j++) {
-                          const inp = document.getElementById('imageUrl' + j);
-                          if (inp) arr.push(inp.value.trim());
+                        // Önce veritabanından gelen görseli yükle
+                        let imageUrl = images[i - 1] || '';
+                        
+                        // Eğer veritabanından gelen görsel yoksa, localStorage'dan kontrol et
+                        if (!imageUrl && this.currentProduct && this.currentProduct.id) {
+                            try {
+                                const localStorageUrls = JSON.parse(localStorage.getItem('product_images_' + this.currentProduct.id) || '[]');
+                                imageUrl = localStorageUrls[i - 1] || '';
+                            } catch (error) {
+                                console.error('LocalStorage parse error:', error);
+                            }
                         }
-                        // Güvenli localStorage kayıt
-                        if (this.currentProduct && this.currentProduct.id) {
-                          localStorage.setItem('product_images_' + this.currentProduct.id, JSON.stringify(arr));
-                        }
-                      });
+                        
+                        input.value = imageUrl;
+                        
+                        // Input değişiklik event listener'ı ekle
+                        input.addEventListener('input', () => {
+                            const arr = [];
+                            for (let j = 1; j <= 6; j++) {
+                                const inp = document.getElementById('imageUrl' + j);
+                                if (inp) arr.push(inp.value.trim());
+                            }
+                            // Güvenli localStorage kayıt
+                            if (this.currentProduct && this.currentProduct.id) {
+                                localStorage.setItem('product_images_' + this.currentProduct.id, JSON.stringify(arr));
+                            }
+                        });
                     }
-                  }
                 }
+                
+                document.getElementById('productModal').classList.add('active');
             }
 
             closeProductModal() {
@@ -2512,6 +2525,9 @@
                         this.showToast(data.message, 'success');
                         this.closeProductModal();
                         this.loadProducts();
+                        
+                        // Frontend'i güncellemek için bildirim gönder
+                        this.notifyFrontendUpdate();
                     } else {
                         this.showToast(data.message || 'Kaydetme başarısız', 'error');
                     }
@@ -2862,6 +2878,23 @@
                 
                 btn.textContent = 'Kaydet';
                 btn.disabled = false;
+            }
+
+            // Frontend güncelleme bildirimi
+            notifyFrontendUpdate() {
+                try {
+                    // LocalStorage üzerinden frontend'e bildirim gönder
+                    localStorage.setItem('madeus_product_updated', Date.now().toString());
+                    
+                    // 5 saniye sonra bildirimi temizle
+                    setTimeout(() => {
+                        localStorage.removeItem('madeus_product_updated');
+                    }, 5000);
+                    
+                    console.log('✅ Frontend güncelleme bildirimi gönderildi');
+                } catch (error) {
+                    console.error('❌ Frontend bildirimi hatası:', error);
+                }
             }
 
         } // AdminPanel class sonu
