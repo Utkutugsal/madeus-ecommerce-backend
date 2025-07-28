@@ -202,20 +202,6 @@ router.post('/register', registerValidation, async (req, res) => {
             // Kullanıcı manuel olarak email doğrulama yapabilir
         }
 
-        // Send admin notification
-        try {
-            await emailService.sendAdminNewUserNotification({
-                name,
-                email,
-                phone: phone || null,
-                created_at: new Date()
-            });
-            console.log('✅ Admin notification sent successfully');
-        } catch (adminEmailError) {
-            console.error('❌ Failed to send admin notification:', adminEmailError);
-            // Admin bildirimi hatası kayıt işlemini durdurmasın
-        }
-
         res.status(201).json({
             message: 'User registered successfully. Please check your email for verification.',
             userId: result.insertId,
