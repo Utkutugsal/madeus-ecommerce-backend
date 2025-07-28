@@ -565,15 +565,15 @@ app.post('/api/setup/test-email', async (req, res) => {
 
         let result;
         if (type === 'welcome') {
-            result = await emailService.sendWelcomeEmail({
-                name: 'Test Kullanici',
-                email: email
-            });
+            result = await emailService.sendWelcomeEmail(
+                email,
+                'Test Kullanici'
+            );
         } else if (type === 'verification') {
-            result = await emailService.sendVerificationEmail({
-                name: 'Test Kullanici',
-                email: email
-            }, 'test-verification-token-123456');
+            result = await emailService.sendVerificationEmail(
+                email,
+                'test-verification-token-123456'
+            );
         } else {
             return res.status(400).json({
                 success: false,
