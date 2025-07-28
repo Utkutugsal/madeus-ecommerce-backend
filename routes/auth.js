@@ -148,7 +148,7 @@ router.post('/register', registerValidation, async (req, res) => {
                 // Send verification email
                 try {
                     await emailService.sendVerificationEmail(
-                        { name, email },
+                        email,
                         verificationToken
                     );
                     console.log('✅ Verification email sent successfully');
@@ -192,7 +192,7 @@ router.post('/register', registerValidation, async (req, res) => {
         // Send verification email
         try {
             await emailService.sendVerificationEmail(
-                { name, email },
+                email,
                 verificationToken
             );
             console.log('✅ Verification email sent successfully');
@@ -458,7 +458,7 @@ router.post('/resend-verification', async (req, res) => {
         // Send verification email
         try {
             await emailService.sendVerificationEmail(
-                { name: user.name, email: user.email },
+                email,
                 verificationToken
             );
             
