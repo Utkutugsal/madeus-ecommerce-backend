@@ -26,8 +26,8 @@ class EmailService {
             port: parseInt(process.env.BREVO_SMTP_PORT) || 587,
             secure: false, // TLS için false
             auth: {
-                user: process.env.BREVO_SMTP_USER || '932d65001@smtp-brevo.com',
-                pass: process.env.BREVO_SMTP_PASS || 'api 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'
+                user: process.env.BREVO_SMTP_USER,
+                pass: process.env.BREVO_SMTP_PASS
             },
             tls: {
                 rejectUnauthorized: false
