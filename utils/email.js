@@ -1,12 +1,10 @@
 ﻿const nodemailer = require('nodemailer');
-const axios = require('axios');
 
 console.log('📧 Email service loading...');
 
 class EmailService {
     constructor() {
         this.transporter = null;
-        this.brevoApiKey = process.env.BREVO_API_KEY;
         this.initializeTransporter();
     }
 
@@ -231,35 +229,21 @@ class EmailService {
                 </html>
             `;
 
-            // API ile email gönder
-            const result = await this.sendEmailViaAPI(
-                userEmail,
-                '📧 Email Adresinizi Doğrulayın - Madeus Skincare',
-                htmlTemplate
-            );
+            const mailOptions = {
+                from: 'Madeus Skincare <noreply@madeusskincare.com>',
+                to: userEmail,
+                subject: '📧 Email Adresinizi Doğrulayın - Madeus Skincare',
+                html: htmlTemplate
+            };
 
-            if (result.success) {
-                console.log('✅ Verification email sent successfully via API:', result.messageId);
-                return result;
-            } else {
-                // API başarısız olursa SMTP ile dene
-                console.log('⚠️ API failed, trying SMTP...');
-                const mailOptions = {
-                    from: process.env.BREVO_SMTP_USER || 'Madeus Skincare <932d65001@smtp-brevo.com>',
-                    to: userEmail,
-                    subject: '📧 Email Adresinizi Doğrulayın - Madeus Skincare',
-                    html: htmlTemplate
-                };
-
-                const smtpResult = await this.transporter.sendMail(mailOptions);
-                console.log('✅ Verification email sent successfully via SMTP:', smtpResult.messageId);
-                
-                return {
-                    success: true,
-                    messageId: smtpResult.messageId,
-                    message: 'Verification email sent successfully via SMTP'
-                };
-            }
+            const result = await this.transporter.sendMail(mailOptions);
+            console.log('✅ Verification email sent successfully:', result.messageId);
+            
+            return {
+                success: true,
+                messageId: result.messageId,
+                message: 'Verification email sent successfully'
+            };
         } catch (error) {
             console.error('❌ Failed to send verification email:', error);
             return {
