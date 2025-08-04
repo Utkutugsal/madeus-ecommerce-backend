@@ -20,29 +20,35 @@ class PayTRService {
 
     // Prepare payment data for PayTR
     preparePaymentData(orderData, userIp) {
-        // Convert items to PayTR format
-        const userBasket = orderData.items.map(item => [
-            item.name,
-            item.price.toFixed(2),
-            item.quantity
-        ]);
+        // Convert items to PayTR format with null checks
+        const userBasket = orderData.items.map(item => {
+            // Price kontrolü ekle
+            const price = item.price || 0;
+            const quantity = item.quantity || 1;
+            
+            return [
+                item.name || 'Ürün',
+                price.toFixed(2),
+                quantity
+            ];
+        });
 
         const paymentData = {
             merchant_id: this.merchantId,
             user_ip: userIp,
             merchant_oid: orderData.orderNumber,
             email: orderData.email,
-            payment_amount: Math.round(orderData.total * 100), // Convert to kuruş (cents)
+            payment_amount: Math.round((orderData.total || 0) * 100), // Convert to kuruş (cents)
             payment_type: 'card',
             installment_count: 0,
             currency: 'TL',
             test_mode: this.testMode,
             
             // User information
-            user_name: orderData.userName,
-            user_phone: orderData.userPhone,
-            user_address: orderData.userAddress,
-            user_city: orderData.userCity,
+            user_name: orderData.userName || 'Müşteri',
+            user_phone: orderData.userPhone || '',
+            user_address: orderData.userAddress || '',
+            user_city: orderData.userCity || '',
             
             // URLs
             merchant_ok_url: `${process.env.FRONTEND_URL}/order-success`,

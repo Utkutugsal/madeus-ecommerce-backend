@@ -693,16 +693,16 @@ router.post('/addresses', authenticateToken, async (req, res) => {
         
         const params = [
             req.user.userId,
-            title,
-            first_name,
-            last_name,
-            address_line_1,
-            address_line_2 || null, // undefined'ı null'a çevir
-            city,
-            district,
-            postal_code,
-            phone,
-            is_default ? 1 : 0 // boolean'ı integer'a çevir
+            title || null,
+            first_name || null,
+            last_name || null,
+            address_line_1 || null,
+            address_line_2 || null,
+            city || null,
+            district || null,
+            postal_code || null,
+            phone || null,
+            is_default ? 1 : 0
         ];
         
         console.log('📍 SQL:', sql);
