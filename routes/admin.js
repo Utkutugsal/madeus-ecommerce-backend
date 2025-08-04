@@ -815,8 +815,8 @@ router.get('/products', adminAuth, async (req, res) => {
 
         const products = await db.query(`
             SELECT 
-                p.id, p.name, p.price, p.stock, p.image_url, p.gallery_images, p.is_active, p.created_at, p.updated_at, p.brand, p.category,
-                p.description, p.original_price, p.show_in_homepage, p.show_in_popular, p.show_in_bestsellers, p.show_in_featured,
+                p.id, p.name, p.price, p.stock, p.image_url, p.is_active, p.created_at, p.updated_at, p.brand, p.category,
+                p.description, p.original_price, p.gallery_images, p.show_in_homepage, p.show_in_popular, p.show_in_bestsellers, p.show_in_featured,
                 p.rating, p.reviews_count
             FROM products p
             ${whereClause}
@@ -827,6 +827,23 @@ router.get('/products', adminAuth, async (req, res) => {
         // Kategori adını manuel olarak ekle
         products.forEach(product => {
             product.category_name = categoryNameMap[product.category] || product.category;
+            
+            // Gallery images'ı parse et
+            if (product.gallery_images) {
+                try {
+                    if (typeof product.gallery_images === 'string') {
+                        const parsed = JSON.parse(product.gallery_images);
+                        if (Array.isArray(parsed)) {
+                            product.gallery_images = parsed;
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Gallery images parse error for product', product.id, ':', error);
+                    product.gallery_images = [];
+                }
+            } else {
+                product.gallery_images = [];
+            }
         });
         
         const totalResult = await db.query(`
@@ -1052,11 +1069,10 @@ router.put('/products/:id', adminAuth, async (req, res) => {
             let galleryImagesStr = '[]';
             if (Array.isArray(gallery_images)) {
                 galleryImagesStr = JSON.stringify(gallery_images);
-                console.log('✅ Gallery images array:', gallery_images);
-                console.log('✅ Gallery images JSON:', galleryImagesStr);
+                console.log('✅ Gallery images (array):', gallery_images);
             } else if (typeof gallery_images === 'string' && gallery_images.startsWith('[')) {
                 galleryImagesStr = gallery_images;
-                console.log('✅ Gallery images string:', gallery_images);
+                console.log('✅ Gallery images (string):', gallery_images);
             } else {
                 console.log('⚠️ Gallery images format:', typeof gallery_images, gallery_images);
             }
@@ -1317,14 +1333,6 @@ router.get('/debug-database-public', async (req, res) => {
         console.error('Database debug error:', error);
         res.status(500).json({
             success: false,
-            message: 'Database debug başarısız: ' + error.message
-        });
-    }
-});
-
-// Trendyol endpoint'leri kaldırıldı - artık normal product update ile rating güncelleniyor
-
-module.exports = router; 
             message: 'Database debug başarısız: ' + error.message
         });
     }

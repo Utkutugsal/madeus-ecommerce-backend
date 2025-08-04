@@ -2335,102 +2335,94 @@
             }
 
             editProduct(productId) {
-                this.currentProduct = this.products.find(p => p.id === productId);
-                if (!this.currentProduct) return;
+                const product = this.products.find(p => p.id === productId);
+                if (!product) {
+                    this.showToast('Ürün bulunamadı', 'error');
+                    return;
+                }
 
+                this.currentProduct = product;
                 document.getElementById('productModalTitle').textContent = 'Ürün Düzenle';
-                // Fill form
-                document.getElementById('productName').value = this.currentProduct.name;
-                document.getElementById('productBrand').value = this.currentProduct.brand || 'MADEUS';
-                document.getElementById('productDescription').value = this.currentProduct.description || '';
-                document.getElementById('productPrice').value = this.currentProduct.price;
-                document.getElementById('productOriginalPrice').value = this.currentProduct.original_price || '';
-                document.getElementById('productCategory').value = this.currentProduct.category;
-                document.getElementById('productStock').value = this.currentProduct.stock;
-                document.getElementById('productActive').value = this.currentProduct.is_active;
                 
-                // Rating alanlarını doldur - null check ekle
-                const ratingElement = document.getElementById('productRating');
-                const reviewCountElement = document.getElementById('productReviewCount');
+                // Form alanlarını doldur
+                document.getElementById('productName').value = product.name || '';
+                document.getElementById('productBrand').value = product.brand || 'MADEUS';
+                document.getElementById('productDescription').value = product.description || '';
+                document.getElementById('productPrice').value = product.price || '';
+                document.getElementById('productOriginalPrice').value = product.original_price || '';
+                document.getElementById('productCategory').value = product.category || 'serum';
+                document.getElementById('productStock').value = product.stock || '';
+                document.getElementById('productActive').value = product.is_active || '1';
                 
-                if (ratingElement) {
-                    ratingElement.value = this.currentProduct.rating || '';
-                }
-                if (reviewCountElement) {
-                    reviewCountElement.value = this.currentProduct.reviews_count || '';
-                }
-
-                // Show/hide checkboxes
-                document.getElementById('showInHomepage').checked = Boolean(this.currentProduct.show_in_homepage);
-                document.getElementById('showInPopular').checked = Boolean(this.currentProduct.show_in_popular);
-                document.getElementById('showInBestsellers').checked = Boolean(this.currentProduct.show_in_bestsellers);
-                document.getElementById('showInFeatured').checked = Boolean(this.currentProduct.show_in_featured);
-
-                // Görsel URL'lerini yükle - Öncelik sırası: DB > localStorage > boş
+                // Rating ve review count
+                document.getElementById('productRating').value = product.rating || 0;
+                document.getElementById('productReviewCount').value = product.reviews_count || 0;
+                
+                // Page control checkboxes
+                document.getElementById('showInHomepage').checked = product.show_in_homepage || false;
+                document.getElementById('showInPopular').checked = product.show_in_popular || false;
+                document.getElementById('showInBestsellers').checked = product.show_in_bestsellers || false;
+                document.getElementById('showInFeatured').checked = product.show_in_featured || false;
+                
+                // Image URLs - ÖNCE DATABASE'DEN YÜKLE
                 let images = [];
-                
-                // 1. Önce veritabanından gallery_images'ı kontrol et
-                if (this.currentProduct.gallery_images) {
-                    try {
-                        if (typeof this.currentProduct.gallery_images === 'string') {
-                            const parsed = JSON.parse(this.currentProduct.gallery_images);
+                try {
+                    if (product.gallery_images) {
+                        if (Array.isArray(product.gallery_images)) {
+                            images = product.gallery_images.filter(img => img && img.trim());
+                        } else if (typeof product.gallery_images === 'string' && product.gallery_images.trim() && product.gallery_images !== 'null') {
+                            const parsed = JSON.parse(product.gallery_images);
                             if (Array.isArray(parsed)) {
                                 images = parsed.filter(img => img && img.trim());
                             }
-                        } else if (Array.isArray(this.currentProduct.gallery_images)) {
-                            images = this.currentProduct.gallery_images.filter(img => img && img.trim());
                         }
-                    } catch (error) {
-                        console.error('Gallery images parse error:', error);
-                        images = [];
                     }
+                } catch (error) {
+                    console.warn('Gallery images parse hatası:', error);
+                    images = [];
                 }
-                
-                // 2. Eğer DB'den gelen images boşsa, localStorage'dan kontrol et
-                if (images.length === 0 && this.currentProduct.id) {
+
+                // Eğer database'de image yoksa, localStorage'dan yükle
+                if (images.length === 0) {
                     try {
-                        const localStorageUrls = JSON.parse(localStorage.getItem('product_images_' + this.currentProduct.id) || '[]');
-                        if (Array.isArray(localStorageUrls)) {
-                            images = localStorageUrls.filter(img => img && img.trim());
-                        }
+                        const localStorageUrls = JSON.parse(localStorage.getItem('product_images_' + product.id) || '[]');
+                        images = localStorageUrls.filter(img => img && img.trim());
                     } catch (error) {
-                        console.error('LocalStorage parse error:', error);
+                        console.warn('LocalStorage parse hatası:', error);
                         images = [];
                     }
                 }
 
-                // 3. Input alanlarını doldur
+                // Image input'larını doldur
                 for (let i = 1; i <= 6; i++) {
                     const input = document.getElementById('imageUrl' + i);
                     if (input) {
                         const imageUrl = images[i - 1] || '';
                         input.value = imageUrl;
                         
-                        // Input değişiklik event listener'ı ekle (sadece bir kez)
-                        input.removeEventListener('input', this.handleImageInputChange);
-                        input.addEventListener('input', this.handleImageInputChange.bind(this));
+                        // Input değişiklik event listener'ı ekle
+                        input.addEventListener('input', () => {
+                            const arr = [];
+                            for (let j = 1; j <= 6; j++) {
+                                const inp = document.getElementById('imageUrl' + j);
+                                if (inp) arr.push(inp.value.trim());
+                            }
+                            // localStorage'a kaydet
+                            if (this.currentProduct && this.currentProduct.id) {
+                                localStorage.setItem('product_images_' + this.currentProduct.id, JSON.stringify(arr));
+                                console.log('💾 Image URLs saved to localStorage:', arr);
+                            }
+                        });
                     }
+                }
+
+                // Database'den gelen image'ları localStorage'a da kaydet
+                if (images.length > 0) {
+                    localStorage.setItem('product_images_' + product.id, JSON.stringify(images));
+                    console.log('💾 Database images saved to localStorage:', images);
                 }
                 
                 document.getElementById('productModal').classList.add('active');
-            }
-
-            // Image input değişiklik handler'ı
-            handleImageInputChange() {
-                if (!this.currentProduct || !this.currentProduct.id) return;
-                
-                const arr = [];
-                for (let j = 1; j <= 6; j++) {
-                    const inp = document.getElementById('imageUrl' + j);
-                    if (inp) {
-                        const val = inp.value.trim();
-                        if (val) arr.push(val);
-                    }
-                }
-                
-                // LocalStorage'a kaydet
-                localStorage.setItem('product_images_' + this.currentProduct.id, JSON.stringify(arr));
-                console.log('💾 Image URLs saved to localStorage:', arr);
             }
 
             closeProductModal() {
@@ -3035,27 +3027,6 @@
                 const placeholder = slot.querySelector('.image-placeholder');
                 const input = slot.querySelector('.image-input');
                 if (placeholder && input) {
-                    input.style.display = 'none';
-                    placeholder.onclick = function(e) {
-                        e.stopPropagation();
-                        document.querySelectorAll('.image-input').forEach(inp => inp.style.display = 'none');
-                        input.style.display = 'block';
-                        input.focus();
-                    };
-                }
-            });
-            document.addEventListener('click', function(e) {
-                if (!e.target.classList.contains('image-input') && !e.target.classList.contains('image-placeholder') && !e.target.closest('.image-placeholder')) {
-                    document.querySelectorAll('.image-input').forEach(inp => inp.style.display = 'none');
-                }
-            });
-        }
-        setTimeout(enableImageUrlInputOnly, 500);
-        // bindImageEvents fonksiyonundan dosya seçici, base64 ve drag-drop ile ilgili tüm kodları kaldır
-    </script>
-</body>
-</html> 
-
                     input.style.display = 'none';
                     placeholder.onclick = function(e) {
                         e.stopPropagation();
