@@ -8,11 +8,11 @@ DATABASE_URL=mysql://username:password@host:port/database
 JWT_SECRET=madeus-super-secure-jwt-secret-2024
 JWT_EXPIRE=24h
 
-# PayTR Configuration (Sandbox for testing)
-PAYTR_MERCHANT_ID=sandbox-merchant-id
-PAYTR_MERCHANT_KEY=sandbox-merchant-key  
-PAYTR_MERCHANT_SALT=sandbox-merchant-salt
-PAYTR_TEST_MODE=true
+# PayTR Configuration (Production)
+PAYTR_MERCHANT_ID=598536
+PAYTR_MERCHANT_KEY=Uw41HT9k4UtXWLDT
+PAYTR_MERCHANT_SALT=5F1Gm1fe6ffaFHpo
+PAYTR_TEST_MODE=false
 
 # Email Configuration
 SMTP_HOST=smtp.gmail.com
