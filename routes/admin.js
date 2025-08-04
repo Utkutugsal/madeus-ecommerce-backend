@@ -815,7 +815,9 @@ router.get('/products', adminAuth, async (req, res) => {
 
         const products = await db.query(`
             SELECT 
-                p.id, p.name, p.price, p.stock, p.image_url, p.is_active, p.created_at, p.updated_at, p.brand, p.category
+                p.id, p.name, p.price, p.stock, p.image_url, p.gallery_images, p.is_active, p.created_at, p.updated_at, p.brand, p.category,
+                p.description, p.original_price, p.show_in_homepage, p.show_in_popular, p.show_in_bestsellers, p.show_in_featured,
+                p.rating, p.reviews_count
             FROM products p
             ${whereClause}
             ORDER BY p.created_at DESC
@@ -1050,11 +1052,17 @@ router.put('/products/:id', adminAuth, async (req, res) => {
             let galleryImagesStr = '[]';
             if (Array.isArray(gallery_images)) {
                 galleryImagesStr = JSON.stringify(gallery_images);
+                console.log('✅ Gallery images array:', gallery_images);
+                console.log('✅ Gallery images JSON:', galleryImagesStr);
             } else if (typeof gallery_images === 'string' && gallery_images.startsWith('[')) {
                 galleryImagesStr = gallery_images;
+                console.log('✅ Gallery images string:', gallery_images);
+            } else {
+                console.log('⚠️ Gallery images format:', typeof gallery_images, gallery_images);
             }
             updateFields.push('gallery_images = ?');
             updateValues.push(galleryImagesStr);
+            console.log('💾 Gallery images saved to DB:', galleryImagesStr);
         }
         if (brand !== undefined) {
             updateFields.push('brand = ?');

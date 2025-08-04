@@ -2366,56 +2366,71 @@
                 document.getElementById('showInBestsellers').checked = Boolean(this.currentProduct.show_in_bestsellers);
                 document.getElementById('showInFeatured').checked = Boolean(this.currentProduct.show_in_featured);
 
-                // Güvenli gallery_images parse
+                // Görsel URL'lerini yükle - Öncelik sırası: DB > localStorage > boş
                 let images = [];
-                try {
-                    if (this.currentProduct.gallery_images) {
+                
+                // 1. Önce veritabanından gallery_images'ı kontrol et
+                if (this.currentProduct.gallery_images) {
+                    try {
                         if (typeof this.currentProduct.gallery_images === 'string') {
-                            images = JSON.parse(this.currentProduct.gallery_images);
+                            const parsed = JSON.parse(this.currentProduct.gallery_images);
+                            if (Array.isArray(parsed)) {
+                                images = parsed.filter(img => img && img.trim());
+                            }
                         } else if (Array.isArray(this.currentProduct.gallery_images)) {
-                            images = this.currentProduct.gallery_images;
+                            images = this.currentProduct.gallery_images.filter(img => img && img.trim());
                         }
+                    } catch (error) {
+                        console.error('Gallery images parse error:', error);
+                        images = [];
                     }
-                } catch (error) {
-                    console.error('Gallery images parse error:', error);
-                    images = [];
+                }
+                
+                // 2. Eğer DB'den gelen images boşsa, localStorage'dan kontrol et
+                if (images.length === 0 && this.currentProduct.id) {
+                    try {
+                        const localStorageUrls = JSON.parse(localStorage.getItem('product_images_' + this.currentProduct.id) || '[]');
+                        if (Array.isArray(localStorageUrls)) {
+                            images = localStorageUrls.filter(img => img && img.trim());
+                        }
+                    } catch (error) {
+                        console.error('LocalStorage parse error:', error);
+                        images = [];
+                    }
                 }
 
-                // Görsel URL'lerini doldur - Önce veritabanından, sonra localStorage'dan
+                // 3. Input alanlarını doldur
                 for (let i = 1; i <= 6; i++) {
                     const input = document.getElementById('imageUrl' + i);
                     if (input) {
-                        // Önce veritabanından gelen görseli yükle
-                        let imageUrl = images[i - 1] || '';
-                        
-                        // Eğer veritabanından gelen görsel yoksa, localStorage'dan kontrol et
-                        if (!imageUrl && this.currentProduct && this.currentProduct.id) {
-                            try {
-                                const localStorageUrls = JSON.parse(localStorage.getItem('product_images_' + this.currentProduct.id) || '[]');
-                                imageUrl = localStorageUrls[i - 1] || '';
-                            } catch (error) {
-                                console.error('LocalStorage parse error:', error);
-                            }
-                        }
-                        
+                        const imageUrl = images[i - 1] || '';
                         input.value = imageUrl;
                         
-                        // Input değişiklik event listener'ı ekle
-                        input.addEventListener('input', () => {
-                            const arr = [];
-                            for (let j = 1; j <= 6; j++) {
-                                const inp = document.getElementById('imageUrl' + j);
-                                if (inp) arr.push(inp.value.trim());
-                            }
-                            // Güvenli localStorage kayıt
-                            if (this.currentProduct && this.currentProduct.id) {
-                                localStorage.setItem('product_images_' + this.currentProduct.id, JSON.stringify(arr));
-                            }
-                        });
+                        // Input değişiklik event listener'ı ekle (sadece bir kez)
+                        input.removeEventListener('input', this.handleImageInputChange);
+                        input.addEventListener('input', this.handleImageInputChange.bind(this));
                     }
                 }
                 
                 document.getElementById('productModal').classList.add('active');
+            }
+
+            // Image input değişiklik handler'ı
+            handleImageInputChange() {
+                if (!this.currentProduct || !this.currentProduct.id) return;
+                
+                const arr = [];
+                for (let j = 1; j <= 6; j++) {
+                    const inp = document.getElementById('imageUrl' + j);
+                    if (inp) {
+                        const val = inp.value.trim();
+                        if (val) arr.push(val);
+                    }
+                }
+                
+                // LocalStorage'a kaydet
+                localStorage.setItem('product_images_' + this.currentProduct.id, JSON.stringify(arr));
+                console.log('💾 Image URLs saved to localStorage:', arr);
             }
 
             closeProductModal() {
@@ -2465,12 +2480,16 @@
                             if (val) imageUrls.push(val);
                         }
                     }
+                    
+                    console.log('📸 Collected image URLs:', imageUrls);
+                    
                     if (imageUrls.length > 6) {
                         this.showToast('En fazla 6 görsel URL girebilirsiniz!', 'error');
                         btn.textContent = 'Kaydet';
                         btn.disabled = false;
                         return;
                     }
+                    
                     const productData = {
                         name: document.getElementById('productName')?.value || '',
                         brand: document.getElementById('productBrand')?.value || 'MADEUS',
@@ -2489,6 +2508,8 @@
                         rating: parseFloat(document.getElementById('productRating')?.value) || 0,
                         reviews_count: parseInt(document.getElementById('productReviewCount')?.value) || 0
                     };
+
+                    console.log('📦 Product data to save:', productData);
 
                     const url = this.currentProduct ? 
                         `/api/admin/products/${this.currentProduct.id}` : 
