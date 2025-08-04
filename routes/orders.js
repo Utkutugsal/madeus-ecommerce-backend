@@ -252,7 +252,7 @@ router.post('/create', async (req, res) => {
                 user_phone || '',
                 JSON.stringify(shipping_address),
                 total_amount,
-                shipping_cost || 0
+                0 // Kargo fiyatını 0 yap
             ]
         );
 
@@ -383,12 +383,12 @@ router.post('/create-payment', async (req, res) => {
             [
                 orderNumber,
                 user_id,
-                user_email,
-                user_name,
+                user_email || '',
+                user_name || '',
                 user_phone || '',
-                JSON.stringify(shipping_address),
-                total_amount,
-                shipping_cost || 0
+                shipping_address ? JSON.stringify(shipping_address) : null,
+                total_amount || 0,
+                0 // Kargo fiyatını 0 yap
             ]
         );
 
