@@ -1325,3 +1325,11 @@ router.get('/debug-database-public', async (req, res) => {
 // Trendyol endpoint'leri kaldırıldı - artık normal product update ile rating güncelleniyor
 
 module.exports = router; 
+            message: 'Database debug başarısız: ' + error.message
+        });
+    }
+});
+
+// Trendyol endpoint'leri kaldırıldı - artık normal product update ile rating güncelleniyor
+
+module.exports = router; 

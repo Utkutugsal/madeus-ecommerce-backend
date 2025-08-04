@@ -1735,3 +1735,55 @@ router.get('/recreate-orders-complete', async (req, res) => {
 });
 
 module.exports = router; 
+
+                shipping_address JSON NOT NULL,
+                total_amount DECIMAL(10,2) NOT NULL,
+                shipping_cost DECIMAL(10,2) DEFAULT 0,
+                status ENUM('pending', 'confirmed', 'shipped', 'delivered', 'cancelled') DEFAULT 'pending',
+                payment_status ENUM('pending', 'paid', 'failed', 'refunded') DEFAULT 'pending',
+                order_number VARCHAR(50) UNIQUE,
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_user_id (user_id),
+                INDEX idx_status (status),
+                INDEX idx_created_at (created_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+        
+        // Create order_items table
+        await db.query(`
+            CREATE TABLE order_items (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                order_id INT NOT NULL,
+                product_id INT,
+                product_name VARCHAR(255) NOT NULL,
+                quantity INT NOT NULL,
+                price DECIMAL(10,2) NOT NULL,
+                total DECIMAL(10,2) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+                INDEX idx_order_id (order_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+        
+        // Re-enable foreign key checks
+        await db.query(`SET FOREIGN_KEY_CHECKS = 1`);
+
+        res.json({
+            success: true,
+            message: 'Orders and order_items tables recreated successfully!',
+            note: 'All existing orders were deleted. New orders can now be created.'
+        });
+
+    } catch (error) {
+        console.error('Orders tables recreation error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to recreate orders tables',
+            error: error.message
+        });
+    }
+});
+
+module.exports = router; 

@@ -538,3 +538,41 @@ class EmailService {
 const emailService = new EmailService();
 
 module.exports = emailService;
+
+                error: error.message,
+                message: 'Failed to send order notification email'
+            };
+        }
+    }
+
+    async sendCustomEmail(to, subject, htmlContent) {
+        try {
+            const mailOptions = {
+                from: process.env.EMAIL_FROM || 'Madeus Skincare <noreply@madeusskincare.com>',
+                to: to,
+                subject: subject,
+                html: htmlContent
+            };
+
+            const result = await this.transporter.sendMail(mailOptions);
+            console.log('✅ Custom email sent successfully:', result.messageId);
+            
+            return {
+                success: true,
+                messageId: result.messageId,
+                message: 'Custom email sent successfully'
+            };
+        } catch (error) {
+            console.error('❌ Failed to send custom email:', error);
+            return {
+                success: false,
+                error: error.message,
+                message: 'Failed to send custom email'
+            };
+        }
+    }
+}
+
+const emailService = new EmailService();
+
+module.exports = emailService;

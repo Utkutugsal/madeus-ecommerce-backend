@@ -3055,3 +3055,24 @@
     </script>
 </body>
 </html> 
+
+                    input.style.display = 'none';
+                    placeholder.onclick = function(e) {
+                        e.stopPropagation();
+                        document.querySelectorAll('.image-input').forEach(inp => inp.style.display = 'none');
+                        input.style.display = 'block';
+                        input.focus();
+                    };
+                }
+            });
+            document.addEventListener('click', function(e) {
+                if (!e.target.classList.contains('image-input') && !e.target.classList.contains('image-placeholder') && !e.target.closest('.image-placeholder')) {
+                    document.querySelectorAll('.image-input').forEach(inp => inp.style.display = 'none');
+                }
+            });
+        }
+        setTimeout(enableImageUrlInputOnly, 500);
+        // bindImageEvents fonksiyonundan dosya seçici, base64 ve drag-drop ile ilgili tüm kodları kaldır
+    </script>
+</body>
+</html> 
