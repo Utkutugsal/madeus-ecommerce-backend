@@ -9,8 +9,8 @@ class PayTRService {
         this.merchantSalt = process.env.PAYTR_MERCHANT_SALT;
         this.apiUrl = process.env.PAYTR_API_URL || 'https://www.paytr.com/odeme/api/get-token';
         this.callbackUrl = process.env.PAYTR_CALLBACK_URL || `${process.env.FRONTEND_URL}/api/payment/callback`;
-        // Test mode'u environment variable'dan al
-        this.testMode = process.env.PAYTR_TEST_MODE === 'true' ? 1 : 0;
+        // Test mode'u kapat - production modunda çalış
+        this.testMode = 0;
         
         console.log('🔧 PayTR Configuration:', {
             merchantId: this.merchantId,
