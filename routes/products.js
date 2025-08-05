@@ -64,7 +64,7 @@ async function getProductsFromDatabase(filters = {}) {
 async function getProductById(id) {
     const sql = `
         SELECT 
-            id, name, slug, description, short_description as shortDescription,
+            id, name, slug, custom_slug, description, short_description as shortDescription,
             price, compare_price as originalPrice, featured_image as mainImage,
             gallery_images as images, sku, brand, ingredients, skin_type as skinType,
             stock, rating, reviews_count as reviewCount, is_featured as isFeatured,
