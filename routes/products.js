@@ -1,7 +1,58 @@
 const express = require('express');
-const { db } = require('../config/database');
+const { Database } = require('../config/database');
 
 const router = express.Router();
+
+// Test endpoint - ürünleri debug etmek için
+router.get('/debug', async (req, res) => {
+  try {
+    console.log('🔍 Products debug endpoint çağrıldı');
+    
+    const db = new Database();
+    
+    // Database bağlantısını test et
+    const connectionTest = await db.query('SELECT 1 as test');
+    console.log('✅ Database bağlantısı:', connectionTest[0]);
+    
+    // Products tablosunu kontrol et
+    const tableCheck = await db.query(`
+      SELECT TABLE_NAME 
+      FROM INFORMATION_SCHEMA.TABLES 
+      WHERE TABLE_NAME = 'products'
+    `);
+    console.log('📋 Products tablosu mevcut mu:', tableCheck.length > 0);
+    
+    if (tableCheck.length > 0) {
+      // Ürün sayısını kontrol et
+      const countResult = await db.query('SELECT COUNT(*) as count FROM products');
+      console.log('📊 Toplam ürün sayısı:', countResult[0].count);
+      
+      // İlk 5 ürünü listele
+      const products = await db.query('SELECT id, name, price, is_active FROM products LIMIT 5');
+      console.log('📦 İlk 5 ürün:', products);
+      
+      res.json({
+        success: true,
+        database_connection: connectionTest[0],
+        table_exists: tableCheck.length > 0,
+        total_products: countResult[0].count,
+        sample_products: products
+      });
+    } else {
+      res.json({
+        success: false,
+        error: 'Products tablosu bulunamadı'
+      });
+    }
+    
+  } catch (error) {
+    console.error('❌ Debug endpoint error:', error);
+    res.json({
+      success: false,
+      error: error.message
+    });
+  }
+});
 
 // ===========================================
 // HELPER FUNCTIONS
@@ -148,13 +199,54 @@ async function getRelatedProducts(productId, categoryId) {
 // GET /api/products - Get all products with filtering, sorting, and pagination
 router.get('/', async (req, res, next) => {
   try {
-    const { limit = 50, offset = 0 } = req.query; // Limit'i 50'ye çıkar
-    const { products, total } = await getProductsFromDatabase(req.query);
+    console.log('🌐 Ana site products API çağrıldı');
+    
+    const db = new Database();
+    const { limit = 50, offset = 0 } = req.query;
+    
+    // Admin panel ile aynı query'yi kullan
+    const products = await db.query(`
+      SELECT 
+        p.id, p.name, p.price, p.stock, p.image_url, p.is_active, p.created_at, p.updated_at, p.brand, p.category,
+        p.description, p.original_price, p.gallery_images, p.show_in_homepage, p.show_in_popular, p.show_in_bestsellers, p.show_in_featured,
+        p.rating, p.reviews_count
+      FROM products p
+      WHERE p.is_active = TRUE
+      ORDER BY p.created_at DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `);
+    
+    console.log('📦 Ana site products bulundu:', products.length);
+    
+    // Gallery images'ı parse et
+    const processedProducts = products.map(product => {
+      // Gallery images'ı parse et
+      if (product.gallery_images) {
+        try {
+          if (typeof product.gallery_images === 'string') {
+            const parsed = JSON.parse(product.gallery_images);
+            if (Array.isArray(parsed)) {
+              product.gallery_images = parsed;
+            }
+          }
+        } catch (error) {
+          console.warn('Gallery images parse error for product', product.id, ':', error);
+          product.gallery_images = [];
+        }
+      } else {
+        product.gallery_images = [];
+      }
+      
+      return product;
+    });
+    
+    console.log('📦 İşlenmiş ürünler:', processedProducts.length);
     
     // Frontend'in beklediği format: direkt products array'i
-    res.json(products);
+    res.json(processedProducts);
+    
   } catch (error) {
-    console.error('❌ Products API error:', error);
+    console.error('❌ Ana site products API error:', error);
     // Hata durumunda boş array döndür
     res.json([]);
   }
