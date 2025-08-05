@@ -1397,6 +1397,11 @@
                         </div>
                     </div>
                     <div class="form-group">
+                        <label for="productCustomSlug">Özel URL (SEO için)</label>
+                        <input type="text" id="productCustomSlug" placeholder="ornek: red-pulse-spf-50-dudak-nemlendirici" class="form-input">
+                        <small style="color: #64748b; font-size: 12px;">Boş bırakırsan otomatik oluşturulur. Örnek: red-pulse-spf-50-dudak-nemlendirici</small>
+                    </div>
+                    <div class="form-group">
                         <label for="productDescription">Açıklama</label>
                         <textarea id="productDescription" placeholder="Ürün açıklaması" class="form-textarea"></textarea>
                     </div>
@@ -2281,6 +2286,7 @@
                 // Clear form
                 document.getElementById('productName').value = '';
                 document.getElementById('productBrand').value = '';
+                document.getElementById('productCustomSlug').value = '';
                 document.getElementById('productDescription').value = '';
                 document.getElementById('productPrice').value = '';
                 document.getElementById('productOriginalPrice').value = '';
@@ -2347,6 +2353,7 @@
                 // Form alanlarını doldur
                 document.getElementById('productName').value = product.name || '';
                 document.getElementById('productBrand').value = product.brand || 'MADEUS';
+                document.getElementById('productCustomSlug').value = product.custom_slug || '';
                 document.getElementById('productDescription').value = product.description || '';
                 document.getElementById('productPrice').value = product.price || '';
                 document.getElementById('productOriginalPrice').value = product.original_price || '';
@@ -2485,6 +2492,7 @@
                     const productData = {
                         name: document.getElementById('productName')?.value || '',
                         brand: document.getElementById('productBrand')?.value || 'MADEUS',
+                        custom_slug: document.getElementById('productCustomSlug')?.value || '',
                         description: document.getElementById('productDescription')?.value || '',
                         price: parseFloat(document.getElementById('productPrice')?.value) || 0,
                         original_price: parseFloat(document.getElementById('productOriginalPrice')?.value) || null,
