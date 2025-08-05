@@ -57,13 +57,17 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Rate limiting
+// Rate limiting - Gevşetilmiş ayarlar
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    windowMs: 5 * 60 * 1000, // 5 minutes (daha kısa pencere)
+    max: 1000, // limit each IP to 1000 requests per windowMs (çok daha yüksek)
     message: 'Too many requests from this IP, please try again later.',
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    skip: (req) => {
+        // Development için rate limiting'i atla
+        return req.ip === '127.0.0.1' || req.ip === '::1' || process.env.NODE_ENV === 'development';
+    }
 });
 
 app.use('/api/', limiter);
