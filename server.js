@@ -712,8 +712,9 @@ loadRoute('./routes/orders.js', '/api/orders');
 loadRoute('./routes/seo.js', '/api/seo');
 loadRoute('./routes/setup.js', '/api/setup');
 loadRoute('./routes/admin.js', '/api/admin');
+loadRoute('./routes/payment.js', '/api/payment'); // PayTR callback route
 
-console.log('🚀 Routes loaded: auth, users, products, orders, seo, setup, admin');
+console.log('🚀 Routes loaded: auth, users, products, orders, seo, setup, admin, payment');
 
 // ===========================================
 // 404 HANDLER

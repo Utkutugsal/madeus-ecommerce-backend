@@ -11,7 +11,12 @@ const user_ip = '127.0.0.1';
 const merchant_oid = 'MD' + Date.now();
 const email = 'test@madeusskincare.com';
 const payment_amount = 3099; // 30.99 TL in kuruş
-const user_basket = JSON.stringify([['Madeus Cleansing Foam', '30.99', 1]]);
+
+// PayTR resmi dokümantasyonuna göre: Base64 ile kodlanmış JSON
+const userBasketArray = [['Madeus Cleansing Foam', '30.99', 1]];
+const userBasketJson = JSON.stringify(userBasketArray);
+const user_basket = Buffer.from(userBasketJson).toString('base64');
+
 const no_installment = 0;
 const max_installment = 0;
 const currency = 'TL';

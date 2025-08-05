@@ -42,6 +42,10 @@ class PayTRService {
             ];
         });
 
+        // PayTR resmi dokümantasyonuna göre: Base64 ile kodlanmış JSON
+        const userBasketJson = JSON.stringify(userBasket);
+        const userBasketBase64 = Buffer.from(userBasketJson).toString('base64');
+
         const paymentData = {
             merchant_id: this.merchantId,
             user_ip: userIp,
@@ -63,8 +67,8 @@ class PayTRService {
             merchant_ok_url: `${process.env.FRONTEND_URL}/order-success`,
             merchant_fail_url: `${process.env.FRONTEND_URL}/order-failed`,
             
-            // Basket items (PayTR official format)
-            user_basket: JSON.stringify(userBasket),
+            // Basket items (PayTR official format: Base64 encoded JSON)
+            user_basket: userBasketBase64,
             
             // Optional fields (PayTR official)
             debug_on: this.testMode,
