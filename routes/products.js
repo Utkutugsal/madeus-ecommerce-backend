@@ -11,70 +11,37 @@ async function getProductsFromDatabase(filters = {}) {
   try {
     let query = `
       SELECT 
-        id, name, slug, custom_slug, description, price, original_price, category, brand, stock, 
-        image_url, gallery_images, is_active, created_at, updated_at,
-        show_in_homepage, show_in_popular, show_in_bestsellers, show_in_featured,
-        rating, reviews_count, trendyol_url, trendyol_rating, trendyol_review_count
+        id, name, slug, custom_slug, price, image_url, gallery_images, stock, is_active, brand, category, 
+        rating, reviews_count, trendyol_url, trendyol_rating, trendyol_review_count, trendyol_last_update,
+        created_at, updated_at
       FROM products 
       WHERE is_active = TRUE
     `;
     const values = [];
     const searchConditions = [];
-    
-    if (filters.category && filters.category !== 'all') {
-      query += ` AND category = ?`;
+    if (filters.category) {
+      query += ` AND brand = ?`;
       values.push(filters.category);
     }
-    
     if (filters.search) {
       const searchTerm = `%${filters.search}%`;
-      searchConditions.push(`name LIKE ? OR description LIKE ?`);
-      values.push(searchTerm, searchTerm);
+      searchConditions.push(`name LIKE ?`);
+      values.push(searchTerm);
     }
-    
-    if (filters.featured === 'true') {
-      query += ` AND show_in_featured = TRUE`;
-    }
-    
-    if (filters.bestSeller === 'true') {
-      query += ` AND show_in_bestsellers = TRUE`;
-    }
-    
     if(searchConditions.length > 0) {
       query += ` AND (${searchConditions.join(' OR ')})`;
     }
-    
     // Sorting
-    query += ` ORDER BY created_at DESC`;
-    
+    query += ` ORDER BY name ASC`;
     // Pagination
     const limit = Math.max(1, parseInt(filters.limit) || 10);
     const offset = Math.max(0, parseInt(filters.offset) || 0);
     query += ` LIMIT ${limit} OFFSET ${offset}`;
-    
     // Execute query
     const results = values.length > 0 ? await db.query(query, values) : await db.query(query);
-    
     // Toplam ürün sayısı
-    let totalQuery = 'SELECT COUNT(*) as total FROM products WHERE is_active = TRUE';
-    let totalValues = [];
-    
-    if (filters.category && filters.category !== 'all') {
-      totalQuery += ` AND category = ?`;
-      totalValues.push(filters.category);
-    }
-    
-    if (filters.featured === 'true') {
-      totalQuery += ` AND show_in_featured = TRUE`;
-    }
-    
-    if (filters.bestSeller === 'true') {
-      totalQuery += ` AND show_in_bestsellers = TRUE`;
-    }
-    
-    const totalResult = await db.query(totalQuery, totalValues);
+    const totalResult = await db.query('SELECT COUNT(*) as total FROM products WHERE is_active = TRUE');
     const total = totalResult[0].total;
-    
     // Her ürünün gallery_images alanını array olarak döndür
     const products = results.map(p => ({
       ...p,
@@ -85,31 +52,8 @@ async function getProductsFromDatabase(filters = {}) {
         } catch (e) {
           return [];
         }
-      })(),
-      images: (() => {
-        try {
-          if (!p.gallery_images || p.gallery_images === 'null' || p.gallery_images === '') return [];
-          return Array.isArray(p.gallery_images) ? p.gallery_images : JSON.parse(p.gallery_images);
-        } catch (e) {
-          return [];
-        }
-      })(),
-      mainImage: p.image_url || (p.gallery_images ? (() => {
-        try {
-          const images = Array.isArray(p.gallery_images) ? p.gallery_images : JSON.parse(p.gallery_images);
-          return images.length > 0 ? images[0] : '/placeholder.svg';
-        } catch (e) {
-          return '/placeholder.svg';
-        }
-      })() : '/placeholder.svg'),
-      originalPrice: p.original_price,
-      discount: p.original_price ? Math.round(((p.original_price - p.price) / p.original_price) * 100) : 0,
-      isNew: false,
-      isBestSeller: Boolean(p.show_in_bestsellers),
-      isFeatured: Boolean(p.show_in_featured),
-      reviewCount: p.reviews_count || 0
+      })()
     }));
-    
     return { products, total };
   } catch (error) {
     console.error('❌ Error getting products from database:', error);

@@ -1165,15 +1165,27 @@ router.post('/migrate-products', async (req, res) => {
     await db.query(createTableQuery);
     console.log('✅ Products tablosu hazır');
     
+    // Add custom_slug column if not exists
+    try {
+      await db.query('ALTER TABLE products ADD COLUMN custom_slug VARCHAR(255) UNIQUE');
+      console.log('✅ Custom slug kolonu eklendi');
+    } catch (error) {
+      if (error.code === 'ER_DUP_FIELDNAME') {
+        console.log('✅ Custom slug kolonu zaten mevcut');
+      } else {
+        console.log('⚠️ Custom slug kolonu eklenirken hata:', error.message);
+      }
+    }
+    
     let insertedCount = 0;
     
     // Insert each product
     for (const product of mockProducts) {
       const insertQuery = `
         INSERT INTO products (
-          id, name, slug, description, price, compare_price, featured_image,
+          id, name, slug, custom_slug, description, price, compare_price, featured_image,
           stock, rating, reviews_count, brand, is_active, is_featured, trendyol_url
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
           price = VALUES(price),
           stock = VALUES(stock),
@@ -1185,6 +1197,7 @@ router.post('/migrate-products', async (req, res) => {
         product.id,
         product.name,
         product.slug,
+        product.custom_slug || null,
         product.description,
         product.price,
         product.originalPrice || null,
