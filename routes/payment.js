@@ -128,4 +128,13 @@ router.get('/callback-test', (req, res) => {
     });
 });
 
+// PayTR callback GET route (for testing)
+router.get('/callback', (req, res) => {
+    res.json({
+        message: 'PayTR callback endpoint is accessible',
+        method: 'GET',
+        note: 'Real callbacks will use POST method'
+    });
+});
+
 module.exports = router; 
