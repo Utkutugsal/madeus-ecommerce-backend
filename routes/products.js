@@ -1,58 +1,7 @@
 const express = require('express');
-const { Database } = require('../config/database');
+const { db } = require('../config/database');
 
 const router = express.Router();
-
-// Test endpoint - ürünleri debug etmek için
-router.get('/debug', async (req, res) => {
-  try {
-    console.log('🔍 Products debug endpoint çağrıldı');
-    
-    const db = new Database();
-    
-    // Database bağlantısını test et
-    const connectionTest = await db.query('SELECT 1 as test');
-    console.log('✅ Database bağlantısı:', connectionTest[0]);
-    
-    // Products tablosunu kontrol et
-    const tableCheck = await db.query(`
-      SELECT TABLE_NAME 
-      FROM INFORMATION_SCHEMA.TABLES 
-      WHERE TABLE_NAME = 'products'
-    `);
-    console.log('📋 Products tablosu mevcut mu:', tableCheck.length > 0);
-    
-    if (tableCheck.length > 0) {
-      // Ürün sayısını kontrol et
-      const countResult = await db.query('SELECT COUNT(*) as count FROM products');
-      console.log('📊 Toplam ürün sayısı:', countResult[0].count);
-      
-      // İlk 5 ürünü listele
-      const products = await db.query('SELECT id, name, price, is_active FROM products LIMIT 5');
-      console.log('📦 İlk 5 ürün:', products);
-      
-      res.json({
-        success: true,
-        database_connection: connectionTest[0],
-        table_exists: tableCheck.length > 0,
-        total_products: countResult[0].count,
-        sample_products: products
-      });
-    } else {
-      res.json({
-        success: false,
-        error: 'Products tablosu bulunamadı'
-      });
-    }
-    
-  } catch (error) {
-    console.error('❌ Debug endpoint error:', error);
-    res.json({
-      success: false,
-      error: error.message
-    });
-  }
-});
 
 // ===========================================
 // HELPER FUNCTIONS
@@ -62,24 +11,33 @@ async function getProductsFromDatabase(filters = {}) {
   try {
     let query = `
       SELECT 
-        id, name, price, image_url, gallery_images, stock, is_active, brand, category, 
-        rating, reviews_count, trendyol_url, trendyol_rating, trendyol_review_count, trendyol_last_update,
-        created_at, updated_at
+        id, name, slug, description, price, original_price, category, brand, stock, 
+        image_url, gallery_images, is_active, created_at, updated_at,
+        show_in_homepage, show_in_popular, show_in_bestsellers, show_in_featured,
+        rating, reviews_count, trendyol_url, trendyol_rating, trendyol_review_count
       FROM products 
       WHERE is_active = TRUE
     `;
     const values = [];
     const searchConditions = [];
     
-    if (filters.category) {
-      query += ` AND brand = ?`;
+    if (filters.category && filters.category !== 'all') {
+      query += ` AND category = ?`;
       values.push(filters.category);
     }
     
     if (filters.search) {
       const searchTerm = `%${filters.search}%`;
-      searchConditions.push(`name LIKE ?`);
-      values.push(searchTerm);
+      searchConditions.push(`name LIKE ? OR description LIKE ?`);
+      values.push(searchTerm, searchTerm);
+    }
+    
+    if (filters.featured === 'true') {
+      query += ` AND show_in_featured = TRUE`;
+    }
+    
+    if (filters.bestSeller === 'true') {
+      query += ` AND show_in_bestsellers = TRUE`;
     }
     
     if(searchConditions.length > 0) {
@@ -87,22 +45,34 @@ async function getProductsFromDatabase(filters = {}) {
     }
     
     // Sorting
-    query += ` ORDER BY name ASC`;
+    query += ` ORDER BY created_at DESC`;
     
     // Pagination
-    const limit = Math.max(1, parseInt(filters.limit) || 50);
+    const limit = Math.max(1, parseInt(filters.limit) || 10);
     const offset = Math.max(0, parseInt(filters.offset) || 0);
     query += ` LIMIT ${limit} OFFSET ${offset}`;
     
-    console.log('🔍 Products query:', query);
-    console.log('🔍 Query values:', values);
-    
     // Execute query
     const results = values.length > 0 ? await db.query(query, values) : await db.query(query);
-    console.log('📦 Query results:', results.length);
     
     // Toplam ürün sayısı
-    const totalResult = await db.query('SELECT COUNT(*) as total FROM products WHERE is_active = TRUE');
+    let totalQuery = 'SELECT COUNT(*) as total FROM products WHERE is_active = TRUE';
+    let totalValues = [];
+    
+    if (filters.category && filters.category !== 'all') {
+      totalQuery += ` AND category = ?`;
+      totalValues.push(filters.category);
+    }
+    
+    if (filters.featured === 'true') {
+      totalQuery += ` AND show_in_featured = TRUE`;
+    }
+    
+    if (filters.bestSeller === 'true') {
+      totalQuery += ` AND show_in_bestsellers = TRUE`;
+    }
+    
+    const totalResult = await db.query(totalQuery, totalValues);
     const total = totalResult[0].total;
     
     // Her ürünün gallery_images alanını array olarak döndür
@@ -113,19 +83,37 @@ async function getProductsFromDatabase(filters = {}) {
           if (!p.gallery_images || p.gallery_images === 'null' || p.gallery_images === '') return [];
           return Array.isArray(p.gallery_images) ? p.gallery_images : JSON.parse(p.gallery_images);
         } catch (e) {
-          console.warn('Gallery images parse error:', e);
           return [];
         }
-      })()
+      })(),
+      images: (() => {
+        try {
+          if (!p.gallery_images || p.gallery_images === 'null' || p.gallery_images === '') return [];
+          return Array.isArray(p.gallery_images) ? p.gallery_images : JSON.parse(p.gallery_images);
+        } catch (e) {
+          return [];
+        }
+      })(),
+      mainImage: p.image_url || (p.gallery_images ? (() => {
+        try {
+          const images = Array.isArray(p.gallery_images) ? p.gallery_images : JSON.parse(p.gallery_images);
+          return images.length > 0 ? images[0] : '/placeholder.svg';
+        } catch (e) {
+          return '/placeholder.svg';
+        }
+      })() : '/placeholder.svg'),
+      originalPrice: p.original_price,
+      discount: p.original_price ? Math.round(((p.original_price - p.price) / p.original_price) * 100) : 0,
+      isNew: false,
+      isBestSeller: Boolean(p.show_in_bestsellers),
+      isFeatured: Boolean(p.show_in_featured),
+      reviewCount: p.reviews_count || 0
     }));
     
-    console.log('📦 Final products count:', products.length);
     return { products, total };
-    
   } catch (error) {
     console.error('❌ Error getting products from database:', error);
-    // Hata durumunda boş array döndür
-    return { products: [], total: 0 };
+    throw error;
   }
 }
 
@@ -199,56 +187,20 @@ async function getRelatedProducts(productId, categoryId) {
 // GET /api/products - Get all products with filtering, sorting, and pagination
 router.get('/', async (req, res, next) => {
   try {
-    console.log('🌐 Ana site products API çağrıldı');
-    
-    const db = new Database();
-    const { limit = 50, offset = 0 } = req.query;
-    
-    // Admin panel ile aynı query'yi kullan
-    const products = await db.query(`
-      SELECT 
-        p.id, p.name, p.price, p.stock, p.image_url, p.is_active, p.created_at, p.updated_at, p.brand, p.category,
-        p.description, p.original_price, p.gallery_images, p.show_in_homepage, p.show_in_popular, p.show_in_bestsellers, p.show_in_featured,
-        p.rating, p.reviews_count
-      FROM products p
-      WHERE p.is_active = TRUE
-      ORDER BY p.created_at DESC
-      LIMIT ${limit} OFFSET ${offset}
-    `);
-    
-    console.log('📦 Ana site products bulundu:', products.length);
-    
-    // Gallery images'ı parse et
-    const processedProducts = products.map(product => {
-      // Gallery images'ı parse et
-      if (product.gallery_images) {
-        try {
-          if (typeof product.gallery_images === 'string') {
-            const parsed = JSON.parse(product.gallery_images);
-            if (Array.isArray(parsed)) {
-              product.gallery_images = parsed;
-            }
-          }
-        } catch (error) {
-          console.warn('Gallery images parse error for product', product.id, ':', error);
-          product.gallery_images = [];
-        }
-      } else {
-        product.gallery_images = [];
+    const { limit = 10, offset = 0 } = req.query;
+    const { products, total } = await getProductsFromDatabase(req.query);
+    res.json({
+      success: true,
+      data: {
+        products,
+        total,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        hasMore: (parseInt(offset) + parseInt(limit)) < total
       }
-      
-      return product;
     });
-    
-    console.log('📦 İşlenmiş ürünler:', processedProducts.length);
-    
-    // Frontend'in beklediği format: direkt products array'i
-    res.json(processedProducts);
-    
   } catch (error) {
-    console.error('❌ Ana site products API error:', error);
-    // Hata durumunda boş array döndür
-    res.json([]);
+    next(error);
   }
 });
 

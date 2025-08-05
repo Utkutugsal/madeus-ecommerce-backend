@@ -815,9 +815,10 @@ router.get('/products', adminAuth, async (req, res) => {
 
         const products = await db.query(`
             SELECT 
-                p.id, p.name, p.price, p.stock, p.image_url, p.is_active, p.created_at, p.updated_at, p.brand, p.category,
-                p.description, p.original_price, p.gallery_images, p.show_in_homepage, p.show_in_popular, p.show_in_bestsellers, p.show_in_featured,
-                p.rating, p.reviews_count
+                p.id, p.name, p.slug, p.description, p.price, p.original_price, p.category, p.brand, p.stock, 
+                p.image_url, p.gallery_images, p.is_active, p.created_at, p.updated_at,
+                p.show_in_homepage, p.show_in_popular, p.show_in_bestsellers, p.show_in_featured,
+                p.rating, p.reviews_count, p.trendyol_url, p.trendyol_rating, p.trendyol_review_count
             FROM products p
             ${whereClause}
             ORDER BY p.created_at DESC
