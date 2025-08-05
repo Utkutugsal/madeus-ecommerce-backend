@@ -19,29 +19,41 @@ async function getProductsFromDatabase(filters = {}) {
     `;
     const values = [];
     const searchConditions = [];
+    
     if (filters.category) {
       query += ` AND brand = ?`;
       values.push(filters.category);
     }
+    
     if (filters.search) {
       const searchTerm = `%${filters.search}%`;
       searchConditions.push(`name LIKE ?`);
       values.push(searchTerm);
     }
+    
     if(searchConditions.length > 0) {
       query += ` AND (${searchConditions.join(' OR ')})`;
     }
+    
     // Sorting
     query += ` ORDER BY name ASC`;
+    
     // Pagination
-    const limit = Math.max(1, parseInt(filters.limit) || 10);
+    const limit = Math.max(1, parseInt(filters.limit) || 50);
     const offset = Math.max(0, parseInt(filters.offset) || 0);
     query += ` LIMIT ${limit} OFFSET ${offset}`;
+    
+    console.log('🔍 Products query:', query);
+    console.log('🔍 Query values:', values);
+    
     // Execute query
     const results = values.length > 0 ? await db.query(query, values) : await db.query(query);
+    console.log('📦 Query results:', results.length);
+    
     // Toplam ürün sayısı
     const totalResult = await db.query('SELECT COUNT(*) as total FROM products WHERE is_active = TRUE');
     const total = totalResult[0].total;
+    
     // Her ürünün gallery_images alanını array olarak döndür
     const products = results.map(p => ({
       ...p,
@@ -50,14 +62,19 @@ async function getProductsFromDatabase(filters = {}) {
           if (!p.gallery_images || p.gallery_images === 'null' || p.gallery_images === '') return [];
           return Array.isArray(p.gallery_images) ? p.gallery_images : JSON.parse(p.gallery_images);
         } catch (e) {
+          console.warn('Gallery images parse error:', e);
           return [];
         }
       })()
     }));
+    
+    console.log('📦 Final products count:', products.length);
     return { products, total };
+    
   } catch (error) {
     console.error('❌ Error getting products from database:', error);
-    throw error;
+    // Hata durumunda boş array döndür
+    return { products: [], total: 0 };
   }
 }
 
@@ -131,20 +148,15 @@ async function getRelatedProducts(productId, categoryId) {
 // GET /api/products - Get all products with filtering, sorting, and pagination
 router.get('/', async (req, res, next) => {
   try {
-    const { limit = 10, offset = 0 } = req.query;
+    const { limit = 50, offset = 0 } = req.query; // Limit'i 50'ye çıkar
     const { products, total } = await getProductsFromDatabase(req.query);
-    res.json({
-      success: true,
-      data: {
-        products,
-        total,
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        hasMore: (parseInt(offset) + parseInt(limit)) < total
-      }
-    });
+    
+    // Frontend'in beklediği format: direkt products array'i
+    res.json(products);
   } catch (error) {
-    next(error);
+    console.error('❌ Products API error:', error);
+    // Hata durumunda boş array döndür
+    res.json([]);
   }
 });
 

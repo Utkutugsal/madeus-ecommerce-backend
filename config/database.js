@@ -73,9 +73,9 @@ const dbConfig = useUrlConfig ? {
 } : {
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT) || 3306,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS,
-    database: process.env.DB_NAME,
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASS || '',
+    database: process.env.DB_NAME || 'madeus_db',
     charset: 'utf8mb4',
     
     // Connection pool settings (MySQL2 compatible)
@@ -99,15 +99,8 @@ const dbConfig = useUrlConfig ? {
     
     // Connection timeout settings
     connectTimeout: 30000,
-    
-    // Railway connection flags
-    flags: [
-        'LONG_PASSWORD',
-        'LONG_FLAG', 
-        'TRANSACTIONS',
-        'PROTOCOL_41',
-        'SECURE_CONNECTION'
-    ]
+    acquireTimeout: 30000,
+    timeout: 30000
 };
 
 // Log connection attempt (for debugging)
