@@ -57,19 +57,16 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Rate limiting - Çok daha yüksek limit
+// Rate limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 10000, // limit each IP to 10000 requests per windowMs (çok artırıldı)
+    max: 100, // limit each IP to 100 requests per windowMs
     message: 'Too many requests from this IP, please try again later.',
     standardHeaders: true,
     legacyHeaders: false
 });
 
-// Rate limiting'i sadece belirli endpoint'lerde uygula
-app.use('/api/auth/', limiter); // Auth endpoint'leri için
-app.use('/api/admin/', limiter); // Admin endpoint'leri için
-// Products API için rate limiting yok
+app.use('/api/', limiter);
 
 // Response time middleware
 app.use(responseTime());

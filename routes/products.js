@@ -11,7 +11,7 @@ async function getProductsFromDatabase(filters = {}) {
   try {
     let query = `
       SELECT 
-        id, name, description, price, image_url, gallery_images, stock, is_active, brand, category, 
+        id, name, price, image_url, gallery_images, stock, is_active, brand, category, 
         rating, reviews_count, trendyol_url, trendyol_rating, trendyol_review_count, trendyol_last_update,
         created_at, updated_at
       FROM products 
@@ -241,7 +241,7 @@ router.get('/:id', async (req, res, next) => {
     if (isNaN(productId)) {
       return res.status(400).json({ success: false, error: 'Invalid product ID' });
     }
-    const sql = `SELECT id, name, description, price, image_url, gallery_images, stock, is_active, brand, category, rating, reviews_count, created_at, updated_at FROM products WHERE id = ? AND is_active = TRUE`;
+    const sql = `SELECT * FROM products WHERE id = ? AND is_active = TRUE`;
     const result = await db.query(sql, [productId]);
     if (!result || result.length === 0) {
       return res.status(404).json({ success: false, error: 'Product not found' });
