@@ -1032,7 +1032,7 @@ router.put('/products/:id', adminAuth, async (req, res) => {
             name, description, price, original_price, 
             category, stock, image_url, gallery_images, brand, is_active,
             show_in_homepage, show_in_popular, show_in_bestsellers, show_in_featured,
-            rating, reviews_count
+            rating, reviews_count, custom_slug
         } = req.body;
 
         const updateFields = [];
@@ -1114,6 +1114,11 @@ router.put('/products/:id', adminAuth, async (req, res) => {
             updateFields.push('reviews_count = ?');
             updateValues.push(reviews_count);
             console.log('✅ Reviews Count ekleniyor:', reviews_count);
+        }
+        if (custom_slug !== undefined) {
+            updateFields.push('custom_slug = ?');
+            updateValues.push(custom_slug);
+            console.log('✅ Custom Slug ekleniyor:', custom_slug);
         }
 
         updateFields.push('updated_at = NOW()');

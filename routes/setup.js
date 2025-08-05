@@ -1145,6 +1145,7 @@ router.post('/migrate-products', async (req, res) => {
         id INT PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         slug VARCHAR(255) UNIQUE NOT NULL,
+        custom_slug VARCHAR(255) UNIQUE,
         description TEXT,
         price DECIMAL(10,2) NOT NULL,
         compare_price DECIMAL(10,2),

@@ -11,7 +11,7 @@ async function getProductsFromDatabase(filters = {}) {
   try {
     let query = `
       SELECT 
-        id, name, slug, description, price, original_price, category, brand, stock, 
+        id, name, slug, custom_slug, description, price, original_price, category, brand, stock, 
         image_url, gallery_images, is_active, created_at, updated_at,
         show_in_homepage, show_in_popular, show_in_bestsellers, show_in_featured,
         rating, reviews_count, trendyol_url, trendyol_rating, trendyol_review_count
