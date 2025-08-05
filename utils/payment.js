@@ -19,10 +19,12 @@ class PayTRService {
         });
     }
 
-    // Create payment hash for security
+    // Create payment hash for security (PayTR official method)
     createPaymentHash(data) {
-        const hashString = `${data.merchant_id}${data.user_ip}${data.merchant_oid}${data.email}${data.payment_amount}${data.payment_type}${data.installment_count}${data.currency}${data.test_mode}${this.merchantSalt}`;
-        return crypto.createHmac('sha256', this.merchantKey).update(hashString).digest('base64');
+        // PayTR official hash method: merchant_id + user_ip + merchant_oid + email + payment_amount + user_basket + no_installment + max_installment + currency + test_mode + merchant_salt
+        const hashString = `${data.merchant_id}${data.user_ip}${data.merchant_oid}${data.email}${data.payment_amount}${data.user_basket}${data.no_installment}${data.max_installment}${data.currency}${data.test_mode}`;
+        const paytrToken = hashString + this.merchantSalt;
+        return crypto.createHmac('sha256', this.merchantKey).update(paytrToken).digest('base64');
     }
 
     // Prepare payment data for PayTR
@@ -61,10 +63,10 @@ class PayTRService {
             merchant_ok_url: `${process.env.FRONTEND_URL}/order-success`,
             merchant_fail_url: `${process.env.FRONTEND_URL}/order-failed`,
             
-            // Basket items
+            // Basket items (PayTR official format)
             user_basket: JSON.stringify(userBasket),
             
-            // Optional fields
+            // Optional fields (PayTR official)
             debug_on: this.testMode,
             lang: 'tr',
             no_installment: 0,
