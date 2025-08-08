@@ -1289,6 +1289,23 @@
                                     </div>
                                 </div>
 
+                                <!-- About/Brand Section Image -->
+                                <div class="settings-card">
+                                    <div class="card-header">
+                                        <div class="card-title">
+                                            <i class="fas fa-image"></i>
+                                            <span>Hakkımızda Bölümü Görseli</span>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <label for="brandSectionImage">Tanıtım Görseli URL</label>
+                                            <input type="text" id="brandSectionImage" placeholder="https://.../about-hero.jpg" class="form-input">
+                                            <small style="color: #64748b; font-size: 12px;">Ana sayfadaki "Madeus Skincare Nedir?" bölümündeki büyük görsel.</small>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <!-- Campaign Images -->
                                 <div class="settings-card">
                                     <div class="card-header">
@@ -2765,6 +2782,7 @@
                         document.getElementById('campaignImage1').value = settings.campaign_image_1 || '';
                         document.getElementById('campaignImage2').value = settings.campaign_image_2 || '';
                         document.getElementById('brandLogo').value = settings.brand_logo || '';
+                        document.getElementById('brandSectionImage').value = settings.brand_section_image || '';
                         document.getElementById('heroTitle').value = settings.hero_title || '';
                         document.getElementById('heroSubtitle').value = settings.hero_subtitle || '';
                         
@@ -2788,13 +2806,14 @@
                     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Kaydediliyor...';
                     btn.disabled = true;
                     
-                    const settings = {
+                        const settings = {
                         hero_image_1: document.getElementById('heroImage1').value.trim(),
                         hero_image_2: document.getElementById('heroImage2').value.trim(),
                         hero_image_3: document.getElementById('heroImage3').value.trim(),
                         campaign_image_1: document.getElementById('campaignImage1').value.trim(),
                         campaign_image_2: document.getElementById('campaignImage2').value.trim(),
                         brand_logo: document.getElementById('brandLogo').value.trim(),
+                            brand_section_image: document.getElementById('brandSectionImage').value.trim(),
                         hero_title: document.getElementById('heroTitle').value.trim(),
                         hero_subtitle: document.getElementById('heroSubtitle').value.trim()
                     };
