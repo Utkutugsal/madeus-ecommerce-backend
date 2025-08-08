@@ -49,43 +49,55 @@ router.get('/sitemap.xml', async (req, res) => {
   try {
     const baseUrl = req.protocol + '://' + req.get('host');
     const lastmod = new Date().toISOString().split('T')[0];
-    
+
+    const db = new Database();
+
     // Ana sayfalar
     const staticPages = [
       { url: '/', priority: '1.0', changefreq: 'daily' },
-      { url: '/products', priority: '0.9', changefreq: 'daily' },
+      { url: '/urunler', priority: '0.9', changefreq: 'daily' },
       { url: '/blog', priority: '0.8', changefreq: 'daily' },
-      { url: '/about', priority: '0.7', changefreq: 'monthly' },
-      { url: '/sales-points', priority: '0.6', changefreq: 'weekly' }
+      { url: '/hakkimizda', priority: '0.7', changefreq: 'monthly' },
+      { url: '/satis-noktalari', priority: '0.6', changefreq: 'weekly' }
     ];
 
-    // Ürün sayfaları (dinamik)
-    const productPages = [];
-    for (let i = 1; i <= 6; i++) {
-      productPages.push({
-        url: `/product/${i}`,
+    // Ürünleri veritabanından çek
+    const products = await db.query(`SELECT id, name, slug, custom_slug, updated_at FROM products WHERE is_active = TRUE ORDER BY updated_at DESC`);
+
+    const toSlug = (text) => (text || '')
+      .toLowerCase()
+      .replace(/ğ/g, 'g')
+      .replace(/ü/g, 'u')
+      .replace(/ş/g, 's')
+      .replace(/ı/g, 'i')
+      .replace(/ö/g, 'o')
+      .replace(/ç/g, 'c')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    const productPages = products.map(p => {
+      const productSlug = p.custom_slug || p.slug || `${toSlug(p.name)}-${p.id}`;
+      return {
+        url: `/urun/${productSlug}`,
+        priority: '0.85',
+        changefreq: 'weekly',
+        lastmod: (p.updated_at ? new Date(p.updated_at).toISOString().split('T')[0] : lastmod)
+      };
+    });
+
+    // Ürün blog sayfaları
+    const productBlogPages = products.map(p => {
+      const productSlug = p.custom_slug || p.slug || `${toSlug(p.name)}-${p.id}`;
+      return {
+        url: `/blog/${productSlug}`,
         priority: '0.8',
-        changefreq: 'weekly'
-      });
-    }
+        changefreq: 'weekly',
+        lastmod: (p.updated_at ? new Date(p.updated_at).toISOString().split('T')[0] : lastmod)
+      };
+    });
 
-    // Blog sayfaları
-    const blogPosts = [
-      'dogal-cilt-bakim-rutini-rehber',
-      'organik-vs-sentetik-kozmetik',
-      'yaslanma-karsiti-dogal-icerikler',
-      'hassas-cilt-icin-altin-kurallar',
-      'gunes-koruyucu-secimi-spf-rehberi',
-      'kis-aylarinda-cilt-bakimi'
-    ];
-
-    const blogPages = blogPosts.map(slug => ({
-      url: `/blog/${slug}`,
-      priority: '0.7',
-      changefreq: 'monthly'
-    }));
-
-    const allPages = [...staticPages, ...productPages, ...blogPages];
+    const allPages = [...staticPages, ...productPages, ...productBlogPages];
 
     let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
@@ -95,7 +107,7 @@ router.get('/sitemap.xml', async (req, res) => {
       sitemap += `
   <url>
     <loc>${baseUrl}${page.url}</loc>
-    <lastmod>${lastmod}</lastmod>
+    <lastmod>${page.lastmod || lastmod}</lastmod>
     <changefreq>${page.changefreq}</changefreq>
     <priority>${page.priority}</priority>
   </url>`;
