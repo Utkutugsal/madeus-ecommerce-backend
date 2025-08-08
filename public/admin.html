@@ -1306,6 +1306,42 @@
                                     </div>
                                 </div>
 
+                                <!-- Category Intro Texts -->
+                                <div class="settings-card">
+                                    <div class="card-header">
+                                        <div class="card-title">
+                                            <i class="fas fa-heading"></i>
+                                            <span>Kategori Açılış Yazıları (SEO)</span>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <label for="introDudak">Dudak Bakımı Açılış Metni</label>
+                                            <textarea id="introDudak" class="form-input" rows="3" placeholder="Dudak bakımı, lip balm, nemlendirici... doğal ve etkili çözümler"></textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="introYuz">Yüz Serumları Açılış Metni</label>
+                                            <textarea id="introYuz" class="form-input" rows="3" placeholder="Vitamin C, hyaluronic acid, anti-aging..."></textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="introTemizlik">Temizlik Ürünleri Açılış Metni</label>
+                                            <textarea id="introTemizlik" class="form-input" rows="3" placeholder="Temizleme jeli, köpük, probiyotik..."></textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="introGunes">Güneş Koruma Açılış Metni</label>
+                                            <textarea id="introGunes" class="form-input" rows="3" placeholder="SPF, UVA/UVB, günlük koruma..."></textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="introSac">Saç Bakımı Açılış Metni</label>
+                                            <textarea id="introSac" class="form-input" rows="3" placeholder="Biberiye, keratin, dökülme karşıtı..."></textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="introAksesuar">Aksesuarlar Açılış Metni</label>
+                                            <textarea id="introAksesuar" class="form-input" rows="3" placeholder="Bakım aksesuarları..."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <!-- Campaign Images -->
                                 <div class="settings-card">
                                     <div class="card-header">
@@ -2783,6 +2819,13 @@
                         document.getElementById('campaignImage2').value = settings.campaign_image_2 || '';
                         document.getElementById('brandLogo').value = settings.brand_logo || '';
                         document.getElementById('brandSectionImage').value = settings.brand_section_image || '';
+                        // Category intros
+                        document.getElementById('introDudak').value = settings.intro_dudak_bakimi || '';
+                        document.getElementById('introYuz').value = settings.intro_yuz_serumlari || '';
+                        document.getElementById('introTemizlik').value = settings.intro_temizlik_urunleri || '';
+                        document.getElementById('introGunes').value = settings.intro_gunes_koruma || '';
+                        document.getElementById('introSac').value = settings.intro_sac_bakimi || '';
+                        document.getElementById('introAksesuar').value = settings.intro_aksesuarlar || '';
                         document.getElementById('heroTitle').value = settings.hero_title || '';
                         document.getElementById('heroSubtitle').value = settings.hero_subtitle || '';
                         
@@ -2812,8 +2855,14 @@
                         hero_image_3: document.getElementById('heroImage3').value.trim(),
                         campaign_image_1: document.getElementById('campaignImage1').value.trim(),
                         campaign_image_2: document.getElementById('campaignImage2').value.trim(),
-                        brand_logo: document.getElementById('brandLogo').value.trim(),
+                            brand_logo: document.getElementById('brandLogo').value.trim(),
                             brand_section_image: document.getElementById('brandSectionImage').value.trim(),
+                            intro_dudak_bakimi: document.getElementById('introDudak').value.trim(),
+                            intro_yuz_serumlari: document.getElementById('introYuz').value.trim(),
+                            intro_temizlik_urunleri: document.getElementById('introTemizlik').value.trim(),
+                            intro_gunes_koruma: document.getElementById('introGunes').value.trim(),
+                            intro_sac_bakimi: document.getElementById('introSac').value.trim(),
+                            intro_aksesuarlar: document.getElementById('introAksesuar').value.trim(),
                         hero_title: document.getElementById('heroTitle').value.trim(),
                         hero_subtitle: document.getElementById('heroSubtitle').value.trim()
                     };

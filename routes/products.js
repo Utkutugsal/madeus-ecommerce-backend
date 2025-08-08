@@ -261,4 +261,87 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
+// ===========================================
+// PRODUCT REVIEWS
+// ===========================================
+
+// Ensure reviews table exists
+async function ensureReviewsTable(db) {
+  await db.query(`CREATE TABLE IF NOT EXISTS reviews (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    name VARCHAR(120) NOT NULL,
+    rating TINYINT NOT NULL,
+    comment TEXT,
+    status ENUM('approved','pending','rejected') DEFAULT 'approved',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_product_id (product_id)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+}
+
+// GET /api/products/:id/reviews - list reviews for a product
+router.get('/:id/reviews', async (req, res, next) => {
+  try {
+    const productId = parseInt(req.params.id);
+    if (isNaN(productId)) return res.status(400).json({ success: false, error: 'Invalid product ID' });
+
+    const db = new (require('../config/database').Database)();
+    await ensureReviewsTable(db);
+
+    const reviews = await db.query(
+      `SELECT id, product_id, name, rating, comment, status, created_at 
+       FROM reviews 
+       WHERE product_id = ? AND status = 'approved' 
+       ORDER BY created_at DESC LIMIT 100`,
+      [productId]
+    );
+
+    // Compute aggregate
+    let avg = 0;
+    if (reviews.length > 0) {
+      avg = reviews.reduce((s, r) => s + Number(r.rating || 0), 0) / reviews.length;
+      avg = Math.round(avg * 10) / 10;
+    }
+
+    res.json({ success: true, data: { reviews, average: avg, count: reviews.length } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/products/:id/reviews - add a review
+router.post('/:id/reviews', async (req, res, next) => {
+  try {
+    const productId = parseInt(req.params.id);
+    if (isNaN(productId)) return res.status(400).json({ success: false, error: 'Invalid product ID' });
+
+    const { name, rating, comment } = req.body || {};
+    const safeName = (name || '').toString().trim().slice(0, 120) || 'Anonim';
+    const safeRating = Math.max(1, Math.min(5, parseInt(rating)));
+    const safeComment = (comment || '').toString().trim().slice(0, 2000);
+
+    const db = new (require('../config/database').Database)();
+    await ensureReviewsTable(db);
+
+    // Ensure product exists
+    const prod = await db.query('SELECT id FROM products WHERE id = ? AND is_active = TRUE', [productId]);
+    if (!prod || prod.length === 0) return res.status(404).json({ success: false, error: 'Product not found' });
+
+    await db.query(
+      `INSERT INTO reviews (product_id, name, rating, comment, status) VALUES (?, ?, ?, ?, 'approved')`,
+      [productId, safeName, safeRating, safeComment]
+    );
+
+    // Recalculate aggregate and update products table
+    const stats = await db.query(`SELECT AVG(rating) as avg_rating, COUNT(*) as cnt FROM reviews WHERE product_id = ? AND status = 'approved'`, [productId]);
+    const avg = Math.round((stats[0].avg_rating || 0) * 10) / 10;
+    const cnt = stats[0].cnt || 0;
+    await db.query('UPDATE products SET rating = ?, reviews_count = ? WHERE id = ?', [avg, cnt, productId]);
+
+    res.json({ success: true, message: 'Yorum eklendi', data: { rating: avg, reviews_count: cnt } });
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;
