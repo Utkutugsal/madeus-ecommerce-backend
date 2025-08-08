@@ -2287,6 +2287,8 @@
                 document.getElementById('productName').value = '';
                 document.getElementById('productBrand').value = '';
                 document.getElementById('productCustomSlug').value = '';
+                // Kullanıcı boş bırakırsa otomatik doldurma için placeholder göster
+                document.getElementById('productCustomSlug').placeholder = 'boş bırakabilirsiniz';
                 document.getElementById('productDescription').value = '';
                 document.getElementById('productPrice').value = '';
                 document.getElementById('productOriginalPrice').value = '';
@@ -2492,7 +2494,7 @@
                     const productData = {
                         name: document.getElementById('productName')?.value || '',
                         brand: document.getElementById('productBrand')?.value || 'MADEUS',
-                        custom_slug: document.getElementById('productCustomSlug')?.value || '',
+                        custom_slug: (document.getElementById('productCustomSlug')?.value || '').trim(),
                         description: document.getElementById('productDescription')?.value || '',
                         price: parseFloat(document.getElementById('productPrice')?.value) || 0,
                         original_price: parseFloat(document.getElementById('productOriginalPrice')?.value) || null,

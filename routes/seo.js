@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { Database } = require('../config/database');
 
 // SEO Keywords Database
 const seoKeywords = {
@@ -557,3 +558,27 @@ router.get('/health', (req, res) => {
 });
 
 module.exports = router; 
+
+// Public Site Settings (read-only)
+router.get('/site-settings', async (req, res) => {
+  try {
+    const db = new Database();
+    // Tablo yoksa boş ayarlar dön
+    const tableCheck = await db.query(`SHOW TABLES LIKE 'site_settings'`);
+    if (tableCheck.length === 0) {
+      return res.json({
+        success: true,
+        data: {}
+      });
+    }
+
+    const settings = await db.query('SELECT setting_key, setting_value FROM site_settings');
+    const out = {};
+    settings.forEach(s => { out[s.setting_key] = s.setting_value; });
+
+    res.json({ success: true, data: out });
+  } catch (error) {
+    console.error('Public site-settings error:', error);
+    res.status(500).json({ success: false, message: 'Site ayarları alınamadı' });
+  }
+});

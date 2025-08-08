@@ -1047,12 +1047,14 @@ router.put('/products/:id', adminAuth, async (req, res) => {
             updateValues.push(description);
         }
         if (price !== undefined) {
+            const safePrice = price === null || price === '' || isNaN(parseFloat(price)) ? null : parseFloat(price);
             updateFields.push('price = ?');
-            updateValues.push(price);
+            updateValues.push(safePrice);
         }
         if (original_price !== undefined) {
+            const safeOriginal = original_price === null || original_price === '' || isNaN(parseFloat(original_price)) ? null : parseFloat(original_price);
             updateFields.push('original_price = ?');
-            updateValues.push(original_price);
+            updateValues.push(safeOriginal);
         }
         if (category !== undefined) {
             updateFields.push('category = ?');
@@ -1116,9 +1118,41 @@ router.put('/products/:id', adminAuth, async (req, res) => {
             console.log('✅ Reviews Count ekleniyor:', reviews_count);
         }
         if (custom_slug !== undefined) {
+            const slugify = (text) => {
+                return String(text || '')
+                    .toLowerCase()
+                    .trim()
+                    .replace(/ğ/g, 'g')
+                    .replace(/ü/g, 'u')
+                    .replace(/ş/g, 's')
+                    .replace(/ı/g, 'i')
+                    .replace(/ö/g, 'o')
+                    .replace(/ç/g, 'c')
+                    .replace(/[^a-z0-9]/g, '-')
+                    .replace(/-+/g, '-')
+                    .replace(/^-|-$/g, '');
+            };
+
+            const trimmed = typeof custom_slug === 'string' ? custom_slug.trim() : '';
+            const normalizedCustomSlug = trimmed === '' ? null : slugify(trimmed);
+
+            // Benzersizlik kontrolü (NULL hariç)
+            if (normalizedCustomSlug) {
+                const exists = await db.query(
+                    'SELECT id FROM products WHERE custom_slug = ? AND id != ?',
+                    [normalizedCustomSlug, id]
+                );
+                if (exists && exists.length > 0) {
+                    return res.status(409).json({
+                        success: false,
+                        message: 'Bu özel URL zaten kullanımda. Lütfen farklı bir Özel URL girin.'
+                    });
+                }
+            }
+
             updateFields.push('custom_slug = ?');
-            updateValues.push(custom_slug);
-            console.log('✅ Custom Slug ekleniyor:', custom_slug);
+            updateValues.push(normalizedCustomSlug);
+            console.log('✅ Custom Slug ekleniyor:', normalizedCustomSlug);
         }
 
         updateFields.push('updated_at = NOW()');
