@@ -1372,6 +1372,28 @@
                                     </div>
                                 </div>
 
+                                <!-- Top Banner (Announcement Bar) -->
+                                <div class="settings-card">
+                                    <div class="card-header">
+                                        <h4><i class="fas fa-flag"></i> Üst Duyuru Şeridi</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <label for="top_banner_enabled">Üst Banner Durumu</label>
+                                            <select id="top_banner_enabled" class="form-input">
+                                                <option value="1">Açık</option>
+                                                <option value="0">Kapalı</option>
+                                            </select>
+                                            <small style="color:#64748b; font-size:12px;">Tüm sayfaların en üstünde kayan duyuru şeridini aç/kapat.</small>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="top_banner_messages">Üst Banner Mesajları</label>
+                                            <textarea id="top_banner_messages" class="form-textarea" rows="3" placeholder="Tüm ürünlerde; 2. ürüne %10 indirim. | 750₺ üzeri ücretsiz kargo | Doğal, vegan ve cruelty-free"></textarea>
+                                            <small style="color:#64748b; font-size:12px;">Birden fazla mesajı | (dikey çizgi) ile ayırın. İsterseniz JSON dizi de girebilirsiniz.</small>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <!-- Text Settings -->
                                 <div class="settings-card">
                                     <div class="card-header">
@@ -2828,6 +2850,13 @@
                         document.getElementById('introAksesuar').value = settings.intro_aksesuarlar || '';
                         document.getElementById('heroTitle').value = settings.hero_title || '';
                         document.getElementById('heroSubtitle').value = settings.hero_subtitle || '';
+
+                        // Top banner fields
+                        const bannerEnabled = String(settings.top_banner_enabled || '1');
+                        const enabledEl = document.getElementById('top_banner_enabled');
+                        if (enabledEl) enabledEl.value = (bannerEnabled === 'true' ? '1' : bannerEnabled);
+                        const bannerMsgs = document.getElementById('top_banner_messages');
+                        if (bannerMsgs) bannerMsgs.value = settings.top_banner_messages || 'Tüm ürünlerde; 2. ürüne %10 indirim. | 750₺ üzeri ücretsiz kargo | Doğal, vegan ve cruelty-free';
                         
                         console.log('Site ayarları yüklendi:', settings);
                     } else {
@@ -2863,8 +2892,10 @@
                             intro_gunes_koruma: document.getElementById('introGunes').value.trim(),
                             intro_sac_bakimi: document.getElementById('introSac').value.trim(),
                             intro_aksesuarlar: document.getElementById('introAksesuar').value.trim(),
-                        hero_title: document.getElementById('heroTitle').value.trim(),
-                        hero_subtitle: document.getElementById('heroSubtitle').value.trim()
+                            hero_title: document.getElementById('heroTitle').value.trim(),
+                            hero_subtitle: document.getElementById('heroSubtitle').value.trim(),
+                            top_banner_enabled: document.getElementById('top_banner_enabled').value,
+                            top_banner_messages: document.getElementById('top_banner_messages').value.trim()
                     };
                     
                     const response = await fetch('/api/admin/site-settings', {
