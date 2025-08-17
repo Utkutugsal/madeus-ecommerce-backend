@@ -693,15 +693,15 @@ router.post('/addresses', authenticateToken, async (req, res) => {
         
         const params = [
             req.user.userId,
-            title || null,
-            first_name || null,
-            last_name || null,
-            address_line_1 || null,
+            title || '',
+            first_name || '',
+            last_name || '',
+            address_line_1 || '',
             address_line_2 || null,
-            city || null,
-            district || null,
-            postal_code || null,
-            phone || null,
+            city || '',
+            district || '',
+            postal_code || '',
+            phone || '',
             is_default ? 1 : 0
         ];
         
@@ -865,15 +865,15 @@ router.post('/users/addresses', authenticateToken, async (req, res) => {
         
         const params = [
             req.user.userId,
-            title,
-            first_name,
-            last_name,
-            address_line_1,
+            title || '',
+            first_name || '',
+            last_name || '',
+            address_line_1 || '',
             address_line_2 || null,
-            city,
-            district,
-            postal_code,
-            phone,
+            city || '',
+            district || '',
+            postal_code || '',
+            phone || '',
             is_default ? 1 : 0
         ];
         
@@ -918,8 +918,8 @@ router.put('/users/addresses/:id', authenticateToken, async (req, res) => {
         `;
         
         const params = [
-            title, first_name, last_name, address_line_1, address_line_2 || null,
-            city, district, postal_code, phone, is_default ? 1 : 0,
+            title || '', first_name || '', last_name || '', address_line_1 || '', address_line_2 || null,
+            city || '', district || '', postal_code || '', phone || '', is_default ? 1 : 0,
             addressId, req.user.userId
         ];
 

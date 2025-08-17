@@ -248,15 +248,15 @@ router.post('/addresses', authenticateToken, async (req, res) => {
         
         const params = [
             req.user.userId,
-            title,
-            first_name,
-            last_name,
-            address_line_1,
+            title || '',
+            first_name || '',
+            last_name || '',
+            address_line_1 || '',
             address_line_2 || null,
-            city,
-            district,
-            postal_code,
-            phone,
+            city || '',
+            district || '',
+            postal_code || '',
+            phone || '',
             is_default ? 1 : 0
         ];
         
@@ -301,8 +301,8 @@ router.put('/addresses/:id', authenticateToken, async (req, res) => {
         `;
         
         const params = [
-            title, first_name, last_name, address_line_1, address_line_2 || null,
-            city, district, postal_code, phone, is_default ? 1 : 0,
+            title || '', first_name || '', last_name || '', address_line_1 || '', address_line_2 || null,
+            city || '', district || '', postal_code || '', phone || '', is_default ? 1 : 0,
             addressId, req.user.userId
         ];
 

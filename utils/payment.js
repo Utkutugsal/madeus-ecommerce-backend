@@ -64,8 +64,8 @@ class PayTRService {
             user_city: orderData.userCity || '',
             
             // URLs
-            merchant_ok_url: `${process.env.FRONTEND_URL}/order-success`,
-            merchant_fail_url: `${process.env.FRONTEND_URL}/order-failed`,
+            merchant_ok_url: `${process.env.FRONTEND_URL}/siparis-basarili`,
+            merchant_fail_url: `${process.env.FRONTEND_URL}/siparis-basarisiz`,
             
             // Basket items (PayTR official format: Base64 encoded JSON)
             user_basket: userBasketBase64,
