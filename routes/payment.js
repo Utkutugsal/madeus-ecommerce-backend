@@ -82,7 +82,7 @@ router.post('/callback', async (req, res) => {
                 // Başarılı ödeme
                 await db.query(
                     `UPDATE orders SET 
-                     status = 'paid', 
+                     status = 'confirmed', 
                      payment_status = 'completed',
                      payment_amount = ?,
                      payment_type = ?,

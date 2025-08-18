@@ -623,7 +623,10 @@ router.post('/guest-checkout', async (req, res) => {
             data: {
                 orderId: orderId,
                 orderNumber: orderNumber,
-                customerEmail: customerInfo.email
+                customerEmail: customerInfo.email,
+                customerName: customerInfo.name,
+                customerPhone: customerInfo.phone,
+                totalAmount: total_amount
             }
         });
 
@@ -667,7 +670,7 @@ router.post('/guest-track', async (req, res) => {
                 o.created_at,
                 o.updated_at
             FROM orders o
-            WHERE o.order_number = ? AND o.user_email = ? AND o.user_id IS NULL
+            WHERE o.order_number = ? AND o.user_email = ?
         `, [orderNumber, email]);
 
         if (order.length === 0) {
