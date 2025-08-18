@@ -594,11 +594,11 @@ router.post('/guest-checkout', async (req, res) => {
                 ) VALUES (?, ?, ?, ?, ?, ?)
             `, [
                 orderId,
-                item.product_id,
-                item.name,
-                item.quantity,
-                item.price,
-                item.total
+                item.product_id || null,
+                item.name || '',
+                item.quantity || 1,
+                item.price || 0,
+                item.total || 0
             ]);
         }
 
