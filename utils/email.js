@@ -507,6 +507,144 @@ class EmailService {
         }
     }
 
+    async sendGuestOrderConfirmation({ email, orderNumber, customerName, totalAmount, items, shippingAddress }) {
+        try {
+            console.log('📧 Sending guest order confirmation email to:', email);
+
+            const itemsHtml = items.map(item => `
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${item.name}</td>
+                    <td style="padding: 10px; text-align: center; border-bottom: 1px solid #e2e8f0;">${item.quantity}</td>
+                    <td style="padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0;">${item.price} TL</td>
+                    <td style="padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0;">${item.total} TL</td>
+                </tr>
+            `).join('');
+
+            const htmlTemplate = `
+                <!DOCTYPE html>
+                <html lang="tr">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Sipariş Onayı - Madeus Skincare</title>
+                </head>
+                <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f8fafc;">
+                    <div style="max-width: 600px; margin: 0 auto; background-color: white;">
+                        <div style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); padding: 30px; text-align: center;">
+                            <h1 style="color: white; margin: 0; font-size: 28px;">🎉 Siparişiniz Alındı!</h1>
+                            <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Madeus Skincare</p>
+                        </div>
+                        
+                        <div style="padding: 30px;">
+                            <h2 style="color: #1f2937; margin-bottom: 20px;">Merhaba ${customerName},</h2>
+                            
+                            <p style="color: #4b5563; line-height: 1.6; margin-bottom: 20px;">
+                                Siparişiniz başarıyla alındı ve işleme alındı. Sipariş detaylarınız aşağıda yer almaktadır.
+                            </p>
+
+                            <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; border-left: 4px solid #059669; margin-bottom: 25px;">
+                                <h3 style="color: #059669; margin: 0 0 10px 0;">📋 Sipariş Bilgileri</h3>
+                                <p style="margin: 5px 0; color: #065f46;"><strong>Sipariş Numarası:</strong> ${orderNumber}</p>
+                                <p style="margin: 5px 0; color: #065f46;"><strong>Sipariş Tarihi:</strong> ${new Date().toLocaleString('tr-TR')}</p>
+                                <p style="margin: 5px 0; color: #065f46;"><strong>Toplam Tutar:</strong> ${totalAmount} TL</p>
+                            </div>
+
+                            <h3 style="color: #1f2937; margin-bottom: 15px;">🛍️ Sipariş Edilen Ürünler</h3>
+                            <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-bottom: 25px;">
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <thead>
+                                        <tr style="background-color: #f8fafc;">
+                                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0;">Ürün</th>
+                                            <th style="padding: 12px; text-align: center; border-bottom: 2px solid #e2e8f0;">Adet</th>
+                                            <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e2e8f0;">Fiyat</th>
+                                            <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e2e8f0;">Toplam</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${itemsHtml}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <h3 style="color: #1f2937; margin-bottom: 15px;">🏠 Teslimat Adresi</h3>
+                            <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                                <p style="margin: 5px 0; color: #374151;"><strong>${shippingAddress?.title || 'Adres'}:</strong></p>
+                                <p style="margin: 5px 0; color: #374151;">${shippingAddress?.fullName || customerName}</p>
+                                <p style="margin: 5px 0; color: #374151;">${shippingAddress?.address || 'Adres bilgisi'}</p>
+                                <p style="margin: 5px 0; color: #374151;">${shippingAddress?.district || ''} ${shippingAddress?.city || ''} ${shippingAddress?.postalCode || ''}</p>
+                                <p style="margin: 5px 0; color: #374151;"><strong>Telefon:</strong> ${shippingAddress?.phone || 'Belirtilmemiş'}</p>
+                            </div>
+
+                            <div style="background: #eff6ff; padding: 20px; border-radius: 8px; border-left: 4px solid #3b82f6; margin-bottom: 25px;">
+                                <h3 style="color: #1e40af; margin: 0 0 10px 0;">📞 Sipariş Takibi</h3>
+                                <p style="margin: 5px 0; color: #1e3a8a;">
+                                    Siparişinizi takip etmek için aşağıdaki bilgileri kullanabilirsiniz:
+                                </p>
+                                <p style="margin: 5px 0; color: #1e3a8a;"><strong>Sipariş Numarası:</strong> ${orderNumber}</p>
+                                <p style="margin: 5px 0; color: #1e3a8a;"><strong>Email Adresiniz:</strong> ${email}</p>
+                                <p style="margin: 10px 0 0 0; color: #1e3a8a;">
+                                    <a href="https://madeusskincare.com/siparis-takip" style="color: #3b82f6; text-decoration: none; font-weight: bold;">
+                                        🔍 Sipariş Takip Sayfasına Git
+                                    </a>
+                                </p>
+                            </div>
+
+                            <div style="background: #fef3c7; padding: 20px; border-radius: 8px; border-left: 4px solid #f59e0b; margin-bottom: 25px;">
+                                <h3 style="color: #92400e; margin: 0 0 10px 0;">⚠️ Önemli Bilgi</h3>
+                                <p style="margin: 5px 0; color: #78350f;">
+                                    Üye olmadan yaptığınız bu sipariş için sipariş takibi yapabilmek adına 
+                                    <strong>sipariş numaranızı ve email adresinizi</strong> saklayınız.
+                                </p>
+                            </div>
+
+                            <div style="text-align: center; margin-top: 30px;">
+                                <a href="https://madeusskincare.com" style="display: inline-block; background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                                    🛍️ Alışverişe Devam Et
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div style="background: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
+                            <p style="margin: 0; color: #64748b; font-size: 14px;">
+                                Bu email ${email} adresine gönderilmiştir.
+                            </p>
+                            <p style="margin: 5px 0 0 0; color: #64748b; font-size: 14px;">
+                                Sorularınız için: <a href="mailto:hello@madeusskincare.com" style="color: #059669;">hello@madeusskincare.com</a>
+                            </p>
+                            <p style="margin: 5px 0 0 0; color: #64748b; font-size: 14px;">
+                                © 2024 Madeus Skincare - Tüm hakları saklıdır
+                            </p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            const mailOptions = {
+                from: process.env.EMAIL_FROM || 'Madeus Skincare <noreply@madeusskincare.com>',
+                to: email,
+                subject: `🎉 Sipariş Onayı #${orderNumber} - Madeus Skincare`,
+                html: htmlTemplate
+            };
+
+            const result = await this.transporter.sendMail(mailOptions);
+            console.log('✅ Guest order confirmation email sent successfully:', result.messageId);
+            
+            return {
+                success: true,
+                messageId: result.messageId,
+                message: 'Guest order confirmation email sent successfully'
+            };
+        } catch (error) {
+            console.error('❌ Failed to send guest order confirmation email:', error);
+            return {
+                success: false,
+                error: error.message,
+                message: 'Failed to send guest order confirmation email'
+            };
+        }
+    }
+
     async sendCustomEmail(to, subject, htmlContent) {
         try {
             const mailOptions = {

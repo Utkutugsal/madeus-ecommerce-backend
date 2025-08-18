@@ -527,6 +527,197 @@ router.get('/test-payment', async (req, res) => {
     }
 });
 
+// Guest checkout - Create order without user account
+router.post('/guest-checkout', async (req, res) => {
+    try {
+        const db = new Database();
+        const {
+            customerInfo,
+            shippingAddress,
+            items,
+            total_amount,
+            shipping_cost
+        } = req.body;
+
+        // Validate required fields
+        if (!customerInfo || !shippingAddress || !items || !total_amount) {
+            return res.status(400).json({
+                success: false,
+                message: 'Eksik bilgi gönderildi'
+            });
+        }
+
+        // Generate unique order number
+        const orderNumber = generateOrderNumber();
+
+        // Create order
+        const orderResult = await db.query(`
+            INSERT INTO orders (
+                order_number,
+                user_id,
+                user_name,
+                user_email,
+                user_phone,
+                shipping_address,
+                total_amount,
+                shipping_cost,
+                status,
+                payment_status,
+                created_at,
+                updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+        `, [
+            orderNumber,
+            null, // user_id is null for guest orders
+            customerInfo.name,
+            customerInfo.email,
+            customerInfo.phone,
+            JSON.stringify(shippingAddress),
+            total_amount,
+            shipping_cost || 0,
+            'pending',
+            'pending'
+        ]);
+
+        const orderId = orderResult.insertId;
+
+        // Add order items
+        for (const item of items) {
+            await db.query(`
+                INSERT INTO order_items (
+                    order_id,
+                    product_id,
+                    product_name,
+                    quantity,
+                    price,
+                    total
+                ) VALUES (?, ?, ?, ?, ?, ?)
+            `, [
+                orderId,
+                item.product_id,
+                item.name,
+                item.quantity,
+                item.price,
+                item.total
+            ]);
+        }
+
+        // Send confirmation email via Brevo
+        try {
+            await emailService.sendGuestOrderConfirmation({
+                email: customerInfo.email,
+                orderNumber: orderNumber,
+                customerName: customerInfo.name,
+                totalAmount: total_amount,
+                items: items,
+                shippingAddress: shippingAddress
+            });
+        } catch (emailError) {
+            console.error('Guest order email error:', emailError);
+            // Don't fail the order if email fails
+        }
+
+        res.json({
+            success: true,
+            message: 'Sipariş başarıyla oluşturuldu',
+            data: {
+                orderId: orderId,
+                orderNumber: orderNumber,
+                customerEmail: customerInfo.email
+            }
+        });
+
+    } catch (error) {
+        console.error('Guest checkout error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Sipariş oluşturulurken hata oluştu'
+        });
+    }
+});
+
+// Guest order tracking - Get order by email and order number
+router.post('/guest-track', async (req, res) => {
+    try {
+        const db = new Database();
+        const { email, orderNumber } = req.body;
+
+        if (!email || !orderNumber) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email ve sipariş numarası gerekli'
+            });
+        }
+
+        // Get order details
+        const order = await db.query(`
+            SELECT 
+                o.id,
+                o.order_number,
+                o.user_name,
+                o.user_email,
+                o.user_phone,
+                o.shipping_address,
+                o.total_amount,
+                o.shipping_cost,
+                o.status,
+                o.payment_status,
+                o.cargo_company,
+                o.cargo_tracking_number,
+                o.created_at,
+                o.updated_at
+            FROM orders o
+            WHERE o.order_number = ? AND o.user_email = ? AND o.user_id IS NULL
+        `, [orderNumber, email]);
+
+        if (order.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Sipariş bulunamadı'
+            });
+        }
+
+        // Get order items
+        const items = await db.query(`
+            SELECT 
+                oi.id,
+                oi.product_id,
+                oi.product_name,
+                oi.quantity,
+                oi.price,
+                oi.total
+            FROM order_items oi
+            WHERE oi.order_id = ?
+        `, [order[0].id]);
+
+        // Parse shipping address
+        let shippingAddress = null;
+        if (order[0].shipping_address) {
+            try {
+                shippingAddress = JSON.parse(order[0].shipping_address);
+            } catch (e) {
+                console.error('Error parsing shipping address:', e);
+            }
+        }
+
+        res.json({
+            success: true,
+            data: {
+                ...order[0],
+                items: items,
+                shipping_address: shippingAddress
+            }
+        });
+
+    } catch (error) {
+        console.error('Guest order tracking error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Sipariş bilgileri alınamadı'
+        });
+    }
+});
+
 // Get order by ID
 router.get('/:id', async (req, res) => {
     try {
